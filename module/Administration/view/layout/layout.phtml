@@ -44,7 +44,45 @@
             </div>
         </nav>
         <div class="container">
-            <?php echo $this->content; ?>
+            <div class="jumbotron">
+                
+            </div>
+            <div class="row">
+                <div class="col-md-3">
+                    
+                    <div class="panel panel-default">
+                        <div class="panel-heading">
+                            <h3 class="panel-title"><?php echo $this->translate('Developer Tools') ?></h3>
+                        </div>
+                        <div class="panel-body">
+                           
+                        </div>
+                    </div>
+
+                    <div class="panel panel-default">
+                        <div class="panel-heading">
+                            <h3 class="panel-title"><?php echo $this->translate('Contents') ?></h3>
+                        </div>
+                        <div class="panel-body">
+                           
+                        </div>
+                    </div>
+
+                    <div class="panel panel-default">
+                        <div class="panel-heading">
+                            <h3 class="panel-title"><?php echo $this->translate('Help &amp; Support') ?></h3>
+                        </div>
+                        <div class="panel-body">
+                           
+                        </div>
+                    </div>
+
+                </div>
+                <div class="col-md-9">
+                    <?php echo $this->content; ?>
+                </div>
+            </div>
+
             <hr>
             <footer>
                 <p>&copy; 2005 - <?php echo date('Y') ?> by Zend Technologies Ltd. <?php echo $this->translate('All rights reserved.') ?></p>

@@ -11,6 +11,7 @@ namespace Administration\Controller;
 
 use Zend\Mvc\Controller\AbstractActionController;
 use Zend\View\Model\ViewModel;
+use Administration\Model;
 
 class IndexController extends AbstractActionController
 {
@@ -20,6 +21,10 @@ class IndexController extends AbstractActionController
     	var_dump($this->params()->fromRoute('collection'));
     	var_dump($this->params()->fromRoute('item'));
     	var_dump($this->params()->fromRoute('action'));
+
+    	$model = 'Administration\\Model\\'.$this->params()->fromRoute('model');
+    	$component = new $model();
+
         return new ViewModel();
     }
 
