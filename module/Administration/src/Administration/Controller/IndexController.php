@@ -24,6 +24,7 @@ class IndexController extends AbstractActionController
 
     	$model = 'Administration\\Model\\'.$this->params()->fromRoute('model');
     	$component = new $model();
+        $component->setDbAdapter($this->getServiceLocator()->get('DbAdapter'));
 
         return new ViewModel();
     }

@@ -11,6 +11,9 @@ namespace Administration;
 
 use Zend\Mvc\ModuleRouteListener;
 use Zend\Mvc\MvcEvent;
+use Administration\AbstractClasses\AbstractModelTable;
+use Zend\Db\ResultSet\ResultSet;
+use Zend\Db\TableGateway\TableGateway;
 
 class Module
 {
@@ -33,6 +36,29 @@ class Module
                 'namespaces' => array(
                     __NAMESPACE__ => __DIR__ . '/src/' . __NAMESPACE__,
                 ),
+            ),
+        );
+    }
+
+    public function getServiceConfig()
+     {
+        return array(
+            'factories' => array(
+                'DbAdapter' => function ($sm) {
+                    $dbAdapter = $sm->get('Zend\Db\Adapter\Adapter');
+                    return $dbAdapter;
+                },
+                'Administration\AbstractClasses\AbstractModelTable' =>  function($sm) {
+                    $tableGateway = $sm->get('AbstractModelTableGateway');
+                    $table = new AbstractModelTable($tableGateway);
+                    return $table;
+                },
+                'AbstractModelTableGateway' => function ($sm) {
+                    $dbAdapter = $sm->get('Zend\Db\Adapter\Adapter');
+                    $resultSetPrototype = new ResultSet();
+                    $resultSetPrototype->setArrayObjectPrototype(new Album());
+                    return new TableGateway('album', $dbAdapter, null, $resultSetPrototype);
+                },
             ),
         );
     }
