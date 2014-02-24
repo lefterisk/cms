@@ -1,28 +1,34 @@
 <?php 
 namespace Administration\Model;
 
-use Zend\Mvc\Controller\AbstractActionController;
-use Administration\AbstractClasses\AbstractModel;
+use Administration\AbstractClasses\TableHandle;
 
-class User extends AbstractModel 
+class User  
 {
 	public function __construct()
     {
-    	$this->setModelName('User');
-    	$this->setTableName('Users');
-    	$this->setPrimaryKeyField('userId');
-    	$this->setLanguageForeignKeyField('languageId');
-    	$this->setIntegers(array());
-    	$this->setBooleans(array());
-    	$this->setVarchars(array());
-    	$this->setShortTexts(array());
-    	$this->setLongTexts(array());
-    	$this->setFiles(array());
-    	$this->setMultilanguageVarchars(array());
-    	$this->setMultilanguageShortTexts(array());
-    	$this->setMultilanguageLongTexts(array());
-    	$this->setMultilanguageFiles(array());
-
-    	$this->checkDbTable();
+    	$itemManager = new TableHandle('User', 'UserDescription', 'id', 'languageId', 'email');
+    	$itemManager->setPrefix("user_");
+		$itemManager->setDates(array());
+		$itemManager->setDateTimes(array());
+		$itemManager->setEnums(array());
+		$itemManager->setVarchars(array());	
+		$itemManager->setTexts(array());
+		$itemManager->setLongTexts(array());
+		$itemManager->setIntegers(array());
+		$itemManager->setImages(array());
+		$itemManager->setFiles(array());
+		$itemManager->setMultilanguageVarchars(array());
+		$itemManager->setMultilanguageTexts(array());
+		$itemManager->setMultilanguageLongTexts(array());
+		$itemManager->setMultilanguageFiles(array());
+		$itemManager->setRequiredFields(array());
+		$itemManager->setMultilanguageRequiredFields(array());
+		$itemManager->setJoinedTables(array());
+		$itemManager->setRelations(array());
+		$itemManager->setMetaTitle();
+		$itemManager->setMetaDescription();
+		$itemManager->setMetaKeywords();
+    	
     }
 }
