@@ -62,16 +62,20 @@ class TableHandle
 	//Prefix used for file uploads.
 	private $prefix;
 
+    public $tableGateWay;
+
 	/**
 	 * Instantiates a new TableHandle object
 	 */
-	public function __construct($tableName, $tableDescriptionName, $tableKey, $languageID, $nameField)
+	public function __construct($tableName, $tableDescriptionName, $tableKey, $languageID, $nameField, $dbAdapter)
 	{
 		$this->tableName 			= $tableName;
 		$this->tableDescriptionName = $tableDescriptionName;
 		$this->tableKey 			= $tableKey;
 		$this->languageID 			= $languageID;
-		$this->nameField 			= $nameField;
+        $this->nameField 			= $nameField;
+        $this->dbAdapter 			= $dbAdapter;
+        $this->tableGateWay         = new AbstractModelTable($tableName, $dbAdapter);
 	}
 
 	////////////////////////////////////////////////////////////////

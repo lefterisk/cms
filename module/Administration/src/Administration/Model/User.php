@@ -5,9 +5,9 @@ use Administration\AbstractClasses\TableHandle;
 
 class User  
 {
-	public function __construct()
+	public function __construct($dbAdapter)
     {
-    	$itemManager = new TableHandle('User', 'UserDescription', 'id', 'languageId', 'email');
+    	$itemManager = new TableHandle('User', 'UserDescription', 'id', 'languageId', 'email', $dbAdapter);
     	$itemManager->setPrefix("user_");
 		$itemManager->setDates(array());
 		$itemManager->setDateTimes(array());
@@ -26,9 +26,10 @@ class User
 		$itemManager->setMultilanguageRequiredFields(array());
 		$itemManager->setJoinedTables(array());
 		$itemManager->setRelations(array());
-		$itemManager->setMetaTitle();
-		$itemManager->setMetaDescription();
-		$itemManager->setMetaKeywords();
+        $itemManager->tableGateWay->finaliseTable();
+//		$itemManager->setMetaTitle();
+//		$itemManager->setMetaDescription();
+//		$itemManager->setMetaKeywords();
     	
     }
 }
