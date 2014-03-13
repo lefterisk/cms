@@ -21,19 +21,25 @@ class AbstractModelTable extends TableGateway
         $this->addFieldsIfDontExist('longTexts',                $this->getLongTexts());
         $this->addFieldsIfDontExist('imageCaptions',            $this->getImageCaptions());
         $this->addFieldsIfDontExist('fileCaptions',             $this->getFileCaptions());
-        $this->addFieldsIfDontExist('multiLingualFileCaptions', $this->getMultilingualFilesCaptions());
-        $this->addFieldsIfDontExist('multiLingualTexts',        $this->getMultilingualTexts());
-        $this->addFieldsIfDontExist('multiLingualLongTexts',    $this->getMultilingualLongTexts());
-        $this->addFieldsIfDontExist('multiLingualVarchars',     $this->getMultilingualVarchars());
-        $this->addFieldsIfDontExist('multiLingualFiles',        $this->getMultilingualFiles());
+        if ($this->isMultiLingual()) {
+            $this->addFieldsIfDontExist('multiLingualFileCaptions', $this->getMultilingualFilesCaptions());
+            $this->addFieldsIfDontExist('multiLingualTexts',        $this->getMultilingualTexts());
+            $this->addFieldsIfDontExist('multiLingualLongTexts',    $this->getMultilingualLongTexts());
+            $this->addFieldsIfDontExist('multiLingualVarchars',     $this->getMultilingualVarchars());
+            $this->addFieldsIfDontExist('multiLingualFiles',        $this->getMultilingualFiles());
+        }
     }
 
-    private function createTablesIfNotExists(){
+    private function createTablesIfNotExists()
+    {
         $this->adapter->query('CREATE TABLE IF NOT EXISTS `'.$this->getTableName().'` (`id` int(11) unsigned NOT NULL AUTO_INCREMENT, PRIMARY KEY (`id`))', Adapter::QUERY_MODE_EXECUTE);
-        $this->adapter->query('CREATE TABLE IF NOT EXISTS `'.$this->getTableDescriptionName().'` (`id` int(11) unsigned NOT NULL AUTO_INCREMENT, PRIMARY KEY (`id`))', Adapter::QUERY_MODE_EXECUTE);
+        if ($this->isMultiLingual()) {
+            $this->adapter->query('CREATE TABLE IF NOT EXISTS `'.$this->getTableDescriptionName().'` (`id` int(11) unsigned NOT NULL AUTO_INCREMENT, PRIMARY KEY (`id`))', Adapter::QUERY_MODE_EXECUTE);
+        }
     }
 
-    private function addFieldsIfDontExist($type, $fieldsArray){
+    private function addFieldsIfDontExist($type, $fieldsArray)
+    {
 
         $tableToAddTheColumn = '';
         $fieldType           = '';
@@ -68,7 +74,11 @@ class AbstractModelTable extends TableGateway
             case 'imageCaptions':
             case 'fileCaptions':
             case 'multiLingualFileCaptions':
-                $tableToAddTheColumn = $this->getTableDescriptionName();
+                if ($this->isMultiLingual()) {
+                    $tableToAddTheColumn = $this->getTableDescriptionName();
+                } else {
+                    $tableToAddTheColumn = $this->getTableName();
+                }
                 $fieldType = " VARCHAR( 255 ) ";
                 break;
             case 'multiLingualTexts':
@@ -97,11 +107,13 @@ class AbstractModelTable extends TableGateway
         }
     }
 
-    private function addJoinRelationsIfNotExist(){
+    private function addJoinRelationsIfNotExist()
+    {
 
     }
 
-    private function addCustomSelectionFieldsIfNotExist(){
+    private function addCustomSelectionFieldsIfNotExist()
+    {
 
     }
 }
