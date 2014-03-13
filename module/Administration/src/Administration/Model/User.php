@@ -8,8 +8,7 @@ class User
 	public function __construct($dbAdapter)
     {
     	$itemManager = new TableHandle('User', $dbAdapter);
-        $itemManager->setIsMultilingual(false);
-        $itemManager->setLanguageID("languageId");
+        $itemManager->setIsMultilingual(true);
         $itemManager->setNameField("email");
     	$itemManager->setPrefix("user_");
         //Fields

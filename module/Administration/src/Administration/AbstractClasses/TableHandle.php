@@ -9,7 +9,7 @@ class TableHandle extends AbstractModelTable
 	//Table properties
 	private $tableName;
 	private $tableDescriptionName;
-	private $languageID;
+    private $languageID = 'languageId';
 	private $nameField;
     private $hasMultilingualContent = true;
 	
@@ -440,7 +440,7 @@ class TableHandle extends AbstractModelTable
             throw new Exception\InvalidArgumentException('Parameter for hasMultilingualContent must be boolean!');
         }
     }
-	
+
 	/**
 	 * Sets LanguageID.
 	 */
