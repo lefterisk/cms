@@ -7,26 +7,28 @@ class User
 {
 	public function __construct($dbAdapter)
     {
-    	$itemManager = new TableHandle('User', 'UserDescription', 'id', 'languageId', 'email', $dbAdapter);
+    	$itemManager = new TableHandle('User', $dbAdapter);
+        $itemManager->setLanguageID("languageId");
+        $itemManager->setNameField("email");
     	$itemManager->setPrefix("user_");
-		$itemManager->setDates(array());
-		$itemManager->setDateTimes(array());
-		$itemManager->setEnums(array());
-		$itemManager->setVarchars(array());	
-		$itemManager->setTexts(array());
-		$itemManager->setLongTexts(array());
-		$itemManager->setIntegers(array());
-		$itemManager->setImages(array());
-		$itemManager->setFiles(array());
-		$itemManager->setMultilanguageVarchars(array());
-		$itemManager->setMultilanguageTexts(array());
-		$itemManager->setMultilanguageLongTexts(array());
-		$itemManager->setMultilanguageFiles(array());
+        //Fields
+		$itemManager->setDates(array('day'));
+		$itemManager->setEnums(array('status','sticky'));
+		$itemManager->setVarchars(array('email', 'address'));
+		$itemManager->setTexts(array('simpleText_1','simpleText_2'));
+		$itemManager->setLongTexts(array('simpleLongText_1','simpleLongText_2'));
+		$itemManager->setIntegers(array('id','number'));
+		$itemManager->setImages(array('image_1', 'image_2'));
+		$itemManager->setFiles(array('file_1','file_2'));
+		$itemManager->setMultilingualVarchars(array('title'));
+		$itemManager->setMultilingualTexts(array('description'));
+		$itemManager->setMultilingualLongTexts(array('longDescription'));
+		$itemManager->setMultilingualFiles(array('multiLangfile'));
 		$itemManager->setRequiredFields(array());
-		$itemManager->setMultilanguageRequiredFields(array());
+		$itemManager->setMultilingualRequiredFields(array());
 		$itemManager->setJoinedTables(array());
 		$itemManager->setRelations(array());
-        $itemManager->tableGateWay->finaliseTable();
+        $itemManager->finaliseTable();
 //		$itemManager->setMetaTitle();
 //		$itemManager->setMetaDescription();
 //		$itemManager->setMetaKeywords();

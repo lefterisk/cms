@@ -1,7 +1,7 @@
 <?php
 namespace Administration\AbstractClasses;
 
-class TableHandle 
+class TableHandle extends AbstractModelTable
 {
 	//Table properties
 	private $tableName;
@@ -10,25 +10,23 @@ class TableHandle
 	private $languageID;
 	private $nameField;
 	
-	//Generic fields which do not support multilanguage.
+	//Generic fields which do not support Multilingual.
 	private $enums = array();
 	private $dates = array();
-	private $dateTimes = array();
 	private $images = array();
 	private $files = array();
 
-	//Fields which do not support multilanguage.
+	//Fields which do not support Multilingual.
 	private $varchars = array();
 	private $texts = array();
 	private $longTexts = array();
 	private $integers = array();
-	private $doubles = array();
 
-	//Fields which support multilanguage.
-	private $multilanguageVarchars = array();
-	private $multilanguageTexts = array();
-	private $multilanguageLongTexts = array();
-	private $multilanguageFiles = array();
+	//Fields which support Multilingual.
+	private $MultilingualVarchars = array();
+	private $MultilingualTexts = array();
+	private $MultilingualLongTexts = array();
+	private $MultilingualFiles = array();
 
 	//Fields which support custom meta tags.
 	private $metaTitle;
@@ -38,11 +36,11 @@ class TableHandle
 	//Captions
 	private $useImagesCaptions = false;
 	private $useFilesCaptions = false;
-	private $useMultilanguageFilesCaptions = false;	
+	private $useMultilingualFilesCaptions = false;	
 
 	//Required fields
 	private $requiredFields = array();
-	private $requiredMultilanguageFields = array();
+	private $requiredMultilingualFields = array();
 	
 	//Related Tables
 	private $relations = array();
@@ -67,15 +65,11 @@ class TableHandle
 	/**
 	 * Instantiates a new TableHandle object
 	 */
-	public function __construct($tableName, $tableDescriptionName, $tableKey, $languageID, $nameField, $dbAdapter)
+	public function __construct($tableName, $dbAdapter)
 	{
-		$this->tableName 			= $tableName;
-		$this->tableDescriptionName = $tableDescriptionName;
-		$this->tableKey 			= $tableKey;
-		$this->languageID 			= $languageID;
-        $this->nameField 			= $nameField;
-        $this->dbAdapter 			= $dbAdapter;
-        $this->tableGateWay         = new AbstractModelTable($tableName, $dbAdapter);
+        parent::__construct($tableName, $dbAdapter);
+		$this->setTableName($tableName);
+		$this->setTableDescriptionName($tableName.'Description');
 	}
 
 	////////////////////////////////////////////////////////////////
@@ -91,19 +85,11 @@ class TableHandle
 	}
 	
 	/**
-	 * Returns table description name, which stores multilanguage data.
+	 * Returns table description name, which stores Multilingual data.
 	 */
 	public function getTableDescriptionName()
 	{
 		return $this->tableDescriptionName;
-	}
-	
-	/**
-	 * Returns table key.
-	 */
-	public function getTableKey()
-	{
-		return $this->tableKey;
 	}
 	
 	/**
@@ -139,14 +125,6 @@ class TableHandle
 	}
 
 	/**
-	 * Returns datetimes.
-	 */
-	public function getDateTimes()
-	{
-		return $this->dateTimes;
-	}
-
-	/**
 	 * Returns images.
 	 */
 	public function getImages()
@@ -157,7 +135,7 @@ class TableHandle
 	/**
 	 * Returns images' captions.
 	 */
-	public function getImagesCaptions()
+	public function getImageCaptions()
 	{
 		if ($this->useImagesCaptions==false)
 		{
@@ -185,7 +163,7 @@ class TableHandle
 	/**
 	 * Returns files' captions.
 	 */
-	public function getFilesCaptions()
+	public function getFileCaptions()
 	{
 		if ($this->useFilesCaptions==false)
 		{
@@ -235,35 +213,27 @@ class TableHandle
 	}
 
 	/**
-	 * Returns doubles.
+	 * Returns varchars, which support Multilingual.
 	 */
-	public function getDoubles()
+	public function getMultilingualVarchars()
 	{
-		return $this->doubles;
+		return $this->MultilingualVarchars;
 	}
 
 	/**
-	 * Returns varchars, which support multilanguage.
+	 * Returns texts, which support Multilingual.
 	 */
-	public function getMultilanguageVarchars()
+	public function getMultilingualTexts()
 	{
-		return $this->multilanguageVarchars;
+		return $this->MultilingualTexts;
 	}
 
 	/**
-	 * Returns texts, which support multilanguage.
+	 * Returns longTexts, which support Multilingual.
 	 */
-	public function getMultilanguageTexts()
+	public function getMultilingualLongTexts()
 	{
-		return $this->multilanguageTexts;
-	}
-
-	/**
-	 * Returns longTexts, which support multilanguage.
-	 */
-	public function getMultilanguageLongTexts()
-	{
-		return $this->multilanguageLongTexts;
+		return $this->MultilingualLongTexts;
 	}
 	
 	/**
@@ -291,28 +261,28 @@ class TableHandle
 	}
 
 	/**
-	 * Returns files, which support multilanguage.
+	 * Returns files, which support Multilingual.
 	 */
-	public function getMultilanguageFiles()
+	public function getMultilingualFiles()
 	{
-		return $this->multilanguageFiles;
+		return $this->MultilingualFiles;
 	}
 
 	/**
 	 * Returns files' captions.
 	 */
-	public function getMultilanguageFilesCaptions()
+	public function getMultilingualFilesCaptions()
 	{
-		if ($this->useMultilanguageFilesCaptions==false)
+		if ($this->useMultilingualFilesCaptions==false)
 		{
 			return array();
 		}
 		else
 		{
 			$captions = array();
-			for ($i=0; $i<count($this->multilanguageFiles); $i++)
+			for ($i=0; $i<count($this->MultilingualFiles); $i++)
 			{
-				$captions[$i] = $this->multilanguageFiles[$i] . "_caption";
+				$captions[$i] = $this->MultilingualFiles[$i] . "_caption";
 			}
 			return $captions;
 		}
@@ -327,11 +297,11 @@ class TableHandle
 	}
 
 	/**
-	 * Returns required multilanguage fields.
+	 * Returns required Multilingual fields.
 	 */
-	public function getMultilanguageRequiredFields()
+	public function getMultilingualRequiredFields()
 	{
-		return $this->requiredMultilanguageFields;
+		return $this->requiredMultilingualFields;
 	}
 
 	/**
@@ -375,19 +345,19 @@ class TableHandle
 	}
 
 	/**
-	 * Returns all non multilanguage fields.
+	 * Returns all non Multilingual fields.
 	 */
-	public function getAllNonMultilanguageFields()
+	public function getAllNonMultilingualFields()
 	{
 		return array_merge($this->enums, $this->dates, $this->dateTimes, $this->varchars, $this->texts, $this->longTexts, $this->integers, $this->doubles, $this->joinedTables, $this->customSelections);
 	}
 	
 	/**
-	 * Returns all multilanguage fields.
+	 * Returns all Multilingual fields.
 	 */
-	public function getAllMultilanguageFields()
+	public function getAllMultilingualFields()
 	{
-		return array_merge($this->multilanguageVarchars, $this->multilanguageTexts, $this->multilanguageLongTexts, $this->getImagesCaptions(), $this->getFilesCaptions(), $this->getMultilanguageFilesCaptions());
+		return array_merge($this->MultilingualVarchars, $this->MultilingualTexts, $this->MultilingualLongTexts, $this->getImagesCaptions(), $this->getFilesCaptions(), $this->getMultilingualFilesCaptions());
 	}	
 	
 	/**
@@ -395,7 +365,7 @@ class TableHandle
 	 */
 	public function getSimpleFields()
 	{
-		$simpleFields = array_merge($this->dates, $this->dateTimes, $this->varchars, $this->enums, $this->joinedTables, $this->customSelections, $this->customFields, $this->integers, $this->doubles, $this->texts, $this->multilanguageVarchars, $this->multilanguageTexts);
+		$simpleFields = array_merge($this->dates, $this->dateTimes, $this->varchars, $this->enums, $this->joinedTables, $this->customSelections, $this->customFields, $this->integers, $this->doubles, $this->texts, $this->MultilingualVarchars, $this->MultilingualTexts);
 		// Treat Meta Fields seperately
 		for ($i=0; $i<count($simpleFields); $i++)
 		{
@@ -412,7 +382,7 @@ class TableHandle
 	 */
 	public function getAdvancedFields()
 	{
-		return array_merge($this->longTexts, $this->multilanguageLongTexts);
+		return array_merge($this->longTexts, $this->MultilingualLongTexts);
 	}
 	
 	/**
@@ -443,7 +413,7 @@ class TableHandle
 	 */ 
 	public function getAllFileFields()
 	{
-		return array_merge($this->images, $this->files, $this->multilanguageFiles);
+		return array_merge($this->images, $this->files, $this->MultilingualFiles);
 	}	
 	
 
@@ -465,14 +435,6 @@ class TableHandle
 	public function setTableDescriptionName($tableDescriptionName)
 	{
 		$this->tableDescriptionName = $tableDescriptionName;
-	}
-	
-	/**
-	 * Sets key.
-	 */
-	public function setTableKey($tableKey)
-	{
-		$this->tableKey = $tableKey;
 	}
 	
 	/**
@@ -505,14 +467,6 @@ class TableHandle
 	public function setDates($dates)
 	{
 		$this->dates = $dates;
-	}
-
-	/**
-	 * Sets datetimes.
-	 */
-	public function setDateTimes($dateTimes)
-	{
-		$this->dateTimes = $dateTimes;
 	}
 
 	/**
@@ -566,47 +520,39 @@ class TableHandle
 	}
 
 	/**
-	 * Sets Doubles.
+	 * Sets varchars, which support Multilingual.
 	 */
-	public function setDoubles($doubles)
+	public function setMultilingualVarchars($MultilingualVarchars)
 	{
-		$this->doubles = $doubles;
-	}
-
-	/**
-	 * Sets varchars, which support multilanguage.
-	 */
-	public function setMultilanguageVarchars($multilanguageVarchars)
-	{
-		$this->multilanguageVarchars = $multilanguageVarchars;
-		if (isset($this->metaTitle) && !in_array($this->metaTitle, $multilanguageVarchars))
+		$this->MultilingualVarchars = $MultilingualVarchars;
+		if (isset($this->metaTitle) && !in_array($this->metaTitle, $MultilingualVarchars))
 		{
-			array_push($this->multilanguageVarchars, $this->metaTitle);	
+			array_push($this->MultilingualVarchars, $this->metaTitle);	
 		}
 	}
 
 	/**
-	 * Sets longTexts, which support multilanguage.
+	 * Sets longTexts, which support Multilingual.
 	 */
-	public function setMultilanguageTexts($multilanguageTexts)
+	public function setMultilingualTexts($MultilingualTexts)
 	{
-		$this->multilanguageTexts = $multilanguageTexts;
-		if (isset($this->metaDescription) && !in_array($this->metaDescription, $multilanguageTexts))
+		$this->MultilingualTexts = $MultilingualTexts;
+		if (isset($this->metaDescription) && !in_array($this->metaDescription, $MultilingualTexts))
 		{
-			array_push($this->multilanguageTexts, $this->metaDescription);	
+			array_push($this->MultilingualTexts, $this->metaDescription);	
 		}
-		if (isset($this->metaKeywords) && !in_array($this->metaKeywords, $multilanguageTexts))
+		if (isset($this->metaKeywords) && !in_array($this->metaKeywords, $MultilingualTexts))
 		{
-			array_push($this->multilanguageTexts, $this->metaKeywords);	
+			array_push($this->MultilingualTexts, $this->metaKeywords);	
 		}
 	}
 
 	/**
-	 * Sets longTexts, which support multilanguage.
+	 * Sets longTexts, which support Multilingual.
 	 */
-	public function setMultilanguageLongTexts($multilanguageLongTexts)
+	public function setMultilingualLongTexts($MultilingualLongTexts)
 	{
-		$this->multilanguageLongTexts = $multilanguageLongTexts;
+		$this->MultilingualLongTexts = $MultilingualLongTexts;
 	}
 	
 	/**
@@ -620,7 +566,7 @@ class TableHandle
 			return;
 		}
 		$this->metaTitle = $metaTitle;
-		array_push($this->multilanguageVarchars, $metaTitle);
+		array_push($this->MultilingualVarchars, $metaTitle);
 	}
 	
 	/**
@@ -634,7 +580,7 @@ class TableHandle
 			return;
 		}
 		$this->metaKeywords = $metaKeywords;
-		array_push($this->multilanguageTexts, $metaKeywords);
+		array_push($this->MultilingualTexts, $metaKeywords);
 	}
 	
 	/**
@@ -648,16 +594,16 @@ class TableHandle
 			return;
 		}
 		$this->metaDescription = $metaDescription;
-		array_push($this->multilanguageTexts, $metaDescription);
+		array_push($this->MultilingualTexts, $metaDescription);
 	}
 
 	/**
-	 * Sets files, which support multilanguage.
+	 * Sets files, which support Multilingual.
 	 */
-	public function setMultilanguageFiles($multilanguageFiles, $useCaption = false)
+	public function setMultilingualFiles($MultilingualFiles, $useCaption = false)
 	{
-		$this->multilanguageFiles = $multilanguageFiles;
-		$this->useMultilanguageFilesCaptions = $useCaption;
+		$this->MultilingualFiles = $MultilingualFiles;
+		$this->useMultilingualFilesCaptions = $useCaption;
 	}
 
 	/**
@@ -669,11 +615,11 @@ class TableHandle
 	}
 
 	/**
-	 * Sets required multilanguage fields.
+	 * Sets required Multilingual fields.
 	 */
-	public function setMultilanguageRequiredFields($requiredMultilanguageFields)
+	public function setMultilingualRequiredFields($requiredMultilingualFields)
 	{
-		$this->requiredMultilanguageFields = $requiredMultilanguageFields;
+		$this->requiredMultilingualFields = $requiredMultilingualFields;
 	}
 
 	/**
