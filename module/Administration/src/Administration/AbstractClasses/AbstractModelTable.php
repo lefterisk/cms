@@ -7,7 +7,6 @@ use Zend\Db\TableGateway\Exception;
 
 class AbstractModelTable extends TableGateway
 {
-
     public function finaliseTable()
     {
         $this->createTablesIfNotExists();
@@ -98,59 +97,11 @@ class AbstractModelTable extends TableGateway
         }
     }
 
-    private function addEnumFieldsIfNotExist(){
-
-    }
-
-    private function addDateFieldsIfNotExist(){
-
-    }
-
-    private function addImageFieldsIfNotExist(){
-
-    }
-
-    private function addFileFieldsIfNotExist(){
-
-    }
-
-    private function addTextFieldsIfNotExist(){
-
-    }
-
-    private function addLongTextFieldsIfNotExist(){
-
-    }
-
-    private function addMultilingualVarcharFieldsIfNotExist(){
-
-    }
-
-    private function addMultilingualTextFieldsIfNotExist(){
-
-    }
-
-    private function addMultilingualLongTextFieldsIfNotExist(){
-
-    }
-
-    private function addMultilingualFileFieldsIfNotExist(){
-
-    }
-
     private function addJoinRelationsIfNotExist(){
 
     }
 
     private function addCustomSelectionFieldsIfNotExist(){
-
-    }
-
-    private function addImageCaptionsFieldsIfNotExist(){
-
-    }
-
-    private function addMultilingualFileCaptionsFieldsIfNotExist(){
 
     }
 }

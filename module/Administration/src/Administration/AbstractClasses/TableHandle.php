@@ -45,9 +45,6 @@ class TableHandle extends AbstractModelTable
 	//Related Tables
 	private $relations = array();
 
-	//Joined Tables.
-	private $joinedTables = array();
-
 	//Custom Fields
 	private $customFields = array();
 	
@@ -310,14 +307,6 @@ class TableHandle extends AbstractModelTable
 	public function getRelations()
 	{
 		return $this->relations;
-	}
-
-	/**
-	 * Returns joined Tables.
-	 */
-	public function getJoinedTables()
-	{
-		return $this->joinedTables;
 	}
 	
 	/**
@@ -628,14 +617,6 @@ class TableHandle extends AbstractModelTable
 	public function setRelations($relations)
 	{
 		$this->relations = $relations;
-	}
-
-	/**
-	 * Sets joined Tables.
-	 */
-	public function setJoinedTables($joinedTables)
-	{
-		$this->joinedTables = $joinedTables;
 	}
 	
 	/**

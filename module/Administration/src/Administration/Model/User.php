@@ -26,7 +26,6 @@ class User
 		$itemManager->setMultilingualFiles(array('multiLangfile'));
 		$itemManager->setRequiredFields(array());
 		$itemManager->setMultilingualRequiredFields(array());
-		$itemManager->setJoinedTables(array());
 		$itemManager->setRelations(array());
         $itemManager->finaliseTable();
 //		$itemManager->setMetaTitle();
