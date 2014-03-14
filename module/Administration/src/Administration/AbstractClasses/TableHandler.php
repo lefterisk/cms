@@ -4,7 +4,7 @@ namespace Administration\AbstractClasses;
 use Zend\Db\TableGateway\Exception;
 
 
-class TableHandle extends AbstractModelTable
+class TableHandler extends AbstractModelTable
 {
 	//Table properties
 	private $tableName;
@@ -437,7 +437,7 @@ class TableHandle extends AbstractModelTable
         if (is_bool($boolean)) {
             $this->hasMultilingualContent = $boolean;
         } else {
-            throw new Exception\InvalidArgumentException('Parameter for hasMultilingualContent must be boolean!');
+            throw new Exception\InvalidArgumentException('Parameter must be boolean!');
         }
     }
 
@@ -529,7 +529,7 @@ class TableHandle extends AbstractModelTable
 	public function setMultilingualVarchars($MultilingualVarchars)
 	{
 		if (!$this->isMultiLingual()) {
-            throw new Exception\InvalidArgumentException('You are trying to setup multilingual variables in a non-multilingual model!');
+            $this->throwMultilingualException();
         }
         $this->MultilingualVarchars = $MultilingualVarchars;
 		if (isset($this->metaTitle) && !in_array($this->metaTitle, $MultilingualVarchars))
@@ -544,7 +544,7 @@ class TableHandle extends AbstractModelTable
 	public function setMultilingualTexts($MultilingualTexts)
 	{
         if (!$this->isMultiLingual()) {
-            throw new Exception\InvalidArgumentException('You are trying to setup multilingual variables in a non-multilingual model!');
+            $this->throwMultilingualException();
         }
         $this->MultilingualTexts = $MultilingualTexts;
 		if (isset($this->metaDescription) && !in_array($this->metaDescription, $MultilingualTexts))
@@ -563,7 +563,7 @@ class TableHandle extends AbstractModelTable
 	public function setMultilingualLongTexts($MultilingualLongTexts)
 	{
         if (!$this->isMultiLingual()) {
-            throw new Exception\InvalidArgumentException('You are trying to setup multilingual variables in a non-multilingual model!');
+            $this->throwMultilingualException();
         }
         $this->MultilingualLongTexts = $MultilingualLongTexts;
 	}
@@ -616,7 +616,7 @@ class TableHandle extends AbstractModelTable
 	public function setMultilingualFiles($MultilingualFiles, $useCaption = false)
 	{
         if (!$this->isMultiLingual()) {
-            throw new Exception\InvalidArgumentException('You are trying to setup multilingual variables in a non-multilingual model!');
+            $this->throwMultilingualException();
         }
         $this->MultilingualFiles = $MultilingualFiles;
 		$this->useMultilingualFilesCaptions = $useCaption;
@@ -636,7 +636,7 @@ class TableHandle extends AbstractModelTable
 	public function setMultilingualRequiredFields($requiredMultilingualFields)
 	{
         if (!$this->isMultiLingual()) {
-            throw new Exception\InvalidArgumentException('You are trying to setup multilingual variables in a non-multilingual model!');
+            $this->throwMultilingualException();
         }
         $this->requiredMultilingualFields = $requiredMultilingualFields;
 	}
@@ -689,8 +689,19 @@ class TableHandle extends AbstractModelTable
 		return $this->actionManager;
 	}
 
+    /**
+     * Returns whether the model is multilingual (has Description table).
+     */
     public function isMultiLingual()
     {
         return $this->hasMultilingualContent;
+    }
+
+    /**
+     * Non Multilingual Exception
+     */
+    protected function throwMultilingualException()
+    {
+        throw new Exception\InvalidArgumentException('You are trying to setup multilingual variables in a non-multilingual model!');
     }
 }

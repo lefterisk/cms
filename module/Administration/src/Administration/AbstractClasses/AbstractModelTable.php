@@ -9,7 +9,7 @@ class AbstractModelTable extends TableGateway
 {
     public function finaliseTable()
     {
-        $this->createTablesIfNotExists();
+        $this->createTablesIfNotExist();
         $this->addFieldsIfDontExist('integers',                 $this->getIntegers());
         $this->addFieldsIfDontExist('enums',                    $this->getEnums());
         $this->addFieldsIfDontExist('dates',                    $this->getDates());
@@ -28,9 +28,10 @@ class AbstractModelTable extends TableGateway
             $this->addFieldsIfDontExist('multiLingualVarchars',     $this->getMultilingualVarchars());
             $this->addFieldsIfDontExist('multiLingualFiles',        $this->getMultilingualFiles());
         }
+        $this->addJoinRelationsIfNotExist($this->getRelations());
     }
 
-    private function createTablesIfNotExists()
+    private function createTablesIfNotExist()
     {
         $this->adapter->query('CREATE TABLE IF NOT EXISTS `'.$this->getTableName().'` (`id` int(11) unsigned NOT NULL AUTO_INCREMENT, PRIMARY KEY (`id`))', Adapter::QUERY_MODE_EXECUTE);
         if ($this->isMultiLingual()) {
@@ -107,9 +108,15 @@ class AbstractModelTable extends TableGateway
         }
     }
 
-    private function addJoinRelationsIfNotExist()
+    private function addJoinRelationsIfNotExist($relations)
     {
-
+        foreach ($relations as $relation) {
+            $relationModelPath = 'Administration\\Model\\' . $relation->getRelatedModel();
+            $relationModel = new $relationModelPath($this->adapter);
+            if ($relation->hasLookUpTable()) {
+                $this->adapter->query('CREATE TABLE IF NOT EXISTS `' . $this->getTableName() .'To'.$relationModel->manager->getTableName(). '` ( `'.$this->getPrefix().'id` int(11) DEFAULT NULL, `'.$relationModel->manager->getPrefix().'id` int(11) DEFAULT NULL)', Adapter::QUERY_MODE_EXECUTE);
+            }
+        }
     }
 
     private function addCustomSelectionFieldsIfNotExist()
