@@ -20,13 +20,22 @@ class RelationsHandler
         if (in_array($typeOfRelation , $this->relationTypes)) {
             $this->typeOfRelation = $typeOfRelation;
         } else {
-            throw new Exception\InvalidArgumentException('This is not a valid Relation Type!');
+            throw new Exception\InvalidArgumentException( '"' . $typeOfRelation . '" is not a valid Relation Type!');
         }
     }
 
     public function hasLookUpTable()
     {
-        if ($this->typeOfRelation = 'manyToOne' || $this->typeOfRelation = 'manyToMany') {
+        if ($this->typeOfRelation == 'manyToMany') {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    public function hasLookupColumn()
+    {
+        if ($this->typeOfRelation == 'manyToOne') {
             return true;
         } else {
             return false;

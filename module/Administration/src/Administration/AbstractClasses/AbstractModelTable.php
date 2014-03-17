@@ -28,7 +28,9 @@ class AbstractModelTable extends TableGateway
             $this->addFieldsIfDontExist('multiLingualVarchars',     $this->getMultilingualVarchars());
             $this->addFieldsIfDontExist('multiLingualFiles',        $this->getMultilingualFiles());
         }
-        $this->addJoinRelationsIfNotExist($this->getRelations());
+        if ($this->followRelations()) {
+            $this->addJoinRelationsIfNotExist($this->getRelations());
+        }
     }
 
     private function createTablesIfNotExist()
@@ -110,12 +112,29 @@ class AbstractModelTable extends TableGateway
 
     private function addJoinRelationsIfNotExist($relations)
     {
-        foreach ($relations as $relation) {
-            $relationModelPath = 'Administration\\Model\\' . $relation->getRelatedModel();
-            $relationModel = new $relationModelPath($this->adapter);
-            if ($relation->hasLookUpTable()) {
-                $this->adapter->query('CREATE TABLE IF NOT EXISTS `' . $this->getTableName() .'To'.$relationModel->manager->getTableName(). '` ( `'.$this->getPrefix().'id` int(11) DEFAULT NULL, `'.$relationModel->manager->getPrefix().'id` int(11) DEFAULT NULL)', Adapter::QUERY_MODE_EXECUTE);
+        if (is_array($relations)) {
+            foreach ($relations as $relation) {
+                $relationModelPath = 'Administration\\Model\\' . $relation->getRelatedModel();
+                $relationModel = new $relationModelPath($this->adapter, false);
+                if ($relationModel->manager->getPrefix() == '') {
+                    throw new Exception\InvalidArgumentException('Please set the prefix in the ' . $relationModel->manager->getTableName() . ' model!');
+                }
+                if ($this->getPrefix() == '') {
+                    throw new Exception\InvalidArgumentException('Please set the prefix in the ' . $this->getTableName() . ' model!');
+                }
+                if ($relation->hasLookUpTable()) {
+                    $this->adapter->query('CREATE TABLE IF NOT EXISTS `' . $this->getTableName() .'To'.$relationModel->manager->getTableName(). '` ( `'.$this->getPrefix().'id` int(11) DEFAULT NULL, `'.$relationModel->manager->getPrefix().'id` int(11) DEFAULT NULL)', Adapter::QUERY_MODE_EXECUTE);
+                } elseif ($relation->hasLookupColumn()) {
+                    $statement = $this->adapter->createStatement("SHOW COLUMNS FROM " . $this->getTableName() . " LIKE '" . $relationModel->manager->getPrefix() . "id'" );
+                    $result    = $statement->execute();
+                    if ($result->count()==0)
+                    {
+                        $this->adapter->query("ALTER TABLE " . $this->getTableName() . " ADD `" . $relationModel->manager->getPrefix() . "id` int(11) DEFAULT NULL;", Adapter::QUERY_MODE_EXECUTE);
+                    }
+                }
             }
+        } else {
+            throw new Exception\InvalidArgumentException('Relations must be an array!');
         }
     }
 

@@ -8,9 +8,9 @@ class User
 {
 	public $manager;
     
-    public function __construct($dbAdapter)
+    public function __construct($dbAdapter, $followRelations = true)
     {
-    	$this->manager = new TableHandler('User', $dbAdapter);
+    	$this->manager = new TableHandler('User', $dbAdapter, $followRelations);
         $this->manager->setIsMultilingual(false);
         $this->manager->setNameField("email");
     	$this->manager->setPrefix("user_");
@@ -29,7 +29,7 @@ class User
 //		$this->manager->setMultilingualFiles(array('multiLangfile'));
 //		$this->manager->setRequiredFields(array());
 //		$this->manager->setMultilingualRequiredFields(array());
-		$this->manager->setRelations(array($userGroup = new RelationsHandler('UserGroup','manyToOne')));
+		$this->manager->setRelations(array($userGroup = new RelationsHandler('UserGroup','manyToMany')));
         $this->manager->finaliseTable();
 //		$this->manager->setMetaTitle();
 //		$this->manager->setMetaDescription();

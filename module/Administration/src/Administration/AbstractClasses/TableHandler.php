@@ -12,7 +12,8 @@ class TableHandler extends AbstractModelTable
     private $languageID = 'languageId';
 	private $nameField;
     private $hasMultilingualContent = true;
-	
+    private $followRelations;
+
 	//Generic fields which do not support Multilingual.
 	private $enums = array();
 	private $dates = array();
@@ -58,18 +59,19 @@ class TableHandler extends AbstractModelTable
 	private $actionManager = array();
 
 	//Prefix used for file uploads.
-	private $prefix;
+	private $prefix = '';
 
     public  $tableGateWay;
 
 	/**
 	 * Instantiates a new TableHandle object
 	 */
-	public function __construct($tableName, $dbAdapter)
+	public function __construct($tableName, $dbAdapter, $followRelations = true)
 	{
         parent::__construct($tableName, $dbAdapter);
 		$this->setTableName($tableName);
-		$this->setTableDescriptionName($tableName.'Description');
+        $this->setTableDescriptionName($tableName.'Description');
+        $this->setFollowRelations($followRelations);
 	}
 
 	////////////////////////////////////////////////////////////////
@@ -406,7 +408,23 @@ class TableHandler extends AbstractModelTable
 	public function getAllFileFields()
 	{
 		return array_merge($this->images, $this->files, $this->MultilingualFiles);
-	}	
+	}
+
+    /**
+     * Returns whether the model is multilingual (has Description table).
+     */
+    public function isMultiLingual()
+    {
+        return $this->hasMultilingualContent;
+    }
+
+    /**
+     * Returns whether to follow relations.
+     */
+    public function followRelations()
+    {
+        return $this->followRelations;
+    }
 	
 
 	////////////////////////////////////////////////////////////////
@@ -439,6 +457,14 @@ class TableHandler extends AbstractModelTable
         } else {
             throw new Exception\InvalidArgumentException('Parameter must be boolean!');
         }
+    }
+
+    /**
+     * Sets whether to follow the models relations
+     */
+    public function setFollowRelations($followRelations)
+    {
+        $this->followRelations = $followRelations;
     }
 
 	/**
@@ -688,14 +714,6 @@ class TableHandler extends AbstractModelTable
 	{
 		return $this->actionManager;
 	}
-
-    /**
-     * Returns whether the model is multilingual (has Description table).
-     */
-    public function isMultiLingual()
-    {
-        return $this->hasMultilingualContent;
-    }
 
     /**
      * Non Multilingual Exception

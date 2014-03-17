@@ -8,9 +8,9 @@ class UserGroup
 {
 	public $manager;
 
-    public function __construct($dbAdapter)
+    public function __construct($dbAdapter, $followRelations = true)
     {
-        $this->manager = new TableHandler('UserGroup', $dbAdapter);
+        $this->manager = new TableHandler('UserGroup', $dbAdapter, $followRelations);
         $this->manager->setIsMultilingual(false);
         $this->manager->setNameField("name");
         $this->manager->setPrefix("user_group_");
