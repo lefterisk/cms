@@ -10,9 +10,9 @@ class TableHandler extends AbstractModelTable
 	private $tableName;
 	private $tableDescriptionName;
     private $languageID = 'languageId';
-	private $nameField;
     private $hasMultilingualContent = true;
-    private $followRelations;
+    private $followRelations = true;
+    private $listingFields = array();
 
 	//Generic fields which do not support Multilingual.
 	private $enums = array();
@@ -66,12 +66,11 @@ class TableHandler extends AbstractModelTable
 	/**
 	 * Instantiates a new TableHandle object
 	 */
-	public function __construct($tableName, $dbAdapter, $followRelations = true)
+	public function __construct($tableName, $dbAdapter)
 	{
         parent::__construct($tableName, $dbAdapter);
 		$this->setTableName($tableName);
         $this->setTableDescriptionName($tableName.'Description');
-        $this->setFollowRelations($followRelations);
 	}
 
 	////////////////////////////////////////////////////////////////
@@ -105,9 +104,9 @@ class TableHandler extends AbstractModelTable
 	/**
 	 * Returns name field.
 	 */
-	public function getNameField()
+	public function getListingFields()
 	{
-		return $this->nameField;
+		return $this->listingFields;
 	}
 
 	/**
@@ -478,9 +477,9 @@ class TableHandler extends AbstractModelTable
 	/**
 	 * Sets name field.
 	 */
-	public function setNameField($nameField)
+	public function setListingFields($listingFields)
 	{
-		$this->nameField = $nameField;
+		$this->listingFields = $listingFields;
 	}
 
 	/**

@@ -14,10 +14,10 @@ return array(
             'administration' => array(
                 'type' => 'segment',
                 'options' => array(
-                    'route'    => '/administration[/:model][/:collection][/:item][/:action]',
+                    'route'    => '/administration[/:model][/page/:page][/:item][/:action]',
                     'constraints' => array(
                         'model'      => '[a-zA-Z][a-zA-Z0-9_-]*',
-                        'collection' => '[0-9_-]*',
+                        'page'       => '[0-9]+',
                         'item'       => '[0-9]+',
                         'action'     => '[a-zA-Z][a-zA-Z0-9_-]*',
                     ),

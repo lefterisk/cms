@@ -116,20 +116,20 @@ class AbstractModelTable extends TableGateway
             foreach ($relations as $relation) {
                 $relationModelPath = 'Administration\\Model\\' . $relation->getRelatedModel();
                 $relationModel = new $relationModelPath($this->adapter, false);
-                if ($relationModel->manager->getPrefix() == '') {
-                    throw new Exception\InvalidArgumentException('Please set the prefix in the ' . $relationModel->manager->getTableName() . ' model!');
+                if ($relationModel->getPrefix() == '') {
+                    throw new Exception\InvalidArgumentException('Please set the prefix in the ' . $relationModel->getTableName() . ' model!');
                 }
                 if ($this->getPrefix() == '') {
                     throw new Exception\InvalidArgumentException('Please set the prefix in the ' . $this->getTableName() . ' model!');
                 }
                 if ($relation->hasLookUpTable()) {
-                    $this->adapter->query('CREATE TABLE IF NOT EXISTS `' . $this->getTableName() .'To'.$relationModel->manager->getTableName(). '` ( `'.$this->getPrefix().'id` int(11) DEFAULT NULL, `'.$relationModel->manager->getPrefix().'id` int(11) DEFAULT NULL)', Adapter::QUERY_MODE_EXECUTE);
+                    $this->adapter->query('CREATE TABLE IF NOT EXISTS `' . $this->getTableName() .'To'.$relationModel->getTableName(). '` ( `'.$this->getPrefix().'id` int(11) DEFAULT NULL, `'.$relationModel->getPrefix().'id` int(11) DEFAULT NULL)', Adapter::QUERY_MODE_EXECUTE);
                 } elseif ($relation->hasLookupColumn()) {
-                    $statement = $this->adapter->createStatement("SHOW COLUMNS FROM " . $this->getTableName() . " LIKE '" . $relationModel->manager->getPrefix() . "id'" );
+                    $statement = $this->adapter->createStatement("SHOW COLUMNS FROM " . $this->getTableName() . " LIKE '" . $relationModel->getPrefix() . "id'" );
                     $result    = $statement->execute();
                     if ($result->count()==0)
                     {
-                        $this->adapter->query("ALTER TABLE " . $this->getTableName() . " ADD `" . $relationModel->manager->getPrefix() . "id` int(11) DEFAULT NULL;", Adapter::QUERY_MODE_EXECUTE);
+                        $this->adapter->query("ALTER TABLE " . $this->getTableName() . " ADD `" . $relationModel->getPrefix() . "id` int(11) DEFAULT NULL;", Adapter::QUERY_MODE_EXECUTE);
                     }
                 }
             }
@@ -141,5 +141,23 @@ class AbstractModelTable extends TableGateway
     private function addCustomSelectionFieldsIfNotExist()
     {
 
+    }
+
+    public function getListing()
+    {
+        if (is_array($this->getListingFields()) && count($this->getListingFields()) > 0) {
+
+            if ($this->isMultiLingual()) {
+                $statement = $this->sql->select()->join(array( 'dc' => $this->getTableDescriptionName()),'dc.' . $this->getPrefix() . 'id = '.$this->getTableName().'.id');
+            } else {
+                $statement = $this->sql->select();
+            }
+            $selectString = $this->sql->getSqlStringForSqlObject($statement);
+            $results = $this->adapter->query($selectString, Adapter::QUERY_MODE_EXECUTE);
+            return $results;
+
+        } else {
+            throw new Exception\InvalidArgumentException('List of fields for the listing must be an Array!');
+        }
     }
 }
