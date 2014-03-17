@@ -8,11 +8,18 @@ class RelationsHandler
     protected $relationTypes = array('oneToMany', 'manyToOne', 'manyToMany');
     protected $typeOfRelation;
     protected $relatedToModel;
+    protected $relatedSelectDisplayFields;
 
-    public function __construct($model, $typeOfRelation)
+    /*
+     * Input: Related Model ,
+     * type of relation can be 'oneToMany', 'manyToOne', 'manyToMany',
+     * fields to show from related model on auto-generated select can be field or array of fields
+     */
+    public function __construct($model, $typeOfRelation, $selectBoxDisplayFields = null)
     {
         $this->setIfValidRelationType($typeOfRelation);
         $this->relatedToModel = $model;
+        $this->relatedSelectDisplayFields = $selectBoxDisplayFields;
     }
 
     protected function setIfValidRelationType($typeOfRelation)
@@ -40,6 +47,11 @@ class RelationsHandler
         } else {
             return false;
         }
+    }
+
+    public function getRelatedSelectDisplayFields()
+    {
+        return $this->relatedSelectDisplayFields;
     }
 
     public function getRelatedModel()
