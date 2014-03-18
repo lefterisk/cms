@@ -143,7 +143,7 @@ class AbstractModelTable extends TableGateway
 
     }
 
-    public function getListing()
+    public function getListing($itemsPerPage = 20, $page = null, $order = null, $orderDirection = null, $filters = null)
     {
         if (is_array($this->getListingFields()) && count($this->getListingFields()) > 0) {
 
@@ -152,6 +152,25 @@ class AbstractModelTable extends TableGateway
             } else {
                 $statement = $this->sql->select();
             }
+
+            $offset = 0;
+            if ($page != null ) {
+                if (is_int((int)$page) && (int)$page > 0) {
+                    $offset = $itemsPerPage * ($page - 1);
+                } else {
+                    throw new Exception\InvalidArgumentException('Page must be an integer > 0!');
+                }
+            }
+
+            if ($order != null) {
+                $orderBy = $order;
+                if ($orderDirection != null) {
+                    $orderBy .= ' '.$orderDirection;
+                }
+                $statement->order($orderBy);
+            }
+
+            $statement->limit($itemsPerPage)->offset($offset);
             $selectString = $this->sql->getSqlStringForSqlObject($statement);
             $results = $this->adapter->query($selectString, Adapter::QUERY_MODE_EXECUTE);
             return $results;

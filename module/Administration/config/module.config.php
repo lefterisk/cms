@@ -14,12 +14,15 @@ return array(
             'administration' => array(
                 'type' => 'segment',
                 'options' => array(
-                    'route'    => '/administration[/:model][/page/:page][/:item][/:action]',
+                    'route'    => '/administration[/:model][/itemsperpage/:itemsperpage][/page/:page][/order/:order][/direction/:direction][/:item][/:action]',
                     'constraints' => array(
-                        'model'      => '[a-zA-Z][a-zA-Z0-9_-]*',
-                        'page'       => '[0-9]+',
-                        'item'       => '[0-9]+',
-                        'action'     => '[a-zA-Z][a-zA-Z0-9_-]*',
+                        'model'        => '[a-zA-Z][a-zA-Z0-9_-]*',
+                        'itemsperpage' => '[0-9]+',
+                        'page'         => '[0-9]+',
+                        'order'        => '[a-zA-Z][a-zA-Z0-9_-]*',
+                        'direction'    => '(asc|desc)',
+                        'item'         => '[0-9_-]*',
+                        'action'       => '[a-zA-Z][a-zA-Z0-9_-]*',
                     ),
                     'defaults' => array(
                         'controller' => 'Administration\Controller\Index',

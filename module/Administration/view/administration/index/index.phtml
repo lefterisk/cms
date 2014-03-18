@@ -4,8 +4,28 @@
             <h3 class="panel-title"><?php echo $this->translate('Follow Development') ?></h3>
         </div>
         <div class="panel-body">
-            <?php foreach ($listing as $item ) : ?>
-            <?php var_dump($item); ?>
-            <?php endforeach; ?>
+            <table class="" width="100%">
+                <thead>
+                    <tr>
+                        <td>No.</td>
+                        <?php foreach ($visibleListingFields as $field) : ?>
+                        <td><?php echo $field ?></td>
+                        <?php endforeach; ?>
+                        <td>Actions</td>
+                    </tr>
+                </thead>
+                <tbody>
+                <?php foreach ($listing as $item ) : ?>
+                    <tr>
+                        <td>1</td>
+                        <?php foreach ($visibleListingFields as $field) : ?>
+                        <td><?php echo $item->$field ?></td>
+                        <?php endforeach; ?>
+                        <td></td>
+                    </tr>
+                    <?php var_dump($item); ?>
+                <?php endforeach; ?>
+                </tbody>
+            </table>
         </div>
     </div>
