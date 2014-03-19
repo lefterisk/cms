@@ -32,7 +32,8 @@ class IndexController extends AbstractActionController
                     ($this->params()->fromRoute('direction'))   ? $this->params()->fromRoute('direction'): null
                 ),
                 'visibleListingFields' => $component->getListingFields(),
-                'userRights' => array('read','edit','add','delete')
+                'listingSwitches'      => $component->getListingSwitches(),
+                'userRights'           => array('read','edit','add','delete')
             )
         );
     }

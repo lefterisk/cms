@@ -13,6 +13,7 @@ class TableHandler extends AbstractModelTable
     private $hasMultilingualContent = true;
     private $followRelations = true;
     private $listingFields = array();
+    private $listingSwitches = array();
 
 	//Generic fields which do not support Multilingual.
 	private $enums = array();
@@ -108,6 +109,14 @@ class TableHandler extends AbstractModelTable
 	{
 		return $this->listingFields;
 	}
+
+    /**
+     * Returns boolean switches for the listing.
+     */
+    public function getListingSwitches()
+    {
+        return $this->listingSwitches;
+    }
 
 	/**
 	 * Returns enums.
@@ -410,6 +419,14 @@ class TableHandler extends AbstractModelTable
 	}
 
     /**
+     * Returns all action managers associated with this table.
+     */
+    public function getActionManagers()
+    {
+        return $this->actionManager;
+    }
+
+    /**
      * Returns whether the model is multilingual (has Description table).
      */
     public function isMultiLingual()
@@ -697,6 +714,14 @@ class TableHandler extends AbstractModelTable
 	{
 		$this->prefix = $prefix;
 	}
+
+    /**
+     * Sets listing switches.
+     */
+    public function setListingSwitches($listingSwitches)
+    {
+        $this->listingSwitches = $listingSwitches;
+    }
 	
 	/**
 	 * Adds an action manager associated with this table.
@@ -704,14 +729,6 @@ class TableHandler extends AbstractModelTable
 	public function addActionManager($actionManager)
 	{
 		array_push($this->actionManager, $actionManager);
-	}
-	
-	/**
-	 * Returns all action managers associated with this table.
-	 */
-	public function getActionManagers()
-	{
-		return $this->actionManager;
 	}
 
     /**

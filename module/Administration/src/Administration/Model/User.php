@@ -13,6 +13,7 @@ class User  extends TableHandler
 
         $this->setIsMultilingual(false);
         $this->setListingFields(array("email"));
+        $this->setListingSwitches(array("status"));
     	$this->setPrefix("user_");
         $this->setFollowRelations($followRelations);
 
