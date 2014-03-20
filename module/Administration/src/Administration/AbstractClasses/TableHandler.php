@@ -427,6 +427,14 @@ class TableHandler extends AbstractModelTable
     }
 
     /**
+     * Returnsthe form object.
+     */
+    public function getForm()
+    {
+
+    }
+
+    /**
      * Returns whether the model is multilingual (has Description table).
      */
     public function isMultiLingual()

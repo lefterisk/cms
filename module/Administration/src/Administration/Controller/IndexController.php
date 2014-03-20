@@ -49,10 +49,17 @@ class IndexController extends AbstractActionController
 
     public function editAction()
     {
-        var_dump($this->params()->fromRoute('model'));
-        var_dump($this->params()->fromRoute('collection'));
-        var_dump($this->params()->fromRoute('item'));
-        var_dump($this->params()->fromRoute('action'));
-        return new ViewModel();
+//        var_dump($this->params()->fromRoute('model'));
+//        var_dump($this->params()->fromRoute('collection'));
+//        var_dump($this->params()->fromRoute('item'));
+//        var_dump($this->params()->fromRoute('action'));
+        $model = 'Administration\\Model\\'.$this->params()->fromRoute('model');
+        $component = new $model($this->getServiceLocator()->get('Zend\Db\Adapter\Adapter'));
+        //var_dump($component->getAllNonMultilingualFields());
+        return new ViewModel(
+            array(
+                'form' => $component->getForm()
+            )
+        );
     }
 }
