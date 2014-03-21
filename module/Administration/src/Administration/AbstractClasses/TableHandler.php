@@ -40,7 +40,7 @@ class TableHandler extends AbstractModelTable
 	
 	//Captions
 	private $useImagesCaptions = false;
-	private $useFilesCaptions = false;
+	private $useFileCaptions = false;
 	private $useMultilingualFilesCaptions = false;	
 
 	//Required fields
@@ -62,7 +62,7 @@ class TableHandler extends AbstractModelTable
 	//Prefix used for file uploads.
 	private $prefix = '';
 
-    public  $tableGateWay;
+    public  $tableFormManager;
 
 	/**
 	 * Instantiates a new TableHandle object
@@ -175,7 +175,7 @@ class TableHandler extends AbstractModelTable
 	 */
 	public function getFileCaptions()
 	{
-		if ($this->useFilesCaptions==false)
+		if ($this->useFileCaptions==false)
 		{
 			return array();
 		}
@@ -351,7 +351,7 @@ class TableHandler extends AbstractModelTable
 	 */
 	public function getAllNonMultilingualFields()
 	{
-		return array_merge($this->enums, $this->dates, $this->dateTimes, $this->varchars, $this->texts, $this->longTexts, $this->integers, $this->doubles, $this->joinedTables, $this->customSelections);
+		return array_merge($this->enums, $this->dates, $this->varchars, $this->texts, $this->longTexts, $this->integers, $this->customSelections);
 	}
 	
 	/**
@@ -359,7 +359,7 @@ class TableHandler extends AbstractModelTable
 	 */
 	public function getAllMultilingualFields()
 	{
-		return array_merge($this->MultilingualVarchars, $this->MultilingualTexts, $this->MultilingualLongTexts, $this->getImagesCaptions(), $this->getFilesCaptions(), $this->getMultilingualFilesCaptions());
+		return array_merge($this->MultilingualVarchars, $this->MultilingualTexts, $this->MultilingualLongTexts, $this->getImageCaptions(), $this->getFileCaptions(), $this->getMultilingualFilesCaptions());
 	}	
 	
 	/**
@@ -367,7 +367,7 @@ class TableHandler extends AbstractModelTable
 	 */
 	public function getSimpleFields()
 	{
-		$simpleFields = array_merge($this->dates, $this->dateTimes, $this->varchars, $this->enums, $this->joinedTables, $this->customSelections, $this->customFields, $this->integers, $this->doubles, $this->texts, $this->MultilingualVarchars, $this->MultilingualTexts);
+		$simpleFields = array_merge($this->dates, $this->varchars, $this->enums, $this->customSelections, $this->customFields, $this->integers, $this->texts, $this->MultilingualVarchars, $this->MultilingualTexts);
 		// Treat Meta Fields seperately
 		for ($i=0; $i<count($simpleFields); $i++)
 		{
@@ -427,11 +427,27 @@ class TableHandler extends AbstractModelTable
     }
 
     /**
-     * Returnsthe form object.
+     * Returns the form object.
      */
     public function getForm()
     {
+        if (empty($this->tableFormManager)) {
+            return $this->getDefaultForm();
+        } else {
+            return $this->tableFormManager;
+        }
+    }
 
+    /**
+     * Instantiates the default formmanager.
+     */
+    public function getDefaultForm()
+    {
+        $this->tableFormManager = new FormManager();
+        $this->tableFormManager->addTab('Tab1', $this->getSimpleFields());
+        $this->tableFormManager->addTab('Tab2', $this->getAdvancedFields());
+        $this->tableFormManager->addTab('Tab3', $this->getAllFileFields());
+        return $this->tableFormManager;
     }
 
     /**
@@ -538,7 +554,7 @@ class TableHandler extends AbstractModelTable
 	public function setFiles($files, $useCaption = false)
 	{
 		$this->files = $files;
-		$this->useFilesCaptions = $useCaption;
+		$this->useFileCaptions = $useCaption;
 	}
 	
 	/**

@@ -55,7 +55,6 @@ class IndexController extends AbstractActionController
 //        var_dump($this->params()->fromRoute('action'));
         $model = 'Administration\\Model\\'.$this->params()->fromRoute('model');
         $component = new $model($this->getServiceLocator()->get('Zend\Db\Adapter\Adapter'));
-        //var_dump($component->getAllNonMultilingualFields());
         return new ViewModel(
             array(
                 'form' => $component->getForm()
