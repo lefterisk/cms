@@ -2,7 +2,8 @@
 namespace Administration\AbstractClasses;
 
 use Zend\Db\TableGateway\Exception;
-
+use Zend\Form\Element;
+use Zend\Form\Form;
 
 class TableHandler extends AbstractModelTable
 {
@@ -419,6 +420,14 @@ class TableHandler extends AbstractModelTable
 	}
 
     /**
+     * Returns all fields.
+     */
+    public function getAllFields()
+    {
+        return array_merge($this->getSimpleFields(), $this->getAdvancedFields(), $this->getAllFileFields());
+    }
+
+    /**
      * Returns all action managers associated with this table.
      */
     public function getActionManagers()
@@ -443,11 +452,73 @@ class TableHandler extends AbstractModelTable
      */
     public function getDefaultForm()
     {
-        $this->tableFormManager = new FormManager();
-        $this->tableFormManager->addTab('Tab1', $this->getSimpleFields());
-        $this->tableFormManager->addTab('Tab2', $this->getAdvancedFields());
-        $this->tableFormManager->addTab('Tab3', $this->getAllFileFields());
+        $this->tableFormManager = new FormManager($this->getFormObject());
+        if (count($this->getSimpleFields()) > 0 ) {
+            $this->tableFormManager->addTab('Tab1', $this->getSimpleFields());
+        }
+        if (count($this->getAdvancedFields()) > 0 ) {
+            $this->tableFormManager->addTab('Tab2', $this->getAdvancedFields());
+        }
+        if (count($this->getAllFileFields()) > 0 ) {
+            $this->tableFormManager->addTab('Tab3', $this->getAllFileFields());
+        }
         return $this->tableFormManager;
+    }
+
+    /**
+     * Instantiates the Zend Form Object.
+     */
+    public function getFormObject()
+    {
+        $form = new Form($this->getTableName());
+
+        foreach ($this->getAllFields() as $field) {
+
+            $type       = 'Zend\Form\Element\Text';
+            $attributes = array();
+            $value_options = array();
+
+            if (in_array($field, array_merge($this->getIntegers(), $this->getVarchars(), $this->getMultilingualVarchars(), $this->getImageCaptions(), $this->getFileCaptions(), $this->getMultilingualFilesCaptions())) ) {
+                $type   = 'Zend\Form\Element\Text';
+            } elseif (in_array($field, array_merge($this->getTexts(), $this->getMultilingualTexts()))) {
+                $type   = 'Zend\Form\Element\Textarea';
+            } elseif (in_array($field, array_merge($this->getLongTexts(), $this->getMultilingualLongTexts()))) {
+                $type   = 'Zend\Form\Element\Textarea';
+                $attributes = array('class' => 'tinyMce');
+            } elseif (in_array($field, $this->getEnums())) {
+                $type   = 'Zend\Form\Element\Radio';
+                $attributes = array('class' => 'switch');
+                $value_options = array('0' => 'No', '1' => 'Yes');
+            } elseif (in_array($field, array_merge($this->getImages(), $this->getFiles(), $this->getMultilingualFiles()))) {
+                $type   = 'Zend\Form\Element\File';
+                $attributes = array('class' => 'switch');
+            }
+
+            if (in_array($field, $this->getAllMultilingualFields())) {
+                $languages = array('1','2');
+                foreach ($languages as $language) {
+                    $form->add(array(
+                        'type' => $type,
+                        'name' => $field . '[' . $language . ']',
+                        'options' => array(
+                            'label' => $field,
+                            $value_options,
+                        ),
+                        $attributes
+                    ));
+                }
+            } else {
+                $form->add(array(
+                    'type' => $type,
+                    'name' => $field,
+                    'options' => array(
+                        'label' => $field,
+                    ),
+                    $attributes
+                ));
+            }
+        }
+        return $form;
     }
 
     /**

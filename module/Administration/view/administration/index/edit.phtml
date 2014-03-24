@@ -4,6 +4,21 @@
             <h3 class="panel-title"><?php echo $this->translate('Follow Development') ?></h3>
         </div>
         <div class="panel-body">
-            <?php var_dump($form) ?>
+            <ul class="nav nav-tabs">
+                <?php foreach ($form->getTabs() as $key => $tab) : ?>
+                <li class="<?php echo ($key == 0)? 'active': '' ?>"><a href="#tab-<?php echo $key; ?>" data-toggle="tab"><?php echo $tab['name'] ?></a></li>
+                <?php endforeach; ?>
+            </ul>
+
+            <!-- Tab panes -->
+            <div class="tab-content">
+                <?php foreach ($form->getTabs() as $key => $tab) : ?>
+                <div class="tab-pane <?php echo ($key == 0)? 'active': '' ?>" id="tab-<?php echo $key; ?>">
+                    <?php foreach ($tab['fields'] as $field) : ?>
+                        <?php echo $this->formElement($form->getFormObject()->get($field)); ?>
+                    <?php endforeach; ?>
+                </div>
+                <?php endforeach; ?>
+            </div>
         </div>
     </div>
