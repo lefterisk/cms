@@ -55,9 +55,10 @@ class IndexController extends AbstractActionController
 //        var_dump($this->params()->fromRoute('action'));
         $model = 'Administration\\Model\\'.$this->params()->fromRoute('model');
         $component = new $model($this->getServiceLocator()->get('Zend\Db\Adapter\Adapter'));
+
         return new ViewModel(
             array(
-                'form' => $component->getForm()
+                'form' => $component->getForm($component->getItemById($this->params()->fromRoute('item')))
             )
         );
     }

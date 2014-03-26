@@ -438,13 +438,13 @@ class TableHandler extends AbstractModelTable
     /**
      * Returns the form object.
      */
-    public function getForm()
+    public function getForm($objectToBind)
     {
         if (empty($this->tableFormManager)) {
-            return $this->getDefaultForm();
-        } else {
-            return $this->tableFormManager;
+            $this->tableFormManager = $this->getDefaultForm();
         }
+        $this->tableFormManager->getFormObject()->bind($objectToBind);
+        return $this->tableFormManager;
     }
 
     /**
@@ -480,18 +480,20 @@ class TableHandler extends AbstractModelTable
 
             if (in_array($field, array_merge($this->getIntegers(), $this->getVarchars(), $this->getMultilingualVarchars(), $this->getImageCaptions(), $this->getFileCaptions(), $this->getMultilingualFilesCaptions())) ) {
                 $type   = 'Zend\Form\Element\Text';
+                $attributes = array('class' => 'form-control');
             } elseif (in_array($field, array_merge($this->getTexts(), $this->getMultilingualTexts()))) {
                 $type   = 'Zend\Form\Element\Textarea';
+                $attributes = array('class' => 'form-control');
             } elseif (in_array($field, array_merge($this->getLongTexts(), $this->getMultilingualLongTexts()))) {
                 $type   = 'Zend\Form\Element\Textarea';
                 $attributes = array('class' => 'tinyMce');
             } elseif (in_array($field, $this->getEnums())) {
                 $type   = 'Zend\Form\Element\Radio';
-                $attributes = array('class' => 'switch');
+                $attributes = array('class' => 'switch','value' => '0');
                 $value_options = array('0' => 'No', '1' => 'Yes');
             } elseif (in_array($field, array_merge($this->getImages(), $this->getFiles(), $this->getMultilingualFiles()))) {
                 $type   = 'Zend\Form\Element\File';
-                $attributes = array('class' => 'switch');
+                $attributes = array('class' => 'form-control');
             }
 
             if (in_array($field, $this->getAllMultilingualFields())) {
@@ -502,9 +504,9 @@ class TableHandler extends AbstractModelTable
                         'name' => $field . '[' . $language . ']',
                         'options' => array(
                             'label' => $field,
-                            $value_options,
+                            'value_options' => $value_options,
                         ),
-                        $attributes
+                        'attributes' => array_merge($attributes,array('placeholder' => $field)),
                     ));
                 }
             } else {
@@ -513,8 +515,9 @@ class TableHandler extends AbstractModelTable
                     'name' => $field,
                     'options' => array(
                         'label' => $field,
+                        'value_options' => $value_options,
                     ),
-                    $attributes
+                    'attributes' => array_merge($attributes,array('placeholder' => $field)),
                 ));
             }
         }

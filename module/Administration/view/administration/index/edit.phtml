@@ -12,13 +12,16 @@
 
             <!-- Tab panes -->
             <div class="tab-content">
+                <?php echo $this->form()->openTag($form->getFormObject()); ?>
                 <?php foreach ($form->getTabs() as $key => $tab) : ?>
                 <div class="tab-pane <?php echo ($key == 0)? 'active': '' ?>" id="tab-<?php echo $key; ?>">
                     <?php foreach ($tab['fields'] as $field) : ?>
+                        <?php echo $form->getFormObject()->get($field)->getLabel() ?>
                         <?php echo $this->formElement($form->getFormObject()->get($field)); ?>
                     <?php endforeach; ?>
                 </div>
                 <?php endforeach; ?>
+                <?php echo $this->form()->closeTag($form->getFormObject()); ?>
             </div>
         </div>
     </div>

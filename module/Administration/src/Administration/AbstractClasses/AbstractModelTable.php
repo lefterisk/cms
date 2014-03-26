@@ -179,4 +179,17 @@ class AbstractModelTable extends TableGateway
             throw new Exception\InvalidArgumentException('List of fields for the listing must be an Array!');
         }
     }
+
+    public function getItemById($id)
+    {
+        if ($this->isMultiLingual()) {
+            $statement = $this->sql->select()->join(array( 'dc' => $this->getTableDescriptionName()),'dc.' . $this->getPrefix() . 'id = '.$this->getTableName().'.id');
+        } else {
+            $statement = $this->sql->select();
+        }
+        $statement->where(array($this->getTableName().'.id' => $id));
+        $selectString = $this->sql->getSqlStringForSqlObject($statement);
+        $results = $this->adapter->query($selectString, Adapter::QUERY_MODE_EXECUTE)->current();
+        return $results;
+    }
 }
