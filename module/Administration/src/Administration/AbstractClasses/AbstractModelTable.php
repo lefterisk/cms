@@ -5,7 +5,7 @@ use Zend\Db\TableGateway\TableGateway;
 use Zend\Db\Adapter\Adapter;
 use Zend\Db\TableGateway\Exception;
 
-class AbstractModelTable extends TableGateway
+class AbstractModelTable
 {
     public function finaliseTable()
     {
@@ -143,7 +143,7 @@ class AbstractModelTable extends TableGateway
 
     }
 
-    public function getListing($itemsPerPage = 20, $page = null, $order = null, $orderDirection = null, $filters = null)
+    public function getListing($itemsPerPage = 'all', $page = null, $order = null, $orderDirection = null, $filters = null)
     {
         if (is_array($this->getListingFields()) && count($this->getListingFields()) > 0) {
 
@@ -169,8 +169,9 @@ class AbstractModelTable extends TableGateway
                 }
                 $statement->order($orderBy);
             }
-
-            $statement->limit($itemsPerPage)->offset($offset);
+            if ($itemsPerPage != 'all') {
+                $statement->limit($itemsPerPage)->offset($offset);
+            }
             $selectString = $this->sql->getSqlStringForSqlObject($statement);
             $results = $this->adapter->query($selectString, Adapter::QUERY_MODE_EXECUTE);
             return $results;

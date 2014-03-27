@@ -49,6 +49,11 @@ class RelationsHandler
         }
     }
 
+    public function getRelationType()
+    {
+        return $this->typeOfRelation;
+    }
+
     public function getRelatedSelectDisplayFields()
     {
         return $this->relatedSelectDisplayFields;

@@ -56,9 +56,42 @@ class IndexController extends AbstractActionController
         $model = 'Administration\\Model\\'.$this->params()->fromRoute('model');
         $component = new $model($this->getServiceLocator()->get('Zend\Db\Adapter\Adapter'));
 
+        $request = $this->getRequest();
+        if ($request->isPost()) {
+
+            $form = $component->getFormObject();
+            $form->setInputFilter($component->getInputFilter());
+            $form->setData($request->getPost());
+            if ($form->isValid()) {
+
+            } else {
+
+            }
+        }
+
+        try {
+            $item = $component->getItemById($this->params()->fromRoute('item'));
+        }
+        catch (\Exception $ex) {
+            return $this->redirect()->toRoute('administration', array(
+                'action' => 'index',
+                'model'  => $this->params()->fromRoute('model')
+            ));
+        }
+        if (!$item) {
+            return $this->redirect()->toRoute('administration', array(
+                'action' => 'index',
+                'model'  => $this->params()->fromRoute('model')
+            ));
+        }
+
+        //Bind form to Item
+        $form = $component->getForm();
+        $form->getFormObject()->bind($item);
+
         return new ViewModel(
             array(
-                'form' => $component->getForm($component->getItemById($this->params()->fromRoute('item')))
+                'form' => $form
             )
         );
     }

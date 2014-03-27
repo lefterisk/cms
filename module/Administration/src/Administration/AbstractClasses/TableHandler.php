@@ -4,6 +4,8 @@ namespace Administration\AbstractClasses;
 use Zend\Db\TableGateway\Exception;
 use Zend\Form\Element;
 use Zend\Form\Form;
+use Zend\Db\Sql\Sql;
+use Zend\Db\Sql\TableIdentifier;
 
 class TableHandler extends AbstractModelTable
 {
@@ -65,13 +67,17 @@ class TableHandler extends AbstractModelTable
 
     public  $tableFormManager;
 
+    public  $adapter;
+    public  $sql;
+
 	/**
 	 * Instantiates a new TableHandle object
 	 */
 	public function __construct($tableName, $dbAdapter)
 	{
-        parent::__construct($tableName, $dbAdapter);
-		$this->setTableName($tableName);
+        $this->adapter = $dbAdapter;
+        $this->sql     = new Sql($this->adapter, $tableName);
+        $this->setTableName($tableName);
         $this->setTableDescriptionName($tableName.'Description');
 	}
 
@@ -316,7 +322,7 @@ class TableHandler extends AbstractModelTable
 	}
 
 	/**
-	 * Returns Related Tables.
+	 * Returns the Relations objects.
 	 */
 	public function getRelations()
 	{
@@ -379,6 +385,18 @@ class TableHandler extends AbstractModelTable
 		}
 		return $simpleFields; 
 	}
+
+    /**
+     * Returns Relations Fields.
+     */
+    public function getRelationsFields()
+    {
+        $relationsFields = array();
+        foreach ($this->getRelations() as $relation) {
+            $relationsFields[] = $relation->inputFieldName;
+        }
+        return $relationsFields;
+    }
 	
 	/**
 	 * Returns all advanced fields.
@@ -424,7 +442,7 @@ class TableHandler extends AbstractModelTable
      */
     public function getAllFields()
     {
-        return array_merge($this->getSimpleFields(), $this->getAdvancedFields(), $this->getAllFileFields());
+        return array_merge($this->getSimpleFields(), $this->getAdvancedFields(), $this->getAllFileFields(), $this->getRelations());
     }
 
     /**
@@ -438,12 +456,11 @@ class TableHandler extends AbstractModelTable
     /**
      * Returns the form object.
      */
-    public function getForm($objectToBind)
+    public function getForm()
     {
         if (empty($this->tableFormManager)) {
             $this->tableFormManager = $this->getDefaultForm();
         }
-        $this->tableFormManager->getFormObject()->bind($objectToBind);
         return $this->tableFormManager;
     }
 
@@ -454,7 +471,7 @@ class TableHandler extends AbstractModelTable
     {
         $this->tableFormManager = new FormManager($this->getFormObject());
         if (count($this->getSimpleFields()) > 0 ) {
-            $this->tableFormManager->addTab('Tab1', $this->getSimpleFields());
+            $this->tableFormManager->addTab('Tab1', array_merge($this->getSimpleFields(), $this->getRelationsFields(), array('id')));
         }
         if (count($this->getAdvancedFields()) > 0 ) {
             $this->tableFormManager->addTab('Tab2', $this->getAdvancedFields());
@@ -471,29 +488,69 @@ class TableHandler extends AbstractModelTable
     public function getFormObject()
     {
         $form = new Form($this->getTableName());
+        $form->add(array(
+            'type' => 'hidden',
+            'name' => 'id',
+        ));
 
         foreach ($this->getAllFields() as $field) {
 
-            $type       = 'Zend\Form\Element\Text';
-            $attributes = array();
+            $type          = 'Zend\Form\Element\Text';
+            $attributes    = array();
             $value_options = array();
+            $name          = '';
+            $label         = '';
 
             if (in_array($field, array_merge($this->getIntegers(), $this->getVarchars(), $this->getMultilingualVarchars(), $this->getImageCaptions(), $this->getFileCaptions(), $this->getMultilingualFilesCaptions())) ) {
-                $type   = 'Zend\Form\Element\Text';
+
+                $type       = 'Zend\Form\Element\Text';
                 $attributes = array('class' => 'form-control');
+                $name       = $field;
+                $label      = $field;
+
             } elseif (in_array($field, array_merge($this->getTexts(), $this->getMultilingualTexts()))) {
-                $type   = 'Zend\Form\Element\Textarea';
+
+                $type       = 'Zend\Form\Element\Textarea';
                 $attributes = array('class' => 'form-control');
+                $name       = $field;
+                $label      = $field;
+
             } elseif (in_array($field, array_merge($this->getLongTexts(), $this->getMultilingualLongTexts()))) {
-                $type   = 'Zend\Form\Element\Textarea';
+
+                $type       = 'Zend\Form\Element\Textarea';
                 $attributes = array('class' => 'tinyMce');
+                $name       = $field;
+                $label      = $field;
+
             } elseif (in_array($field, $this->getEnums())) {
-                $type   = 'Zend\Form\Element\Radio';
+
+                $type       = 'Zend\Form\Element\Radio';
                 $attributes = array('class' => 'switch','value' => '0');
                 $value_options = array('0' => 'No', '1' => 'Yes');
+                $name       = $field;
+                $label      = $field;
+
             } elseif (in_array($field, array_merge($this->getImages(), $this->getFiles(), $this->getMultilingualFiles()))) {
-                $type   = 'Zend\Form\Element\File';
+
+                $type       = 'Zend\Form\Element\File';
                 $attributes = array('class' => 'form-control');
+                $name       = $field;
+                $label      = $field;
+
+            } elseif (in_array($field , $this->getRelations())) {
+                $type       = 'Zend\Form\Element\Select';
+                $attributes = array('class' => 'form-control');
+
+                if ($field->getRelationType() == 'oneToMany') {
+                    $attributes['multiple'] = 'multiple';
+                }
+
+                $name       = $field->inputFieldName;
+                $label      = $field->activeModel->getTableName();
+
+                foreach ($field->activeModel->getListing() as $listingItem) {
+                    $value_options[$listingItem->id] = $listingItem->{$field->getRelatedSelectDisplayFields()};
+                }
             }
 
             if (in_array($field, $this->getAllMultilingualFields())) {
@@ -501,23 +558,25 @@ class TableHandler extends AbstractModelTable
                 foreach ($languages as $language) {
                     $form->add(array(
                         'type' => $type,
-                        'name' => $field . '[' . $language . ']',
+                        'name' => $name . '[' . $language . ']',
                         'options' => array(
-                            'label' => $field,
+                            'label' => $label,
                             'value_options' => $value_options,
+                            'empty_option' => 'Please choose '.$label
                         ),
-                        'attributes' => array_merge($attributes,array('placeholder' => $field)),
+                        'attributes' => array_merge($attributes,array('placeholder' => $name)),
                     ));
                 }
             } else {
                 $form->add(array(
                     'type' => $type,
-                    'name' => $field,
+                    'name' => $name,
                     'options' => array(
-                        'label' => $field,
+                        'label' => $label,
                         'value_options' => $value_options,
+                        'empty_option' => 'Please choose '.$label
                     ),
-                    'attributes' => array_merge($attributes,array('placeholder' => $field)),
+                    'attributes' => array_merge($attributes,array('placeholder' => $name)),
                 ));
             }
         }
@@ -782,11 +841,24 @@ class TableHandler extends AbstractModelTable
 	}
 
 	/**
-	 * Sets joined Tables.
+	 * Sets Relation.
 	 */
-	public function setRelations($relations)
+	public function setRelations(Array $relations)
 	{
-		$this->relations = $relations;
+
+        foreach ($relations as $relation) {
+            if ($this->followRelations()) {
+                $relationModelPath = 'Administration\\Model\\' . $relation->getRelatedModel();
+                $relationModel = new $relationModelPath($this->adapter, false);
+                if ($relationModel->getPrefix() == '') {
+                    throw new Exception\InvalidArgumentException('Please set the prefix in the ' . $relationModel->getTableName() . ' model!');
+                }
+
+                $relation->inputFieldName = $relationModel->getPrefix().'id';
+                $relation->activeModel    = $relationModel;
+            }
+            $this->relations[]        = $relation;
+        }
 	}
 	
 	/**
