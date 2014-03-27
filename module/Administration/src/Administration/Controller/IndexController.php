@@ -63,7 +63,7 @@ class IndexController extends AbstractActionController
             $form->setInputFilter($component->getInputFilter());
             $form->setData($request->getPost());
             if ($form->isValid()) {
-
+                $component->save($form->getData());
             } else {
 
             }

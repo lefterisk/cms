@@ -193,4 +193,33 @@ class AbstractModelTable
         $results = $this->adapter->query($selectString, Adapter::QUERY_MODE_EXECUTE)->current();
         return $results;
     }
+
+    public function save($data)
+    {
+        if (isset($data['id']) && !empty($data['id'])) {
+            $updateTable = $this->sql->update();
+            $queryTableData = array();
+            foreach ($data as $fieldName => $fieldValue) {
+                if (in_array( $fieldName, $this->getAllNonMultilingualFields())) {
+                    $queryTableData[$fieldName] = $fieldValue;
+                }
+            }
+            $updateTable->set($queryTableData);
+            $updateTable->where(array('id' => $data['id']));
+
+            $sqlString = $this->sql->getSqlStringForSqlObject($updateTable);
+            echo $sqlString;
+
+            if ($this->isMultiLingual()) {
+                $languagesArray = array('1','2');
+                foreach ($languagesArray as $language) {
+                    $updateDescriptionTable = $this->sql->update($this->getTableDescriptionName());
+                    $updateDescriptionTable->set($data);
+                    $updateDescriptionTable->where(array('id' => $data['id'], $this->getLanguageID() => $language));
+                }
+            }
+        } else {
+
+        }
+    }
 }
