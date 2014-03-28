@@ -12,7 +12,6 @@
             <?php echo $this->form()->openTag($form->getFormObject()); ?>
             <!-- Tab panes -->
             <div class="tab-content">
-                <?php var_dump($form->getFormObject()->getMessages()) ?>
                 <?php foreach ($form->getTabs() as $key => $tab) : ?>
                 <div class="tab-pane <?php echo ($key == 0)? 'active': '' ?>" id="tab-<?php echo $key; ?>">
                     <?php foreach ($tab['fields'] as $field) : ?>
@@ -33,8 +32,7 @@
                 <?php endforeach; ?>
             </div>
             <button type="submit" class="btn btn-primary">
-                <span class="glyphicon glyphicon-floppy-disk"></span>
-                Save
+                <span class="glyphicon glyphicon-floppy-disk"></span>Save
             </button>
             <?php echo $this->form()->closeTag($form->getFormObject()); ?>
         </div>

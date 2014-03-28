@@ -36,5 +36,12 @@
                 <?php endforeach; ?>
                 </tbody>
             </table>
+            <div class="btn-group">
+                <a href="<?php echo $this->url('administration', array('action' => 'add', 'model' => $model)); ?>" class="btn btn-primary">
+                    <span class="glyphicon glyphicon-plus-sign"></span>
+                    Add New
+                </a>
+
+            </div>
         </div>
     </div>

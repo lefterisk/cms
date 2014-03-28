@@ -17,10 +17,6 @@ class IndexController extends AbstractActionController
 {
     public function indexAction()
     {
-        var_dump($this->params()->fromRoute('order'));
-        var_dump($this->params()->fromRoute('direction'));
-
-
     	$model = 'Administration\\Model\\'.$this->params()->fromRoute('model');
         $component = new $model($this->getServiceLocator()->get('Zend\Db\Adapter\Adapter'));
         return new ViewModel(
@@ -33,18 +29,42 @@ class IndexController extends AbstractActionController
                 ),
                 'visibleListingFields' => $component->getListingFields(),
                 'listingSwitches'      => $component->getListingSwitches(),
-                'userRights'           => array('read','edit','add','delete')
+                'userRights'           => array('read','edit','add','delete'),
+                'model'                => $this->params()->fromRoute('model'),
             )
         );
     }
 
     public function addAction()
     {
-    	var_dump($this->params()->fromRoute('model'));
-    	var_dump($this->params()->fromRoute('collection'));
-    	var_dump($this->params()->fromRoute('item'));
-    	var_dump($this->params()->fromRoute('action'));
-        return new ViewModel();
+        $model = 'Administration\\Model\\'.$this->params()->fromRoute('model');
+        $component = new $model($this->getServiceLocator()->get('Zend\Db\Adapter\Adapter'));
+
+        $request = $this->getRequest();
+        if ($request->isPost()) {
+
+            $form = $component->getFormObject();
+            $form->setInputFilter($component->getInputFilter());
+            $form->setData($request->getPost());
+            if ($form->isValid()) {
+                $component->save($form->getData());
+                //After Save redirect to listing
+                return $this->redirect()->toRoute('administration', array(
+                    'action' => 'index',
+                    'model'  => $this->params()->fromRoute('model')
+                ));
+            } else {
+
+            }
+        }
+
+        $form = $component->getForm();
+        return new ViewModel(
+            array(
+                'form'               => $form,
+                'multilingualFields' => $component->getAllMultilingualFields(),
+            )
+        );
     }
 
     public function editAction()
@@ -91,7 +111,8 @@ class IndexController extends AbstractActionController
 
         return new ViewModel(
             array(
-                'form' => $form
+                'form'               => $form,
+                'multilingualFields' => $component->getAllMultilingualFields()
             )
         );
     }

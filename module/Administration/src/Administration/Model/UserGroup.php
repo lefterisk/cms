@@ -12,7 +12,6 @@ class UserGroup  extends TableHandler
     {
         parent::__construct('UserGroup', $dbAdapter);
 
-        $this->setIsMultilingual(false);
         $this->setListingFields(array("name"));
         $this->setPrefix("user_group_");
         $this->setFollowRelations($followRelations);
