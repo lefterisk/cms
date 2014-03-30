@@ -5,8 +5,11 @@ use Zend\Db\TableGateway\Exception;
 use Zend\Form\Element;
 use Zend\Form\Form;
 use Zend\Db\Sql\Sql;
+use Zend\InputFilter\InputFilter;
+use Zend\InputFilter\InputFilterAwareInterface;
+use Zend\InputFilter\InputFilterInterface;
 
-class TableHandler extends AbstractModelTable
+class TableHandler extends AbstractModelTable implements InputFilterAwareInterface
 {
 	//Table properties
 	private $tableName;
@@ -15,8 +18,9 @@ class TableHandler extends AbstractModelTable
     private $followRelations = true;
     private $listingFields = array();
     private $listingSwitches = array();
+    private $inputFilter;
 
-	//Generic fields which do not support Multilingual.
+    //Generic fields which do not support Multilingual.
 	private $enums = array();
 	private $dates = array();
 	private $images = array();
@@ -76,7 +80,7 @@ class TableHandler extends AbstractModelTable
         $this->adapter = $dbAdapter;
         $this->sql     = new Sql($this->adapter);
         $this->setTableName($tableName);
-        $this->setTableDescriptionName($tableName.'Description');
+        $this->setTableDescriptionName($tableName.'_description');
 	}
 
 	////////////////////////////////////////////////////////////////
@@ -449,6 +453,25 @@ class TableHandler extends AbstractModelTable
     public function getActionManagers()
     {
         return $this->actionManager;
+    }
+
+    public function getInputFilter()
+    {
+        if (!$this->inputFilter) {
+            $inputFilter = new InputFilter();
+
+            /*THis is because ZF2 has select input as required by default*/
+            foreach ($this->getRelations() as $relation) {
+                $inputFilter->add(array(
+                    'name' => $relation->inputFieldName,
+                    'required' => false,
+                ));
+                echo $relation->inputFieldName;
+            }
+
+            $this->inputFilter = $inputFilter;
+        }
+        return $this->inputFilter;
     }
 
     /**
@@ -865,6 +888,14 @@ class TableHandler extends AbstractModelTable
     public function setListingSwitches($listingSwitches)
     {
         $this->listingSwitches = $listingSwitches;
+    }
+
+    /**
+     * For Compatibility.
+     */
+    public function setInputFilter(InputFilterInterface $inputFilter)
+    {
+        throw new \Exception("Not used");
     }
 	
 	/**

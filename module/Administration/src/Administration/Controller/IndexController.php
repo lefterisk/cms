@@ -12,12 +12,14 @@ namespace Administration\Controller;
 use Zend\Mvc\Controller\AbstractActionController;
 use Zend\View\Model\ViewModel;
 use Administration\Model;
+use Administration\AbstractClasses\ControlPanel;
 
 class IndexController extends AbstractActionController
 {
     public function indexAction()
     {
-    	$model = 'Administration\\Model\\'.$this->params()->fromRoute('model');
+    	$controlPanel = new ControlPanel($this->getServiceLocator()->get('Zend\Db\Adapter\Adapter'));
+        $model = 'Administration\\Model\\'.$this->params()->fromRoute('model');
         $component = new $model($this->getServiceLocator()->get('Zend\Db\Adapter\Adapter'));
         return new ViewModel(
             array(
@@ -41,24 +43,23 @@ class IndexController extends AbstractActionController
         $component = new $model($this->getServiceLocator()->get('Zend\Db\Adapter\Adapter'));
 
         $request = $this->getRequest();
-        if ($request->isPost()) {
+        $form = $component->getForm();
 
-            $form = $component->getFormObject();
-            $form->setInputFilter($component->getInputFilter());
-            $form->setData($request->getPost());
-            if ($form->isValid()) {
-                $component->save($form->getData());
+        if ($request->isPost()) {
+            $form->getFormObject()->setInputFilter($component->getInputFilter());
+            $form->getFormObject()->setData($request->getPost());
+            if ($form->getFormObject()->isValid()) {
+                $component->save($form->getFormObject()->getData());
                 //After Save redirect to listing
                 return $this->redirect()->toRoute('administration', array(
                     'action' => 'index',
                     'model'  => $this->params()->fromRoute('model')
                 ));
             } else {
-
+                var_dump($form->getFormObject()->getMessages());
             }
         }
 
-        $form = $component->getForm();
         return new ViewModel(
             array(
                 'form'               => $form,
@@ -69,21 +70,22 @@ class IndexController extends AbstractActionController
 
     public function editAction()
     {
-//        var_dump($this->params()->fromRoute('model'));
-//        var_dump($this->params()->fromRoute('collection'));
-//        var_dump($this->params()->fromRoute('item'));
-//        var_dump($this->params()->fromRoute('action'));
         $model = 'Administration\\Model\\'.$this->params()->fromRoute('model');
         $component = new $model($this->getServiceLocator()->get('Zend\Db\Adapter\Adapter'));
 
         $request = $this->getRequest();
-        if ($request->isPost()) {
+        $form = $component->getForm();
 
-            $form = $component->getFormObject();
-            $form->setInputFilter($component->getInputFilter());
-            $form->setData($request->getPost());
-            if ($form->isValid()) {
-                $component->save($form->getData());
+        if ($request->isPost()) {
+            $form->getFormObject()->setInputFilter($component->getInputFilter());
+            $form->getFormObject()->setData($request->getPost());
+            if ($form->getFormObject()->isValid()) {
+                $component->save($form->getFormObject()->getData());
+                //After Save redirect to listing
+                return $this->redirect()->toRoute('administration', array(
+                    'action' => 'index',
+                    'model'  => $this->params()->fromRoute('model')
+                ));
             } else {
 
             }
@@ -106,7 +108,6 @@ class IndexController extends AbstractActionController
         }
 
         //Bind form to Item
-        $form = $component->getForm();
         $form->getFormObject()->bind($item);
 
         return new ViewModel(

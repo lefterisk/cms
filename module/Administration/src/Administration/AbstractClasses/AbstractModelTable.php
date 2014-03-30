@@ -1,7 +1,6 @@
 <?php
 namespace Administration\AbstractClasses;
 
-use Zend\Db\TableGateway\TableGateway;
 use Zend\Db\Adapter\Adapter;
 use Zend\Db\TableGateway\Exception;
 use Zend\Db\Sql\Select;
@@ -191,8 +190,6 @@ class AbstractModelTable
         }
         $statement->where(array($this->getTableName().'.id' => $id));
         $selectString = $this->sql->getSqlStringForSqlObject($statement);
-        echo $selectString;
-        exit;
         $results = $this->adapter->query($selectString, Adapter::QUERY_MODE_EXECUTE)->current();
         return $results;
     }
@@ -223,8 +220,8 @@ class AbstractModelTable
             }
         }
         //Prepare Main Table Query
-        var_dump($data);
-        exit;
+//        var_dump($data);
+//        exit;
         if (isset($data['id']) && !empty($data['id'])) {
             $tableStatement = $this->sql->update($this->getTableName());
             $tableStatement->set($queryTableData);
