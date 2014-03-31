@@ -9,11 +9,10 @@ use Zend\InputFilter\InputFilterInterface;
 
 class SiteLanguage  extends TableHandler implements InputFilterAwareInterface
 {
-    protected $inputFilter;
 
-    public function __construct($dbAdapter, $followRelations = true)
+    public function __construct($dbAdapter, $controlPanel, $followRelations = true)
     {
-        parent::__construct('SiteLanguage', $dbAdapter);
+        parent::__construct('SiteLanguage', $dbAdapter, $controlPanel);
 
         $this->setListingFields(array("name"));
         $this->setListingSwitches(array("status" , "default"));
@@ -27,58 +26,5 @@ class SiteLanguage  extends TableHandler implements InputFilterAwareInterface
         $this->finaliseTable();
 
 
-    }
-
-    public function setInputFilter(InputFilterInterface $inputFilter)
-    {
-        throw new \Exception("Not used");
-    }
-
-    public function getInputFilter()
-    {
-        if (!$this->inputFilter) {
-            $inputFilter = new InputFilter();
-
-            $inputFilter->add(array(
-                'name'     => 'name',
-                'required' => true,
-                'filters'  => array(
-                    array('name' => 'StripTags'),
-                    array('name' => 'StringTrim'),
-                ),
-                'validators' => array(
-                    array(
-                        'name'    => 'StringLength',
-                        'options' => array(
-                            'encoding' => 'UTF-8',
-                            'min'      => 1,
-                            'max'      => 100,
-                        ),
-                    ),
-                ),
-            ));
-
-            $inputFilter->add(array(
-                'name'     => 'code',
-                'required' => true,
-                'filters'  => array(
-                    array('name' => 'StripTags'),
-                    array('name' => 'StringTrim'),
-                ),
-                'validators' => array(
-                    array(
-                        'name'    => 'StringLength',
-                        'options' => array(
-                            'encoding' => 'UTF-8',
-                            'min'      => 2,
-                            'max'      => 5,
-                        ),
-                    ),
-                ),
-            ));
-
-            $this->inputFilter = $inputFilter;
-        }
-        return $this->inputFilter;
     }
 }

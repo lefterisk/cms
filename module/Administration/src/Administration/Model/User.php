@@ -7,9 +7,9 @@ use Administration\AbstractClasses\RelationsHandler;
 class User  extends TableHandler
 {
 
-    public function __construct($dbAdapter, $followRelations = true)
+    public function __construct($dbAdapter, $controlPanel, $followRelations = true)
     {
-        parent::__construct('user', $dbAdapter);//<--Table name
+        parent::__construct('User', $dbAdapter, $controlPanel);//<--Table name
 
         $this->setListingFields(array("email"));
         $this->setListingSwitches(array("status"));

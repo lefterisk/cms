@@ -67,20 +67,28 @@ class TableHandler extends AbstractModelTable implements InputFilterAwareInterfa
 	//Prefix used for file uploads.
 	private $prefix = '';
 
+    //Contains all related to the add-edit form (zend form, tab-manager)
     public  $tableFormManager;
 
+    //Db adapter
     public  $adapter;
+
+    //Sql interface
     public  $sql;
 
+    //Control object contains languages admin-rights etc
+    public  $controlPanel;
+
 	/**
-	 * Instantiates a new TableHandle object
+	 * Instantiates a new TableHandler object
 	 */
-	public function __construct($tableName, $dbAdapter)
+	public function __construct($tableName, $dbAdapter, $controlPanel = null)
 	{
         $this->adapter = $dbAdapter;
         $this->sql     = new Sql($this->adapter);
+        $this->controlPanel = $controlPanel;
         $this->setTableName($tableName);
-        $this->setTableDescriptionName($tableName.'_description');
+        $this->setTableDescriptionName($tableName.'Description');
 	}
 
 	////////////////////////////////////////////////////////////////
@@ -575,11 +583,10 @@ class TableHandler extends AbstractModelTable implements InputFilterAwareInterfa
             }
 
             if (in_array($field, $this->getAllMultilingualFields())) {
-                $languages = array('1','2');
-                foreach ($languages as $language) {
+                foreach ($this->controlPanel->getSiteLanguages() as $languageId => $language) {
                     $form->add(array(
                         'type' => $type,
-                        'name' => $name . '[' . $language . ']',
+                        'name' => $name . '[' . $languageId . ']',
                         'options' => array(
                             'label' => $label,
                             'value_options' => $value_options,
@@ -846,7 +853,7 @@ class TableHandler extends AbstractModelTable implements InputFilterAwareInterfa
         foreach ($relations as $relation) {
             if ($this->followRelations()) {
                 $relationModelPath = 'Administration\\Model\\' . $relation->getRelatedModel();
-                $relationModel = new $relationModelPath($this->adapter, false);
+                $relationModel = new $relationModelPath($this->adapter, $this->controlPanel, false);
                 if ($relationModel->getPrefix() == '') {
                     throw new Exception\InvalidArgumentException('Please set the prefix in the ' . $relationModel->getTableName() . ' model!');
                 }

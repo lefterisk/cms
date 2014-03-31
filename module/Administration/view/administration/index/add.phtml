@@ -18,10 +18,10 @@
                     <?php foreach ($tab['fields'] as $field) : ?>
                         <?php if (is_array($multilingualFields) && in_array($field , $multilingualFields)) : ?>
                             <?php $languages = array(array('id'=>'1','name'=>'English'),array('id'=>'2','name'=>'Greek')) ?>
-                            <?php foreach ($languages as $language): ?>
-                                <?php echo $form->getFormObject()->get($field . '[' . $language['id'] . ']')->getLabel() . '( ' . $language['name'] . ' )' ?>
-                                <?php echo $this->formElementErrors($form->getFormObject()->get($field . '[' . $language['id'] . ']')); ?>
-                                <?php echo $this->formElement($form->getFormObject()->get($field . '[' . $language['id'] . ']')); ?>
+                            <?php foreach ($controlPanel->getSiteLanguages() as $languageId => $language): ?>
+                                <?php echo $form->getFormObject()->get($field . '[' . $languageId . ']')->getLabel() . '( ' . $language['name'] . ' )' ?>
+                                <?php echo $this->formElementErrors($form->getFormObject()->get($field . '[' . $languageId . ']')); ?>
+                                <?php echo $this->formElement($form->getFormObject()->get($field . '[' . $languageId . ']')); ?>
                             <?php endforeach; ?>
                         <?php else: ?>
                             <?php echo $form->getFormObject()->get($field)->getLabel() ?>

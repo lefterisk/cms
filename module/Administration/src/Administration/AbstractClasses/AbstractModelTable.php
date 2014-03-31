@@ -36,9 +36,31 @@ class AbstractModelTable
 
     private function createTablesIfNotExist()
     {
-        $this->adapter->query('CREATE TABLE IF NOT EXISTS `'.$this->getTableName().'` (`id` int(11) unsigned NOT NULL AUTO_INCREMENT, PRIMARY KEY (`id`))', Adapter::QUERY_MODE_EXECUTE);
+        $this->adapter->query('CREATE TABLE IF NOT EXISTS `' . $this->getTableName() . '` (`id` int(11) unsigned NOT NULL AUTO_INCREMENT, PRIMARY KEY (`id`))', Adapter::QUERY_MODE_EXECUTE);
         if ($this->isMultiLingual()) {
-            $this->adapter->query('CREATE TABLE IF NOT EXISTS `'.$this->getTableDescriptionName().'` (`'.$this->getLanguageID().'` int(11) DEFAULT NULL, `'.$this->getPrefix().'id` int(11) DEFAULT NULL, PRIMARY KEY (`'.$this->getLanguageID().'`,`'.$this->getPrefix().'id`))', Adapter::QUERY_MODE_EXECUTE);
+            $statement = $this->sql->select("SHOW TABLES LIKE " . $this->getTableDescriptionName() );
+            $selectString = $this->sql->getSqlStringForSqlObject($statement);
+            try{
+                $results = $this->adapter->query($selectString, Adapter::QUERY_MODE_EXECUTE);
+            } catch(Exception $e){
+                $this->adapter->query('CREATE TABLE IF NOT EXISTS `'.$this->getTableDescriptionName().'` (`'.$this->getLanguageID().'` int(11) DEFAULT NULL, `'.$this->getPrefix().'id` int(11) DEFAULT NULL, PRIMARY KEY (`'.$this->getLanguageID().'`,`'.$this->getPrefix().'id`))', Adapter::QUERY_MODE_EXECUTE);
+
+                //Make sure every entry on main table has a corresponding one in description
+                $statement    = $this->sql->select($this->getTableName());
+                $selectString = $this->sql->getSqlStringForSqlObject($statement);
+                $results      = $this->adapter->query($selectString, Adapter::QUERY_MODE_EXECUTE);
+                if ($results->count() > 0) {
+                    foreach ($results as $entry) {
+                        foreach ($this->controlPanel->getSiteLanguages() as $languageId => $language) {
+                            $insertStatement = $this->sql->insert($this->getTableDescriptionName());
+                            $insertStatement->values(array($this->getLanguageID() => $languageId, $this->getPrefix().'id' => $entry['id'] ));
+                            $insertStatementString = $this->sql->getSqlStringForSqlObject($statement);
+                            echo $insertStatementString.'<br/>';
+                            //$this->adapter->query($insertStatementString, Adapter::QUERY_MODE_EXECUTE);
+                        }
+                    }
+                }
+            }
         }
     }
 
@@ -55,7 +77,7 @@ class AbstractModelTable
                 break;
             case 'enums':
                 $tableToAddTheColumn = $this->getTableName();
-                $fieldType = " ENUM( '0', '1' ) ";
+                $fieldType = " ENUM( '0', '1' ) NOT NULL ";
                 break;
             case 'dates':
                 $tableToAddTheColumn = $this->getTableName();
@@ -115,22 +137,21 @@ class AbstractModelTable
     {
         if (is_array($relations)) {
             foreach ($relations as $relation) {
-                $relationModelPath = 'Administration\\Model\\' . $relation->getRelatedModel();
-                $relationModel = new $relationModelPath($this->adapter, false);
-                if ($relationModel->getPrefix() == '') {
-                    throw new Exception\InvalidArgumentException('Please set the prefix in the ' . $relationModel->getTableName() . ' model!');
+
+                if ($relation->activeModel->getPrefix() == '') {
+                    throw new Exception\InvalidArgumentException('Please set the prefix in the ' . $relation->activeModel->getTableName() . ' model!');
                 }
                 if ($this->getPrefix() == '') {
                     throw new Exception\InvalidArgumentException('Please set the prefix in the ' . $this->getTableName() . ' model!');
                 }
                 if ($relation->hasLookUpTable()) {
-                    $this->adapter->query('CREATE TABLE IF NOT EXISTS `' . $this->getTableName() .'To'.$relationModel->getTableName(). '` ( `'.$this->getPrefix().'id` int(11) DEFAULT NULL, `'.$relationModel->getPrefix().'id` int(11) DEFAULT NULL)', Adapter::QUERY_MODE_EXECUTE);
+                    $this->adapter->query('CREATE TABLE IF NOT EXISTS `' . $this->getTableName() .'To'.$relation->activeModel->getTableName(). '` ( `'.$this->getPrefix().'id` int(11) DEFAULT NULL, `'.$relation->activeModel->getPrefix().'id` int(11) DEFAULT NULL)', Adapter::QUERY_MODE_EXECUTE);
                 } elseif ($relation->hasLookupColumn()) {
-                    $statement = $this->adapter->createStatement("SHOW COLUMNS FROM " . $this->getTableName() . " LIKE '" . $relationModel->getPrefix() . "id'" );
+                    $statement = $this->adapter->createStatement("SHOW COLUMNS FROM " . $this->getTableName() . " LIKE '" . $relation->activeModel->getPrefix() . "id'" );
                     $result    = $statement->execute();
                     if ($result->count()==0)
                     {
-                        $this->adapter->query("ALTER TABLE " . $this->getTableName() . " ADD `" . $relationModel->getPrefix() . "id` int(11) DEFAULT NULL;", Adapter::QUERY_MODE_EXECUTE);
+                        $this->adapter->query("ALTER TABLE " . $this->getTableName() . " ADD `" . $relation->activeModel->getPrefix() . "id` int(11) DEFAULT NULL;", Adapter::QUERY_MODE_EXECUTE);
                     }
                 }
             }
@@ -149,7 +170,7 @@ class AbstractModelTable
         if (is_array($this->getListingFields()) && count($this->getListingFields()) > 0) {
 
             if ($this->isMultiLingual()) {
-                $statement = $this->sql->select($this->getTableName())->join(array( 'dc' => $this->getTableDescriptionName()),'dc.' . $this->getPrefix() . 'id = '.$this->getTableName().'.id', Select::SQL_STAR , Select::JOIN_LEFT);
+                $statement = $this->sql->select($this->getTableName())->join(array( 'dc' => $this->getTableDescriptionName()),'dc.' . $this->getPrefix() . 'id = ' . $this->getTableName() . '.id' , Select::SQL_STAR , Select::JOIN_LEFT)->where(array($this->getLanguageID() => $this->controlPanel->getDefaultSiteLanguageId()));
             } else {
                 $statement = $this->sql->select($this->getTableName());
             }
@@ -174,6 +195,7 @@ class AbstractModelTable
                 $statement->limit($itemsPerPage)->offset($offset);
             }
             $selectString = $this->sql->getSqlStringForSqlObject($statement);
+            echo $selectString;
             $results = $this->adapter->query($selectString, Adapter::QUERY_MODE_EXECUTE);
             return $results;
         } else {

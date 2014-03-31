@@ -20,7 +20,7 @@ class IndexController extends AbstractActionController
     {
     	$controlPanel = new ControlPanel($this->getServiceLocator()->get('Zend\Db\Adapter\Adapter'));
         $model = 'Administration\\Model\\'.$this->params()->fromRoute('model');
-        $component = new $model($this->getServiceLocator()->get('Zend\Db\Adapter\Adapter'));
+        $component = new $model($this->getServiceLocator()->get('Zend\Db\Adapter\Adapter'), $controlPanel);
         return new ViewModel(
             array(
                 'listing' => $component->getListing(
@@ -31,16 +31,17 @@ class IndexController extends AbstractActionController
                 ),
                 'visibleListingFields' => $component->getListingFields(),
                 'listingSwitches'      => $component->getListingSwitches(),
-                'userRights'           => array('read','edit','add','delete'),
                 'model'                => $this->params()->fromRoute('model'),
+                'controlPanel'         => $controlPanel,
             )
         );
     }
 
     public function addAction()
     {
+        $controlPanel = new ControlPanel($this->getServiceLocator()->get('Zend\Db\Adapter\Adapter'));
         $model = 'Administration\\Model\\'.$this->params()->fromRoute('model');
-        $component = new $model($this->getServiceLocator()->get('Zend\Db\Adapter\Adapter'));
+        $component = new $model($this->getServiceLocator()->get('Zend\Db\Adapter\Adapter'), $controlPanel);
 
         $request = $this->getRequest();
         $form = $component->getForm();
@@ -64,14 +65,16 @@ class IndexController extends AbstractActionController
             array(
                 'form'               => $form,
                 'multilingualFields' => $component->getAllMultilingualFields(),
+                'controlPanel'       => $controlPanel,
             )
         );
     }
 
     public function editAction()
     {
+        $controlPanel = new ControlPanel($this->getServiceLocator()->get('Zend\Db\Adapter\Adapter'));
         $model = 'Administration\\Model\\'.$this->params()->fromRoute('model');
-        $component = new $model($this->getServiceLocator()->get('Zend\Db\Adapter\Adapter'));
+        $component = new $model($this->getServiceLocator()->get('Zend\Db\Adapter\Adapter'), $controlPanel);
 
         $request = $this->getRequest();
         $form = $component->getForm();
@@ -113,7 +116,8 @@ class IndexController extends AbstractActionController
         return new ViewModel(
             array(
                 'form'               => $form,
-                'multilingualFields' => $component->getAllMultilingualFields()
+                'multilingualFields' => $component->getAllMultilingualFields(),
+                'controlPanel'       => $controlPanel,
             )
         );
     }

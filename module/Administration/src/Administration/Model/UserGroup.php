@@ -8,9 +8,9 @@ class UserGroup  extends TableHandler
 {
 	public $manager;
 
-    public function __construct($dbAdapter, $followRelations = true)
+    public function __construct($dbAdapter, $controlPanel, $followRelations = true)
     {
-        parent::__construct('UserGroup', $dbAdapter);
+        parent::__construct('UserGroup', $dbAdapter, $controlPanel);
 
         $this->setListingFields(array("name"));
         $this->setPrefix("user_group_");

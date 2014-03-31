@@ -19,6 +19,7 @@ class ControlPanel
         $this->adapter = $adapter;
         $this->sql     = new Sql($this->adapter);
         $this->initialiseSiteLanguages();
+        //$this->initialiseSiteLanguages();
     }
 
     private function  initialiseAdminLanguages()
