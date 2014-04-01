@@ -81,7 +81,7 @@ class IndexController extends AbstractActionController
 
         if ($request->isPost()) {
             $form->getFormObject()->setInputFilter($component->getInputFilter());
-            $form->getFormObject()->setData($request->getPost());
+            $form->getFormObject()->setData($component->preparePostData($request->getPost()));
 
             if ($form->getFormObject()->isValid()) {
                 $component->save($form->getFormObject()->getData());
