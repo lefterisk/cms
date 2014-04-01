@@ -377,7 +377,21 @@ class TableHandler extends AbstractModelTable implements InputFilterAwareInterfa
 	public function getAllMultilingualFields()
 	{
 		return array_merge($this->MultilingualVarchars, $this->MultilingualTexts, $this->MultilingualLongTexts, $this->getImageCaptions(), $this->getFileCaptions(), $this->getMultilingualFilesCaptions());
-	}	
+	}
+
+    /**
+     * Returns all Multilingual field names (language-specific).
+     */
+    public function getAllMultilingualFieldNames()
+    {
+        $fieldsArray = array();
+        foreach ($this->getAllMultilingualFields() as $field) {
+            foreach ($this->controlPanel->getSiteLanguages() as $languageId => $language) {
+                $fieldsArray[] = $field . '[' . $languageId . ']';
+            }
+        }
+        return $fieldsArray;
+    }
 	
 	/**
 	 * Returns all simple fields.
@@ -474,7 +488,6 @@ class TableHandler extends AbstractModelTable implements InputFilterAwareInterfa
                     'name' => $relation->inputFieldName,
                     'required' => false,
                 ));
-                echo $relation->inputFieldName;
             }
 
             $this->inputFilter = $inputFilter;

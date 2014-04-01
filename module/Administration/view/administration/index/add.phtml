@@ -4,12 +4,12 @@
             <h3 class="panel-title"><?php echo $this->translate('Follow Development') ?></h3>
         </div>
         <div class="panel-body">
-            <?php  ?>
             <ul class="nav nav-tabs">
                 <?php foreach ($form->getTabs() as $key => $tab) : ?>
                 <li class="<?php echo ($key == 0)? 'active': '' ?>"><a href="#tab-<?php echo $key; ?>" data-toggle="tab"><?php echo $tab['name'] ?></a></li>
                 <?php endforeach; ?>
             </ul>
+            <?php $form->getFormObject()->prepare() ?>
             <?php echo $this->form()->openTag($form->getFormObject()); ?>
             <!-- Tab panes -->
             <div class="tab-content">
@@ -17,7 +17,6 @@
                 <div class="tab-pane <?php echo ($key == 0)? 'active': '' ?>" id="tab-<?php echo $key; ?>">
                     <?php foreach ($tab['fields'] as $field) : ?>
                         <?php if (is_array($multilingualFields) && in_array($field , $multilingualFields)) : ?>
-                            <?php $languages = array(array('id'=>'1','name'=>'English'),array('id'=>'2','name'=>'Greek')) ?>
                             <?php foreach ($controlPanel->getSiteLanguages() as $languageId => $language): ?>
                                 <?php echo $form->getFormObject()->get($field . '[' . $languageId . ']')->getLabel() . '( ' . $language['name'] . ' )' ?>
                                 <?php echo $this->formElementErrors($form->getFormObject()->get($field . '[' . $languageId . ']')); ?>

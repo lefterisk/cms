@@ -82,13 +82,14 @@ class IndexController extends AbstractActionController
         if ($request->isPost()) {
             $form->getFormObject()->setInputFilter($component->getInputFilter());
             $form->getFormObject()->setData($request->getPost());
+
             if ($form->getFormObject()->isValid()) {
                 $component->save($form->getFormObject()->getData());
                 //After Save redirect to listing
-                return $this->redirect()->toRoute('administration', array(
-                    'action' => 'index',
-                    'model'  => $this->params()->fromRoute('model')
-                ));
+//                return $this->redirect()->toRoute('administration', array(
+//                    'action' => 'index',
+//                    'model'  => $this->params()->fromRoute('model')
+//                ));
             } else {
 
             }

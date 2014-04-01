@@ -38,11 +38,9 @@ class AbstractModelTable
     {
         $this->adapter->query('CREATE TABLE IF NOT EXISTS `' . $this->getTableName() . '` (`id` int(11) unsigned NOT NULL AUTO_INCREMENT, PRIMARY KEY (`id`))', Adapter::QUERY_MODE_EXECUTE);
         if ($this->isMultiLingual()) {
-            $statement = $this->sql->select("SHOW TABLES LIKE " . $this->getTableDescriptionName() );
-            $selectString = $this->sql->getSqlStringForSqlObject($statement);
-            try{
-                $results = $this->adapter->query($selectString, Adapter::QUERY_MODE_EXECUTE);
-            } catch(Exception $e){
+            $results = $this->adapter->query("SHOW TABLES LIKE '" . $this->getTableDescriptionName() . "'" , Adapter::QUERY_MODE_EXECUTE);
+            if ($results->count() <= 0) {
+
                 $this->adapter->query('CREATE TABLE IF NOT EXISTS `'.$this->getTableDescriptionName().'` (`'.$this->getLanguageID().'` int(11) DEFAULT NULL, `'.$this->getPrefix().'id` int(11) DEFAULT NULL, PRIMARY KEY (`'.$this->getLanguageID().'`,`'.$this->getPrefix().'id`))', Adapter::QUERY_MODE_EXECUTE);
 
                 //Make sure every entry on main table has a corresponding one in description
@@ -54,9 +52,8 @@ class AbstractModelTable
                         foreach ($this->controlPanel->getSiteLanguages() as $languageId => $language) {
                             $insertStatement = $this->sql->insert($this->getTableDescriptionName());
                             $insertStatement->values(array($this->getLanguageID() => $languageId, $this->getPrefix().'id' => $entry['id'] ));
-                            $insertStatementString = $this->sql->getSqlStringForSqlObject($statement);
-                            echo $insertStatementString.'<br/>';
-                            //$this->adapter->query($insertStatementString, Adapter::QUERY_MODE_EXECUTE);
+                            $insertStatementString = $this->sql->getSqlStringForSqlObject($insertStatement);
+                            $this->adapter->query($insertStatementString, Adapter::QUERY_MODE_EXECUTE);
                         }
                     }
                 }
@@ -195,7 +192,6 @@ class AbstractModelTable
                 $statement->limit($itemsPerPage)->offset($offset);
             }
             $selectString = $this->sql->getSqlStringForSqlObject($statement);
-            echo $selectString;
             $results = $this->adapter->query($selectString, Adapter::QUERY_MODE_EXECUTE);
             return $results;
         } else {
@@ -205,14 +201,22 @@ class AbstractModelTable
 
     public function getItemById($id)
     {
-        if ($this->isMultiLingual()) {
-            $statement = $this->sql->select($this->getTableName())->join(array( 'dc' => $this->getTableDescriptionName()),'dc.' . $this->getPrefix() . 'id = '.$this->getTableName().'.id', array('*') , Select::JOIN_LEFT);
-        } else {
-            $statement = $this->sql->select($this->getTableName());
-        }
-        $statement->where(array($this->getTableName().'.id' => $id));
+        $statement = $this->sql->select($this->getTableName())->where(array($this->getTableName().'.id' => $id));
         $selectString = $this->sql->getSqlStringForSqlObject($statement);
         $results = $this->adapter->query($selectString, Adapter::QUERY_MODE_EXECUTE)->current();
+
+        if ($this->isMultiLingual()) {
+            $descriptionStatement    = $this->sql->select($this->getTableDescriptionName())->where(array($this->getPrefix().'id' => $id));
+            $descriptionSelectString = $this->sql->getSqlStringForSqlObject($descriptionStatement);
+            $descriptionResults      = $this->adapter->query($descriptionSelectString, Adapter::QUERY_MODE_EXECUTE);
+            if ($descriptionResults->count() > 0) {
+                foreach ($descriptionResults as $descriptionEntry) {
+                    foreach ($this->getAllMultilingualFields() as $multilingualField) {
+                        $results[$multilingualField . '[' . $descriptionEntry[$this->getLanguageID()] . ']'] = $descriptionEntry[$multilingualField];
+                    }
+                }
+            }
+        }
         return $results;
     }
 
@@ -221,18 +225,18 @@ class AbstractModelTable
         $queryTableData            = array();
         $queryTableDescriptionData = array();
         $queryRelationsData        = array();
+
         foreach ($data as $fieldName => $fieldValue) {
             if (in_array( $fieldName, $this->getAllNonMultilingualFields())) {
                 $queryTableData[$fieldName] = $fieldValue;
-            } elseif ($this->isMultiLingual() && in_array( $fieldName, $this->getAllMultilingualFields())) {
-//                $languages = array(array('id'=>'1'),array('id'=>'2'));
-//                foreach ($this->getAllMultilingualFields() as $multilingualField) {
-//                    foreach ($languages as $language) {
-//                        if ($multilingualField . '[' . $language['id'] . ']' == $fieldName) {
-//                            $queryTableDescriptionData[$language['id']][$multilingualField] = $fieldValue;
-//                        }
-//                    }
-//                }
+            } elseif ($this->isMultiLingual() && in_array( $fieldName, $this->getAllMultilingualFieldNames())) {
+                foreach ($this->getAllMultilingualFields() as $multilingualField) {
+                    foreach ($this->controlPanel->getSiteLanguages() as $languageId => $language) {
+                        if ($multilingualField . '[' . $languageId . ']' == $fieldName) {
+                            $queryTableDescriptionData[ $languageId ][ $multilingualField ] = $fieldValue;
+                        }
+                    }
+                }
             } else {
                 foreach ($this->getRelations() as $relation) {
                     if ( $relation->inputFieldName ==  $fieldName && $relation->hasLookupColumn()) {
@@ -241,31 +245,31 @@ class AbstractModelTable
                 }
             }
         }
+
         //Prepare Main Table Query
-//        var_dump($data);
-//        exit;
         if (isset($data['id']) && !empty($data['id'])) {
             $tableStatement = $this->sql->update($this->getTableName());
             $tableStatement->set($queryTableData);
             $tableStatement->where(array('id' => $data['id']));
+
+            $sqlString = $this->sql->getSqlStringForSqlObject($tableStatement);
+            $result    = $this->adapter->query($sqlString, Adapter::QUERY_MODE_EXECUTE);
+            if ($this->isMultiLingual()) {
+                foreach ($this->controlPanel->getSiteLanguages() as $languageId => $language) {
+                    $descriptionTableStatement = $this->sql->update($this->getTableDescriptionName());
+                    $descriptionTableStatement->set($queryTableDescriptionData[$languageId]);
+                    $descriptionTableStatement->where(array($this->getPrefix().'id' => $data['id'], $this->getLanguageID() => $languageId));
+                    $descriptionTableSqlString = $this->sql->getSqlStringForSqlObject($descriptionTableStatement);
+                    echo $descriptionTableSqlString;
+                    //$this->adapter->query($descriptionTableSqlString, Adapter::QUERY_MODE_EXECUTE);
+                }
+            }
         } else {
             $tableStatement = $this->sql->insert($this->getTableName());
             $tableStatement->values($queryTableData);
+
+            $sqlString = $this->sql->getSqlStringForSqlObject($tableStatement);
+            $result    = $this->adapter->query($sqlString, Adapter::QUERY_MODE_EXECUTE);
         }
-
-        //Prepare Description Table Query
-//        if ($this->isMultiLingual() && isset($data['id']) && !empty($data['id']) ) {
-//            foreach ($languages as $language) {
-//                $statement = $this->sql->select($this->getTableDescriptionName())->columns(array('num' => new \Zend\Db\Sql\Expression('COUNT(*)')))->where(array($this->getPrefix().'_id' => $data['id'], $this->getLanguageID() => $language['id']));
-//                $sqlString = $this->sql->getSqlStringForSqlObject($statement);
-//                $result    = $this->adapter->query($sqlString, Adapter::QUERY_MODE_EXECUTE)->current();
-//                var_dump($result);
-//            }
-//            exit;
-//
-//        }
-        $sqlString = $this->sql->getSqlStringForSqlObject($tableStatement);
-        $result    = $this->adapter->query($sqlString, Adapter::QUERY_MODE_EXECUTE);
-
     }
 }
