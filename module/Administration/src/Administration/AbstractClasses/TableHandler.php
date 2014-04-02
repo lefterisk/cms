@@ -583,12 +583,14 @@ class TableHandler extends AbstractModelTable implements InputFilterAwareInterfa
                 $type       = 'Zend\Form\Element\Select';
                 $attributes = array('class' => 'form-control');
 
-                if (in_array($field->getRelationType(), array('oneToMany', 'manyToMany'))) {
-                    $attributes['multiple'] = 'multiple';
-                }
-
                 $name       = $field->inputFieldName;
                 $label      = $field->activeModel->getTableName();
+
+                if (in_array($field->getRelationType(), array('oneToMany', 'manyToMany'))) {
+                    $attributes['multiple'] = 'multiple';
+                } else {
+                    $value_options[0] = 'Please Choose a ' . $label;
+                }
 
                 foreach ($field->activeModel->getListing() as $listingItem) {
                     $value_options[$listingItem->id] = $listingItem->{$field->getRelatedSelectDisplayFields()};
@@ -603,7 +605,6 @@ class TableHandler extends AbstractModelTable implements InputFilterAwareInterfa
                         'options' => array(
                             'label' => $label,
                             'value_options' => $value_options,
-                            //'empty_option' => 'Please choose '.$label
                         ),
                         'attributes' => array_merge($attributes,array('placeholder' => $name)),
                     ));
@@ -615,7 +616,6 @@ class TableHandler extends AbstractModelTable implements InputFilterAwareInterfa
                     'options' => array(
                         'label' => $label,
                         'value_options' => $value_options,
-                        //'empty_option' => 'Please choose '.$label
                     ),
                     'attributes' => array_merge($attributes,array('placeholder' => $name)),
                 ));

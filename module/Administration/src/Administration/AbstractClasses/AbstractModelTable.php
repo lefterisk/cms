@@ -150,7 +150,7 @@ class AbstractModelTable
                     $result    = $statement->execute();
                     if ($result->count()==0)
                     {
-                        $this->adapter->query("ALTER TABLE " . $this->getTableName() . " ADD `" . $relation->activeModel->getPrefix() . "id` int(11) DEFAULT NULL;", Adapter::QUERY_MODE_EXECUTE);
+                        $this->adapter->query("ALTER TABLE " . $this->getTableName() . " ADD `" . $relation->activeModel->getPrefix() . "id` int(11) DEFAULT 0;", Adapter::QUERY_MODE_EXECUTE);
                     }
                 }
             }
@@ -228,7 +228,7 @@ class AbstractModelTable
         if (count($this->getRelations()) > 0) {
             foreach ($this->getRelations() as $relation) {
                 if ($relation->hasLookUpTable()) {
-
+                    //If relation is manyToMany
                     $lookUpTableStatement    = $this->sql->select($relation->getLookUpTableName())->where(array($this->getPrefix().'id' => $id));
                     $lookUpTableSelectString = $this->sql->getSqlStringForSqlObject($lookUpTableStatement);
                     $lookUpTableResults      = $this->adapter->query($lookUpTableSelectString, Adapter::QUERY_MODE_EXECUTE);
@@ -236,6 +236,17 @@ class AbstractModelTable
                     if ($lookUpTableResults->count() > 0) {
                         foreach ($lookUpTableResults as $lookupTableResult) {
                             $results[$relation->inputFieldName][] =  $lookupTableResult[$relation->activeModel->getPrefix() . 'id'];
+                        }
+                    }
+                } elseif ($relation->getRelationType() == 'oneToMany') {
+                    //If relation is oneToMany
+                    $relationStatement    = $this->sql->select($relation->activeModel->getTableName())->where(array($this->getPrefix().'id' => $id));
+                    $relationSelectString = $this->sql->getSqlStringForSqlObject($relationStatement);
+                    $relationResults      = $this->adapter->query($relationSelectString, Adapter::QUERY_MODE_EXECUTE);
+
+                    if ($relationResults->count() > 0) {
+                        foreach ($relationResults as $relationResult) {
+                            $results[$relation->inputFieldName][] =  $relationResult['id'];
                         }
                     }
                 }
@@ -248,7 +259,8 @@ class AbstractModelTable
     {
         $queryTableData            = array();
         $queryTableDescriptionData = array();
-        $queryRelationsData        = array();
+        $queryM2MRelationsData        = array();
+        $queryO2MRelationsData        = array();
 
         foreach ($data as $fieldName => $fieldValue) {
             if (in_array( $fieldName, $this->getAllNonMultilingualFields())) {
@@ -272,15 +284,24 @@ class AbstractModelTable
                         //Setup data arrays for manyToMany relations queries
                         if (is_array($fieldValue)) {
                             foreach ($fieldValue as $value) {
-                                $queryRelationsData[$relation->getLookUpTableName()][] = array( $relation->activeModel->getPrefix() . 'id' => $value);
+                                $queryM2MRelationsData[$relation->getLookUpTableName()][] = array( $relation->activeModel->getPrefix() . 'id' => $value);
                             }
                         } else {
-                            $queryRelationsData[$relation->getLookUpTableName()] = array();
+                            $queryM2MRelationsData[$relation->getLookUpTableName()] = array();
+                        }
+                    } elseif ($relation->inputFieldName ==  $fieldName && $relation->getRelationType() == 'oneToMany') {
+                        //Setup data array for oneToMany relations queries
+                        if (is_array($fieldValue)) {
+                            foreach ($fieldValue as $value) {
+                                $queryO2MRelationsData[$relation->activeModel->getTableName()][] =  $value;
+                            }
                         }
                     }
                 }
             }
         }
+
+        var_dump($queryO2MRelationsData);
 
         if (isset($data['id']) && !empty($data['id'])) {
 
@@ -293,8 +314,8 @@ class AbstractModelTable
             }
 
             //ManyTOMany Relations Queries
-            if (count($queryRelationsData) > 0) {
-                $this->insertUpdateToEntityRelationsTables($data['id'], $queryRelationsData);
+            if (count($queryM2MRelationsData) > 0) {
+                $this->insertUpdateToEntityRelationsTables($data['id'], $queryM2MRelationsData);
             }
         } else {
 
@@ -307,8 +328,8 @@ class AbstractModelTable
             }
 
             //ManyTOMany Relations Queries
-            if (count($queryRelationsData) > 0) {
-                $this->insertUpdateToEntityRelationsTables($this->lastInsertValue, $queryRelationsData);
+            if (count($queryM2MRelationsData) > 0) {
+                $this->insertUpdateToEntityRelationsTables($this->lastInsertValue, $queryM2MRelationsData);
             }
         }
     }
