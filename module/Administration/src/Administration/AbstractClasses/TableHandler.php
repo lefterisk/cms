@@ -583,7 +583,7 @@ class TableHandler extends AbstractModelTable implements InputFilterAwareInterfa
                 $type       = 'Zend\Form\Element\Select';
                 $attributes = array('class' => 'form-control');
 
-                if ($field->getRelationType() == 'oneToMany') {
+                if (in_array($field->getRelationType(), array('oneToMany', 'manyToMany'))) {
                     $attributes['multiple'] = 'multiple';
                 }
 
@@ -603,7 +603,7 @@ class TableHandler extends AbstractModelTable implements InputFilterAwareInterfa
                         'options' => array(
                             'label' => $label,
                             'value_options' => $value_options,
-                            'empty_option' => 'Please choose '.$label
+                            //'empty_option' => 'Please choose '.$label
                         ),
                         'attributes' => array_merge($attributes,array('placeholder' => $name)),
                     ));
@@ -615,7 +615,7 @@ class TableHandler extends AbstractModelTable implements InputFilterAwareInterfa
                     'options' => array(
                         'label' => $label,
                         'value_options' => $value_options,
-                        'empty_option' => 'Please choose '.$label
+                        //'empty_option' => 'Please choose '.$label
                     ),
                     'attributes' => array_merge($attributes,array('placeholder' => $name)),
                 ));
@@ -925,4 +925,22 @@ class TableHandler extends AbstractModelTable implements InputFilterAwareInterfa
 	{
 		array_push($this->actionManager, $actionManager);
 	}
+
+    /**
+     * Prepares the POST array for save (for multilingual array-fields).
+     */
+    public function preparePostData($post)
+    {
+        $returnArray = array();
+        foreach ($post as $field => $values) {
+            if (in_array($field, $this->getAllMultilingualFields()) && is_array($values)) {
+                foreach ($values as $languageId => $fieldValue) {
+                    $returnArray[$field . '[' . $languageId . ']'] = $fieldValue;
+                }
+            } else {
+                $returnArray[$field] = $values;
+            }
+        }
+        return $returnArray;
+    }
 }

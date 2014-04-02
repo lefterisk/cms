@@ -8,26 +8,28 @@ use Zend\Db\Sql\Select;
 
 class AbstractModelTable
 {
+    protected $lastInsertValue;
+
     public function finaliseTable()
     {
         $this->createTablesIfNotExist();
-        $this->addFieldsIfDontExist('integers',                 $this->getIntegers());
-        $this->addFieldsIfDontExist('enums',                    $this->getEnums());
-        $this->addFieldsIfDontExist('dates',                    $this->getDates());
-        $this->addFieldsIfDontExist('varchars',                 $this->getVarchars());
-        $this->addFieldsIfDontExist('images',                   $this->getImages());
-        $this->addFieldsIfDontExist('files',                    $this->getFiles());
-        $this->addFieldsIfDontExist('customSelections',         $this->getCustomSelections());
-        $this->addFieldsIfDontExist('texts',                    $this->getTexts());
-        $this->addFieldsIfDontExist('longTexts',                $this->getLongTexts());
-        $this->addFieldsIfDontExist('imageCaptions',            $this->getImageCaptions());
-        $this->addFieldsIfDontExist('fileCaptions',             $this->getFileCaptions());
+        $this->addFieldsCollumnsIfDontExist('integers',                 $this->getIntegers());
+        $this->addFieldsCollumnsIfDontExist('enums',                    $this->getEnums());
+        $this->addFieldsCollumnsIfDontExist('dates',                    $this->getDates());
+        $this->addFieldsCollumnsIfDontExist('varchars',                 $this->getVarchars());
+        $this->addFieldsCollumnsIfDontExist('images',                   $this->getImages());
+        $this->addFieldsCollumnsIfDontExist('files',                    $this->getFiles());
+        $this->addFieldsCollumnsIfDontExist('customSelections',         $this->getCustomSelections());
+        $this->addFieldsCollumnsIfDontExist('texts',                    $this->getTexts());
+        $this->addFieldsCollumnsIfDontExist('longTexts',                $this->getLongTexts());
+        $this->addFieldsCollumnsIfDontExist('imageCaptions',            $this->getImageCaptions());
+        $this->addFieldsCollumnsIfDontExist('fileCaptions',             $this->getFileCaptions());
         if ($this->isMultiLingual()) {
-            $this->addFieldsIfDontExist('multiLingualFileCaptions', $this->getMultilingualFilesCaptions());
-            $this->addFieldsIfDontExist('multiLingualTexts',        $this->getMultilingualTexts());
-            $this->addFieldsIfDontExist('multiLingualLongTexts',    $this->getMultilingualLongTexts());
-            $this->addFieldsIfDontExist('multiLingualVarchars',     $this->getMultilingualVarchars());
-            $this->addFieldsIfDontExist('multiLingualFiles',        $this->getMultilingualFiles());
+            $this->addFieldsCollumnsIfDontExist('multiLingualFileCaptions', $this->getMultilingualFilesCaptions());
+            $this->addFieldsCollumnsIfDontExist('multiLingualTexts',        $this->getMultilingualTexts());
+            $this->addFieldsCollumnsIfDontExist('multiLingualLongTexts',    $this->getMultilingualLongTexts());
+            $this->addFieldsCollumnsIfDontExist('multiLingualVarchars',     $this->getMultilingualVarchars());
+            $this->addFieldsCollumnsIfDontExist('multiLingualFiles',        $this->getMultilingualFiles());
         }
         if ($this->followRelations()) {
             $this->addJoinRelationsIfNotExist($this->getRelations());
@@ -61,7 +63,7 @@ class AbstractModelTable
         }
     }
 
-    private function addFieldsIfDontExist($type, $fieldsArray)
+    private function addFieldsCollumnsIfDontExist($type, $fieldsArray)
     {
 
         $tableToAddTheColumn = '';
@@ -142,7 +144,7 @@ class AbstractModelTable
                     throw new Exception\InvalidArgumentException('Please set the prefix in the ' . $this->getTableName() . ' model!');
                 }
                 if ($relation->hasLookUpTable()) {
-                    $this->adapter->query('CREATE TABLE IF NOT EXISTS `' . $this->getTableName() .'To'.$relation->activeModel->getTableName(). '` ( `'.$this->getPrefix().'id` int(11) DEFAULT NULL, `'.$relation->activeModel->getPrefix().'id` int(11) DEFAULT NULL)', Adapter::QUERY_MODE_EXECUTE);
+                    $this->adapter->query('CREATE TABLE IF NOT EXISTS `' . $relation->getLookUpTableName() . '` ( `'.$this->getPrefix().'id` int(11) DEFAULT NULL, `'.$relation->activeModel->getPrefix().'id` int(11) DEFAULT NULL)', Adapter::QUERY_MODE_EXECUTE);
                 } elseif ($relation->hasLookupColumn()) {
                     $statement = $this->adapter->createStatement("SHOW COLUMNS FROM " . $this->getTableName() . " LIKE '" . $relation->activeModel->getPrefix() . "id'" );
                     $result    = $statement->execute();
@@ -201,18 +203,40 @@ class AbstractModelTable
 
     public function getItemById($id)
     {
-        $statement = $this->sql->select($this->getTableName())->where(array($this->getTableName().'.id' => $id));
+        //Data from Entity Table
+        $statement    = $this->sql->select($this->getTableName())->where(array($this->getTableName().'.id' => $id));
         $selectString = $this->sql->getSqlStringForSqlObject($statement);
-        $results = $this->adapter->query($selectString, Adapter::QUERY_MODE_EXECUTE)->current();
+        $results      = $this->adapter->query($selectString, Adapter::QUERY_MODE_EXECUTE)->current();
 
+        //Attach Data from Description Table
         if ($this->isMultiLingual()) {
+
             $descriptionStatement    = $this->sql->select($this->getTableDescriptionName())->where(array($this->getPrefix().'id' => $id));
             $descriptionSelectString = $this->sql->getSqlStringForSqlObject($descriptionStatement);
             $descriptionResults      = $this->adapter->query($descriptionSelectString, Adapter::QUERY_MODE_EXECUTE);
+
             if ($descriptionResults->count() > 0) {
                 foreach ($descriptionResults as $descriptionEntry) {
                     foreach ($this->getAllMultilingualFields() as $multilingualField) {
                         $results[$multilingualField . '[' . $descriptionEntry[$this->getLanguageID()] . ']'] = $descriptionEntry[$multilingualField];
+                    }
+                }
+            }
+        }
+
+        //Attach Data from Relations Look Up Tables
+        if (count($this->getRelations()) > 0) {
+            foreach ($this->getRelations() as $relation) {
+                if ($relation->hasLookUpTable()) {
+
+                    $lookUpTableStatement    = $this->sql->select($relation->getLookUpTableName())->where(array($this->getPrefix().'id' => $id));
+                    $lookUpTableSelectString = $this->sql->getSqlStringForSqlObject($lookUpTableStatement);
+                    $lookUpTableResults      = $this->adapter->query($lookUpTableSelectString, Adapter::QUERY_MODE_EXECUTE);
+
+                    if ($lookUpTableResults->count() > 0) {
+                        foreach ($lookUpTableResults as $lookupTableResult) {
+                            $results[$relation->inputFieldName][] =  $lookupTableResult[$relation->activeModel->getPrefix() . 'id'];
+                        }
                     }
                 }
             }
@@ -228,8 +252,10 @@ class AbstractModelTable
 
         foreach ($data as $fieldName => $fieldValue) {
             if (in_array( $fieldName, $this->getAllNonMultilingualFields())) {
+                //Setup the data array for the main table
                 $queryTableData[$fieldName] = $fieldValue;
             } elseif ($this->isMultiLingual() && in_array( $fieldName, $this->getAllMultilingualFieldNames())) {
+                //Setup data arrays for the description queries
                 foreach ($this->getAllMultilingualFields() as $multilingualField) {
                     foreach ($this->controlPanel->getSiteLanguages() as $languageId => $language) {
                         if ($multilingualField . '[' . $languageId . ']' == $fieldName) {
@@ -240,36 +266,122 @@ class AbstractModelTable
             } else {
                 foreach ($this->getRelations() as $relation) {
                     if ( $relation->inputFieldName ==  $fieldName && $relation->hasLookupColumn()) {
+                        //If relation is oneToMany use the main data array
                         $queryTableData[$fieldName] = $fieldValue;
+                    } elseif ($relation->inputFieldName ==  $fieldName && $relation->hasLookUpTable() ) {
+                        //Setup data arrays for manyToMany relations queries
+                        if (is_array($fieldValue)) {
+                            foreach ($fieldValue as $value) {
+                                $queryRelationsData[$relation->getLookUpTableName()][] = array( $relation->activeModel->getPrefix() . 'id' => $value);
+                            }
+                        } else {
+                            $queryRelationsData[$relation->getLookUpTableName()] = array();
+                        }
                     }
                 }
             }
         }
 
-        //Prepare Main Table Query
         if (isset($data['id']) && !empty($data['id'])) {
-            $tableStatement = $this->sql->update($this->getTableName());
-            $tableStatement->set($queryTableData);
-            $tableStatement->where(array('id' => $data['id']));
 
-            $sqlString = $this->sql->getSqlStringForSqlObject($tableStatement);
-            $result    = $this->adapter->query($sqlString, Adapter::QUERY_MODE_EXECUTE);
+            //Main Table Query
+            $this->updateEntityTable($data['id'], $queryTableData);
+
+            //Description Table Queries (1 per language)
             if ($this->isMultiLingual()) {
-                foreach ($this->controlPanel->getSiteLanguages() as $languageId => $language) {
-                    $descriptionTableStatement = $this->sql->update($this->getTableDescriptionName());
-                    $descriptionTableStatement->set($queryTableDescriptionData[$languageId]);
-                    $descriptionTableStatement->where(array($this->getPrefix().'id' => $data['id'], $this->getLanguageID() => $languageId));
-                    $descriptionTableSqlString = $this->sql->getSqlStringForSqlObject($descriptionTableStatement);
-                    echo $descriptionTableSqlString;
-                    //$this->adapter->query($descriptionTableSqlString, Adapter::QUERY_MODE_EXECUTE);
-                }
+                $this->updateEntityDescriptionTable($data['id'], $queryTableDescriptionData);
+            }
+
+            //ManyTOMany Relations Queries
+            if (count($queryRelationsData) > 0) {
+                $this->insertUpdateToEntityRelationsTables($data['id'], $queryRelationsData);
             }
         } else {
-            $tableStatement = $this->sql->insert($this->getTableName());
-            $tableStatement->values($queryTableData);
 
-            $sqlString = $this->sql->getSqlStringForSqlObject($tableStatement);
-            $result    = $this->adapter->query($sqlString, Adapter::QUERY_MODE_EXECUTE);
+            //Main Table Query
+            $this->insertToEntityTable($queryTableData);
+
+            //Description Table Queries (1 per language)
+            if ($this->isMultiLingual()) {
+                $this->insertToEntityDescriptionTable($queryTableDescriptionData);
+            }
+
+            //ManyTOMany Relations Queries
+            if (count($queryRelationsData) > 0) {
+                $this->insertUpdateToEntityRelationsTables($this->lastInsertValue, $queryRelationsData);
+            }
+        }
+    }
+
+    private function insertToEntityTable ($dataArray)
+    {
+        $tableStatement = $this->sql->insert($this->getTableName());
+        $tableStatement->values($dataArray);
+        $sqlString = $this->sql->getSqlStringForSqlObject($tableStatement);
+        $this->adapter->query($sqlString, Adapter::QUERY_MODE_EXECUTE);
+        $this->lastInsertValue = $this->adapter->getDriver()->getConnection()->getLastGeneratedValue();
+    }
+
+    private function updateEntityTable ($id, $dataArray)
+    {
+        $tableStatement = $this->sql->update($this->getTableName());
+        $tableStatement->set($dataArray);
+        $tableStatement->where(array('id' => $id));
+
+        $sqlString = $this->sql->getSqlStringForSqlObject($tableStatement);
+        $this->adapter->query($sqlString, Adapter::QUERY_MODE_EXECUTE);
+    }
+
+    private function insertToEntityDescriptionTable ($dataArray)
+    {
+        foreach ($this->controlPanel->getSiteLanguages() as $languageId => $language) {
+            $descriptionTableStatement = $this->sql->insert($this->getTableDescriptionName());
+            $descriptionTableStatement->values(
+                array_merge(
+                    $dataArray[$languageId],
+                    array(
+                        $this->getPrefix().'id' => $this->lastInsertValue,
+                        $this->getLanguageID() => $languageId
+                    )
+                )
+            );
+            $descriptionTableSqlString = $this->sql->getSqlStringForSqlObject($descriptionTableStatement);
+            $this->adapter->query($descriptionTableSqlString, Adapter::QUERY_MODE_EXECUTE);
+        }
+    }
+
+    private function updateEntityDescriptionTable ($id, $dataArray)
+    {
+        foreach ($this->controlPanel->getSiteLanguages() as $languageId => $language) {
+
+            $descriptionTableStatement = $this->sql->update($this->getTableDescriptionName());
+            $descriptionTableStatement->set($dataArray[$languageId]);
+            $descriptionTableStatement->where(
+                array(
+                    $this->getPrefix().'id' => $id,
+                    $this->getLanguageID() => $languageId
+                )
+            );
+            $descriptionTableSqlString = $this->sql->getSqlStringForSqlObject($descriptionTableStatement);
+            $this->adapter->query($descriptionTableSqlString, Adapter::QUERY_MODE_EXECUTE);
+        }
+    }
+
+    private function insertUpdateToEntityRelationsTables ($id, $dataArray)
+    {
+        foreach ($dataArray as $lookUpTable => $relationEntries) {
+            $deleteRelationStatement = $this->sql->delete($lookUpTable)->where(array($this->getPrefix() . 'id' => $id));
+            $deleteRelationSqlString = $this->sql->getSqlStringForSqlObject($deleteRelationStatement);
+            $this->adapter->query($deleteRelationSqlString, Adapter::QUERY_MODE_EXECUTE);
+
+            if (count($relationEntries) > 0) {
+                foreach ($relationEntries as $relationEntry) {
+                    $relationStatement = $this->sql->insert($lookUpTable);
+                    $relationStatement->values(array_merge($relationEntry, array($this->getPrefix() . 'id' => $id)));
+                    $relationSqlString = $this->sql->getSqlStringForSqlObject($relationStatement);
+                    $this->adapter->query($relationSqlString, Adapter::QUERY_MODE_EXECUTE);
+                }
+            }
         }
     }
 }

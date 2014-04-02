@@ -48,7 +48,7 @@ class IndexController extends AbstractActionController
 
         if ($request->isPost()) {
             $form->getFormObject()->setInputFilter($component->getInputFilter());
-            $form->getFormObject()->setData($request->getPost());
+            $form->getFormObject()->setData($component->preparePostData($request->getPost()));
             if ($form->getFormObject()->isValid()) {
                 $component->save($form->getFormObject()->getData());
                 //After Save redirect to listing
@@ -56,8 +56,6 @@ class IndexController extends AbstractActionController
                     'action' => 'index',
                     'model'  => $this->params()->fromRoute('model')
                 ));
-            } else {
-                var_dump($form->getFormObject()->getMessages());
             }
         }
 
@@ -81,6 +79,7 @@ class IndexController extends AbstractActionController
 
         if ($request->isPost()) {
             $form->getFormObject()->setInputFilter($component->getInputFilter());
+            //var_dump($request->getPost());
             $form->getFormObject()->setData($component->preparePostData($request->getPost()));
 
             if ($form->getFormObject()->isValid()) {
@@ -90,8 +89,6 @@ class IndexController extends AbstractActionController
 //                    'action' => 'index',
 //                    'model'  => $this->params()->fromRoute('model')
 //                ));
-            } else {
-
             }
         }
 

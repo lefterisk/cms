@@ -31,7 +31,7 @@ class UserGroup  extends TableHandler
 //		$this->setMultilingualFiles(array('multiLangfile'));
 //		$this->setRequiredFields(array());
 //		$this->setMultilingualRequiredFields(array());
-		$this->setRelations(array($user = new RelationsHandler('User','oneToMany','email')));
+		//$this->setRelations(array($user = new RelationsHandler('User','oneToMany','email')));
         $this->finaliseTable();
 //		$this->setMetaTitle();
 //		$this->setMetaDescription();

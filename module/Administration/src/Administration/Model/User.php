@@ -31,7 +31,7 @@ class User  extends TableHandler
 //		$this->setMultilingualFiles(array('multiLangfile'));
 //		$this->setRequiredFields(array());
 //		$this->setMultilingualRequiredFields(array());
-		$this->setRelations(array($userGroup = new RelationsHandler('UserGroup','manyToOne','name')));
+		$this->setRelations(array($userGroup = new RelationsHandler('UserGroup','manyToMany','name','UserToUserGroups')));
         $this->finaliseTable();
 //		$this->setMetaTitle();
 //		$this->setMetaDescription();
