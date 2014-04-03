@@ -259,8 +259,8 @@ class AbstractModelTable
     {
         $queryTableData            = array();
         $queryTableDescriptionData = array();
-        $queryM2MRelationsData        = array();
-        $queryO2MRelationsData        = array();
+        $queryM2MRelationsData     = array();
+        $queryO2MRelationsData     = array();
 
         foreach ($data as $fieldName => $fieldValue) {
             if (in_array( $fieldName, $this->getAllNonMultilingualFields())) {
@@ -291,6 +291,7 @@ class AbstractModelTable
                         }
                     } elseif ($relation->inputFieldName ==  $fieldName && $relation->getRelationType() == 'oneToMany') {
                         //Setup data array for oneToMany relations queries
+                        $queryO2MRelationsData[$relation->activeModel->getTableName()] = array();
                         if (is_array($fieldValue)) {
                             foreach ($fieldValue as $value) {
                                 $queryO2MRelationsData[$relation->activeModel->getTableName()][] =  $value;
@@ -300,8 +301,6 @@ class AbstractModelTable
                 }
             }
         }
-
-        var_dump($queryO2MRelationsData);
 
         if (isset($data['id']) && !empty($data['id'])) {
 
@@ -315,7 +314,12 @@ class AbstractModelTable
 
             //ManyTOMany Relations Queries
             if (count($queryM2MRelationsData) > 0) {
-                $this->insertUpdateToEntityRelationsTables($data['id'], $queryM2MRelationsData);
+                $this->insertUpdateM2MRelations($data['id'], $queryM2MRelationsData);
+            }
+
+            //OneToMany Relations Queries
+            if (count($queryO2MRelationsData) > 0) {
+                $this->insertUpdateO2MRelations($data['id'], $queryO2MRelationsData);
             }
         } else {
 
@@ -331,33 +335,38 @@ class AbstractModelTable
             if (count($queryM2MRelationsData) > 0) {
                 $this->insertUpdateToEntityRelationsTables($this->lastInsertValue, $queryM2MRelationsData);
             }
+
+            //OneToMany Relations Queries
+            if (count($queryO2MRelationsData) > 0) {
+                $this->insertUpdateO2MRelations($this->lastInsertValue, $queryO2MRelationsData);
+            }
         }
     }
 
     private function insertToEntityTable ($dataArray)
     {
-        $tableStatement = $this->sql->insert($this->getTableName());
-        $tableStatement->values($dataArray);
-        $sqlString = $this->sql->getSqlStringForSqlObject($tableStatement);
+        $statement = $this->sql->insert($this->getTableName());
+        $statement->values($dataArray);
+        $sqlString = $this->sql->getSqlStringForSqlObject($statement);
         $this->adapter->query($sqlString, Adapter::QUERY_MODE_EXECUTE);
         $this->lastInsertValue = $this->adapter->getDriver()->getConnection()->getLastGeneratedValue();
     }
 
     private function updateEntityTable ($id, $dataArray)
     {
-        $tableStatement = $this->sql->update($this->getTableName());
-        $tableStatement->set($dataArray);
-        $tableStatement->where(array('id' => $id));
+        $statement = $this->sql->update($this->getTableName());
+        $statement->set($dataArray);
+        $statement->where(array('id' => $id));
 
-        $sqlString = $this->sql->getSqlStringForSqlObject($tableStatement);
+        $sqlString = $this->sql->getSqlStringForSqlObject($statement);
         $this->adapter->query($sqlString, Adapter::QUERY_MODE_EXECUTE);
     }
 
     private function insertToEntityDescriptionTable ($dataArray)
     {
         foreach ($this->controlPanel->getSiteLanguages() as $languageId => $language) {
-            $descriptionTableStatement = $this->sql->insert($this->getTableDescriptionName());
-            $descriptionTableStatement->values(
+            $statement = $this->sql->insert($this->getTableDescriptionName());
+            $statement->values(
                 array_merge(
                     $dataArray[$languageId],
                     array(
@@ -366,8 +375,8 @@ class AbstractModelTable
                     )
                 )
             );
-            $descriptionTableSqlString = $this->sql->getSqlStringForSqlObject($descriptionTableStatement);
-            $this->adapter->query($descriptionTableSqlString, Adapter::QUERY_MODE_EXECUTE);
+            $sqlString = $this->sql->getSqlStringForSqlObject($statement);
+            $this->adapter->query($sqlString, Adapter::QUERY_MODE_EXECUTE);
         }
     }
 
@@ -375,20 +384,20 @@ class AbstractModelTable
     {
         foreach ($this->controlPanel->getSiteLanguages() as $languageId => $language) {
 
-            $descriptionTableStatement = $this->sql->update($this->getTableDescriptionName());
-            $descriptionTableStatement->set($dataArray[$languageId]);
-            $descriptionTableStatement->where(
+            $statement = $this->sql->update($this->getTableDescriptionName());
+            $statement->set($dataArray[$languageId]);
+            $statement->where(
                 array(
                     $this->getPrefix().'id' => $id,
                     $this->getLanguageID() => $languageId
                 )
             );
-            $descriptionTableSqlString = $this->sql->getSqlStringForSqlObject($descriptionTableStatement);
-            $this->adapter->query($descriptionTableSqlString, Adapter::QUERY_MODE_EXECUTE);
+            $sqlString = $this->sql->getSqlStringForSqlObject($statement);
+            $this->adapter->query($sqlString, Adapter::QUERY_MODE_EXECUTE);
         }
     }
 
-    private function insertUpdateToEntityRelationsTables ($id, $dataArray)
+    private function insertUpdateM2MRelations ($id, $dataArray)
     {
         foreach ($dataArray as $lookUpTable => $relationEntries) {
             $deleteRelationStatement = $this->sql->delete($lookUpTable)->where(array($this->getPrefix() . 'id' => $id));
@@ -402,6 +411,36 @@ class AbstractModelTable
                     $relationSqlString = $this->sql->getSqlStringForSqlObject($relationStatement);
                     $this->adapter->query($relationSqlString, Adapter::QUERY_MODE_EXECUTE);
                 }
+            }
+        }
+    }
+
+    private function insertUpdateO2MRelations ($id, $dataArray)
+    {
+        foreach ($dataArray as $entityTable => $entityIds) {
+            //mark all previously related entries as '0' (un-categorized)
+            $statement = $this->sql->update($entityTable);
+            $statement->set(array($this->getPrefix() . 'id' => '0'));
+            $statement->where(
+                array(
+                    $this->getPrefix().'id' => $id,
+                )
+            );
+
+            $sqlString = $this->sql->getSqlStringForSqlObject($statement);
+            $this->adapter->query($sqlString, Adapter::QUERY_MODE_EXECUTE);
+
+            //Update all currently related entries (if any exist)
+            if (count($entityIds) > 0) {
+                $statement = $this->sql->update($entityTable);
+                $statement->set(array($this->getPrefix() . 'id' => $id));
+                $statement->where(
+                    array(
+                        'id' => $entityIds,
+                    )
+                );
+                $sqlString = $this->sql->getSqlStringForSqlObject($statement);
+                $this->adapter->query($sqlString, Adapter::QUERY_MODE_EXECUTE);
             }
         }
     }
