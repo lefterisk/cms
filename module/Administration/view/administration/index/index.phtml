@@ -22,13 +22,13 @@
                     <tr>
                         <td class="text-center"><input type="checkbox" name="multipleCheck" value="<?php echo $item->id ?>"/></td>
                         <?php foreach ($visibleListingFields as $field) : ?>
-                        <td><?php echo $item->$field ?></td>
+                        <td><?php echo $this->escapeHtml($item->$field); ?></td>
                         <?php endforeach; ?>
                         <?php foreach ($listingSwitches as $switch) : ?>
-                            <td><?php echo $item->$switch ?></td>
+                            <td><?php echo $this->escapeHtml($item->$switch); ?></td>
                         <?php endforeach; ?>
                         <td class="text-center" width="2%">
-                            <a href="" type="button" class="btn btn-xs btn-default">
+                            <a href="<?php echo $this->url('administration', array('action' => 'delete', 'model' => $model, 'item' => $this->escapeHtml($item->id) )); ?>" type="button" class="btn btn-xs btn-default">
                                 <span class="glyphicon  glyphicon-trash"></span>
                             </a>
                         </td>

@@ -444,4 +444,64 @@ class AbstractModelTable
             }
         }
     }
+
+    public function deleteSingle($itemId)
+    {
+        //Main Entity Table
+        $this->deleteFromEntityTable($itemId);
+        //Description Table IF it exists
+        if ($this->isMultilingual()) {
+            $this->deleteFromEntityDescriptionTable($itemId);
+        }
+        //Relations If they exist
+        if (count($this->getRelations()) > 0 ) {
+            foreach ($this->getRelations() as $relation) {
+                if ($relation->hasLookupColumn()) {
+                    //If relation is oneToMany the main delete query will take care of it
+                } elseif ($relation->hasLookUpTable() ) {
+                    //If relation is manyToMany
+                    $this->deleteFromLookUpTable($relation->getLookUpTableName(), $itemId);
+                } elseif ($relation->getRelationType() == 'oneToMany') {
+                    //If relation is oneToMany
+                    $this->deleteFromRelatedEntityTable($relation->activeModel->getTableName(), $itemId);
+                }
+            }
+        }
+        return true;
+    }
+
+    private function deleteFromEntityTable($itemId)
+    {
+        $statement = $this->sql->delete($this->getTableName())->where(array('id' => $itemId));
+        $sqlString = $this->sql->getSqlStringForSqlObject($statement);
+        $this->adapter->query($sqlString, Adapter::QUERY_MODE_EXECUTE);
+    }
+
+    private function deleteFromEntityDescriptionTable($itemId)
+    {
+        $statement = $this->sql->delete($this->getTableDescriptionName())->where(array($this->getPrefix().'id' => $itemId));
+        $sqlString = $this->sql->getSqlStringForSqlObject($statement);
+        $this->adapter->query($sqlString, Adapter::QUERY_MODE_EXECUTE);
+    }
+
+    private function deleteFromLookUpTable($lookUpTable, $itemId)
+    {
+        $statement = $this->sql->delete($lookUpTable)->where(array($this->getPrefix() . 'id' => $itemId));
+        $sqlString = $this->sql->getSqlStringForSqlObject($statement);
+        $this->adapter->query($sqlString, Adapter::QUERY_MODE_EXECUTE);
+    }
+
+    private function deleteFromRelatedEntityTable($relatedEntityTable, $itemId)
+    {
+        //mark all previously related entries as '0' (un-categorized)
+        $statement = $this->sql->update($relatedEntityTable);
+        $statement->set(array($this->getPrefix() . 'id' => '0'));
+        $statement->where(
+            array(
+                $this->getPrefix().'id' => $itemId,
+            )
+        );
+        $sqlString = $this->sql->getSqlStringForSqlObject($statement);
+        $this->adapter->query($sqlString, Adapter::QUERY_MODE_EXECUTE);
+    }
 }
