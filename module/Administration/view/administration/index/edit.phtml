@@ -19,12 +19,19 @@
                         <?php if (is_array($multilingualFields) && in_array($field , $multilingualFields)) : ?>
                             <?php foreach ($controlPanel->getSiteLanguages() as $languageId => $language): ?>
                                 <?php echo $form->getFormObject()->get($field . '[' . $languageId . ']')->getLabel() . '( ' . $language['name'] . ' )' ?>
-                                <?php echo $this->formElementErrors($form->getFormObject()->get($field . '[' . $languageId . ']')); ?>
+                                <div class="input-group"><?php echo $this->formElementErrors($form->getFormObject()->get($field . '[' . $languageId . ']')); ?></div>
                                 <?php echo $this->formElement($form->getFormObject()->get($field . '[' . $languageId . ']')); ?>
                             <?php endforeach; ?>
                         <?php else: ?>
-                            <?php echo $form->getFormObject()->get($field)->getLabel() ?>
-                            <?php echo $this->formElementErrors($form->getFormObject()->get($field)); ?>
+                            <?php echo $form->getFormObject()->get($field)->getLabel(); ?>
+                            <div class="input-group">
+                                <?php echo $this->formElementErrors($form->getFormObject()->get($field)); ?>
+                                <?php if (array_key_exists('data-type', $form->getFormObject()->get($field)->getAttributes())) : ?>ssss
+                                <span class="input-group-btn">
+                                    <a href="/filemanager/dialog.php?field_id=<?php ?>&type=1<?php  ?>" class="btn btn-default iframe-btn <?=$hidden;?>" type="button"><?=$btnlabel?></a>
+                                </span>
+                                <?php endif; ?>
+                            </div>
                             <?php echo $this->formElement($form->getFormObject()->get($field)); ?>
                         <?php endif; ?>
                     <?php endforeach; ?>

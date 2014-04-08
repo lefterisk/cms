@@ -574,8 +574,8 @@ class TableHandler extends AbstractModelTable implements InputFilterAwareInterfa
 
             } elseif (in_array($field, array_merge($this->getImages(), $this->getFiles(), $this->getMultilingualFiles()))) {
 
-                $type       = 'Zend\Form\Element\File';
-                $attributes = array('class' => 'form-control');
+                $type       = 'Zend\Form\Element\Text';
+                $attributes = array('class' => 'form-control', 'data-type'=>'image');
                 $name       = $field;
                 $label      = $field;
 
