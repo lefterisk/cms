@@ -13,13 +13,15 @@
         <!-- Le styles -->
         <?php echo $this->headLink(array('rel' => 'shortcut icon', 'type' => 'image/vnd.microsoft.icon', 'href' => $this->basePath() . '/img/favicon.ico'))
                         ->prependStylesheet($this->basePath() . '/css/style.css')
+                        ->prependStylesheet($this->basePath() . '/css/jquery.fancybox.css')
+                        ->prependStylesheet($this->basePath() . '/css/bootstrap-datetimepicker.min.css')
+                        ->prependStylesheet($this->basePath() . '/css/bootstrap-switch.min.css')
                         ->prependStylesheet($this->basePath() . '/css/bootstrap-theme.min.css')
                         ->prependStylesheet($this->basePath() . '/css/bootstrap.min.css') ?>
 
+
         <!-- Scripts -->
         <?php echo $this->headScript()
-            ->prependFile($this->basePath() . '/js/bootstrap.min.js')
-            ->prependFile($this->basePath() . '/js/jquery.min.js')
             ->prependFile($this->basePath() . '/js/respond.min.js', 'text/javascript', array('conditional' => 'lt IE 9',))
             ->prependFile($this->basePath() . '/js/html5shiv.js',   'text/javascript', array('conditional' => 'lt IE 9',))
         ; ?>
@@ -63,8 +65,8 @@
                         <div class="panel-heading">
                             <h3 class="panel-title"><?php echo $this->translate('Contents') ?></h3>
                         </div>
-                        <div class="panel-body">
-                           
+                        <div class="list-group">
+                            <a href="filemanager/dialog.php?type=0" class="list-group-item iframe-btn">Open Filemanager</a>
                         </div>
                     </div>
 
@@ -88,6 +90,12 @@
                 <p>&copy; 2005 - <?php echo date('Y') ?> by Zend Technologies Ltd. <?php echo $this->translate('All rights reserved.') ?></p>
             </footer>
         </div> <!-- /container -->
-        <?php echo $this->inlineScript() ?>
+        <?php echo $this->inlineScript()
+            ->offsetSetFile(100, $this->basePath() . '/js/jquery.min.js')
+            // Looking for plugin files? They've been moved into plugins.js
+            ->offsetSetFile(300, $this->basePath() . '/js/plugins.js')
+            ->offsetSetFile(400, $this->basePath() . '/js/tinymce/tinymce.min.js')
+            ->offsetSetFile(500, $this->basePath() . '/js/main.js')
+        ; ?>
     </body>
 </html>
