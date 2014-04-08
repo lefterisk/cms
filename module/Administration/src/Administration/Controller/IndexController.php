@@ -134,7 +134,7 @@ class IndexController extends AbstractActionController
                 $item = $this->component->getItemById($itemId);
             }
             catch (\Exception $ex) {
-                $this->redirectToComponentListing($itemId);
+                $this->redirectToComponentListing();
             }
             if ($item) {
                 $this->component->deleteSingle($itemId);
@@ -144,12 +144,53 @@ class IndexController extends AbstractActionController
         } else {
             $this->redirectToComponentListing();
         }
+        $this->redirectToComponentListing();
+    }
+
+    public function deleteMultipleAction()
+    {
+        $this->initializeComponent();
+        $request = $this->getRequest();
+
+        if ($request->isPost() && is_array($this->params()->fromPost('multipleDeleteCheck')) && count($this->params()->fromPost('multipleDeleteCheck')) > 0 ) {
+            foreach ($this->params()->fromPost('multipleDeleteCheck') as $idToDelete) {
+                try {
+                    $item = $this->component->getItemById($idToDelete);
+                }
+                catch (\Exception $ex) {
+
+                }
+                if ($item) {
+                    $this->component->deleteSingle($idToDelete);
+                } else {
+
+                }
+            }
+        }
+        $this->redirectToComponentListing();
     }
 
     protected function redirectToComponentListing() {
-        return $this->redirect()->toRoute('administration', array(
-            'action' => 'index',
-            'model'  => $this->params()->fromRoute('model')
+        $listingParams = array();
+        if ($this->params()->fromRoute('itemsperpage')) {
+            $listingParams['itemsperpage'] = $this->params()->fromRoute('itemsperpage');
+        }
+        if ($this->params()->fromRoute('page')) {
+            $listingParams['page'] = $this->params()->fromRoute('page');
+        }
+        if ($this->params()->fromRoute('order')) {
+            $listingParams['order'] = $this->params()->fromRoute('order');
+        }
+        if ($this->params()->fromRoute('direction')) {
+            $listingParams['direction'] = $this->params()->fromRoute('direction');
+        }
+
+        return $this->redirect()->toRoute('administration', array_merge(
+            $listingParams,
+            array(
+                'action' => 'index',
+                'model'  => $this->params()->fromRoute('model')
+            )
         ));
     }
 }

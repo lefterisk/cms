@@ -1,9 +1,15 @@
-
+<?php
+$form = new Zend\Form\Form();
+$form->setAttribute('action',  $this->url('administration', array('action' => 'delete-multiple', 'model' => $model)));
+$form->setAttribute('method', 'post');
+?>
     <div class="panel panel-default">
         <div class="panel-heading">
             <h3 class="panel-title"><?php echo $this->translate('Follow Development') ?></h3>
         </div>
         <div class="panel-body">
+            <?php $form->prepare(); ?>
+            <?php echo $this->form()->openTag($form); ?>
             <table class="table  table-striped" width="100%">
                 <thead>
                     <tr>
@@ -20,7 +26,7 @@
                 <tbody>
                 <?php foreach ($listing as $item ) : ?>
                     <tr>
-                        <td class="text-center"><input type="checkbox" name="multipleCheck" value="<?php echo $item->id ?>"/></td>
+                        <td class="text-center"><input type="checkbox" name="multipleDeleteCheck[]" value="<?php echo $item->id ?>"/></td>
                         <?php foreach ($visibleListingFields as $field) : ?>
                         <td><?php echo $this->escapeHtml($item->$field); ?></td>
                         <?php endforeach; ?>
@@ -41,7 +47,12 @@
                     <span class="glyphicon glyphicon-plus-sign"></span>
                     Add New
                 </a>
+                <button type="submit" class="btn btn-warning">
+                    <span class="glyphicon glyphicon-trash"></span>
+                    Delete selected
+                </button>
 
             </div>
+            <?php echo $this->form()->closeTag(); ?>
         </div>
     </div>
