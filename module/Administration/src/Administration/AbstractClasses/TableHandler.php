@@ -368,7 +368,7 @@ class TableHandler extends AbstractModelTable implements InputFilterAwareInterfa
 	 */
 	public function getAllNonMultilingualFields()
 	{
-		return array_merge($this->enums, $this->dates, $this->varchars, $this->texts, $this->longTexts, $this->integers, $this->customSelections);
+		return array_merge($this->enums, $this->dates, $this->varchars, $this->texts, $this->longTexts, $this->integers, $this->customSelections, $this->images, $this->files);
 	}
 	
 	/**
@@ -376,7 +376,7 @@ class TableHandler extends AbstractModelTable implements InputFilterAwareInterfa
 	 */
 	public function getAllMultilingualFields()
 	{
-		return array_merge($this->MultilingualVarchars, $this->MultilingualTexts, $this->MultilingualLongTexts, $this->getImageCaptions(), $this->getFileCaptions(), $this->getMultilingualFilesCaptions());
+		return array_merge($this->MultilingualVarchars, $this->MultilingualTexts, $this->MultilingualLongTexts, $this->MultilingualFiles, $this->getImageCaptions(), $this->getFileCaptions(), $this->getMultilingualFilesCaptions());
 	}
 
     /**
@@ -575,7 +575,7 @@ class TableHandler extends AbstractModelTable implements InputFilterAwareInterfa
             } elseif (in_array($field, array_merge($this->getImages(), $this->getFiles(), $this->getMultilingualFiles()))) {
 
                 $type       = 'Zend\Form\Element\Text';
-                $attributes = array('class' => 'form-control', 'data-type'=>'image');
+                $attributes = array('class' => 'form-control', 'data-type' => 'image', 'id' => $field);
                 $name       = $field;
                 $label      = $field;
 

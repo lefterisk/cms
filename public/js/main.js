@@ -18,9 +18,13 @@ var AppView = Backbone.View.extend({
             'width'     : 900,
             'height'    : 600,
             'type'      : 'iframe',
-            'autoSize'  : false,
-            'fitToView' : false,
+            'autoSize'  : true,
+            'fitToView' : true,
         });
+        $('.image-preview').fancybox({
+
+        });
+
     }
 });
 
