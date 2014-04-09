@@ -135,7 +135,7 @@ $ext = array_merge($ext_img, $ext_file, $ext_misc, $ext_video,$ext_music); //all
 /******************
  * AVIARY config
 *******************/
-$aviary_active 	= TRUE;
+$aviary_active 	= false;
 $aviary_key 	= "dvh8qudbp6yx2bnp";
 $aviary_secret	= "m6xaym5q42rpw433";
 $aviary_version	= 3;
@@ -158,7 +158,7 @@ $hidden_files = array('config.php');
 /*******************
  * JAVA upload 
  *******************/
-$java_upload = TRUE;
+$java_upload = false;
 $JAVAMaxSizeUpload = 200; //Gb
 
 

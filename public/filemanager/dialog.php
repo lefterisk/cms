@@ -1,4 +1,8 @@
 <?php
+if (!isset($_SERVER['HTTP_REFERER']) || (stristr($_SERVER['HTTP_REFERER'],'/cms') !== false && stristr($_SERVER['HTTP_REFERER'],'/filemanager') !== false)) {
+    die('Sorry, access to the filemanager is denied outside of the CMS');
+}
+
 include('config/config.php');
 
 if (USE_ACCESS_KEYS == TRUE){

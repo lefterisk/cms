@@ -29,21 +29,26 @@ class IndexController extends AbstractActionController
     public function indexAction()
     {
     	$this->initializeComponent();
-
-        return new ViewModel(
-            array(
-                'listing' => $this->component->getListing(
-                    ($this->params()->fromRoute('itemsperpage'))? $this->params()->fromRoute('itemsperpage'): 20,
-                    ($this->params()->fromRoute('page'))        ? $this->params()->fromRoute('page'): 1,
-                    ($this->params()->fromRoute('order'))       ? $this->params()->fromRoute('order'): null,
-                    ($this->params()->fromRoute('direction'))   ? $this->params()->fromRoute('direction'): null
-                ),
-                'visibleListingFields' => $this->component->getListingFields(),
-                'listingSwitches'      => $this->component->getListingSwitches(),
-                'model'                => $this->params()->fromRoute('model'),
-                'controlPanel'         => $this->controlPanel,
-            )
-        );
+        if ($this->isGenericComponent()) {
+            $viewModel = new ViewModel(
+                array(
+                    'listing' => $this->component->getListing(
+                            ($this->params()->fromRoute('itemsperpage'))? $this->params()->fromRoute('itemsperpage'): 20,
+                            ($this->params()->fromRoute('page'))        ? $this->params()->fromRoute('page'): 1,
+                            ($this->params()->fromRoute('order'))       ? $this->params()->fromRoute('order'): null,
+                            ($this->params()->fromRoute('direction'))   ? $this->params()->fromRoute('direction'): null
+                        ),
+                    'visibleListingFields' => $this->component->getListingFields(),
+                    'listingSwitches'      => $this->component->getListingSwitches(),
+                    'model'                => $this->params()->fromRoute('model'),
+                    'controlPanel'         => $this->controlPanel,
+                )
+            );
+        } else {
+            $viewModel = new ViewModel();
+            $viewModel->setTemplate('administration/index/'.$this->params()->fromRoute('model').'.phtml');
+        }
+        return $viewModel;
     }
 
     public function addAction()
@@ -169,7 +174,8 @@ class IndexController extends AbstractActionController
         $this->redirectToComponentListing();
     }
 
-    protected function redirectToComponentListing() {
+    protected function redirectToComponentListing()
+    {
         $listingParams = array();
         if ($this->params()->fromRoute('itemsperpage')) {
             $listingParams['itemsperpage'] = $this->params()->fromRoute('itemsperpage');
@@ -191,5 +197,14 @@ class IndexController extends AbstractActionController
                 'model'  => $this->params()->fromRoute('model')
             )
         ));
+    }
+
+    protected function isGenericComponent()
+    {
+        if (method_exists($this->component ,'genericComponent')) {
+            return true;
+        } else {
+            return false;
+        }
     }
 }

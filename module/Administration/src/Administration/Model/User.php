@@ -27,7 +27,7 @@ class User  extends TableHandler
 		$this->setFiles(array());
 		$this->setMultilingualVarchars(array('title'));
 //		$this->setMultilingualTexts(array('description'));
-//		$this->setMultilingualLongTexts(array('longDescription'));
+		$this->setMultilingualLongTexts(array('longDescription'));
 //		$this->setMultilingualFiles(array('multiLangfile'));
 //		$this->setRequiredFields(array());
 //		$this->setMultilingualRequiredFields(array());

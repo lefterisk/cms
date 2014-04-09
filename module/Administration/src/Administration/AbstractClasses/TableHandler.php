@@ -575,7 +575,12 @@ class TableHandler extends AbstractModelTable implements InputFilterAwareInterfa
             } elseif (in_array($field, array_merge($this->getImages(), $this->getFiles(), $this->getMultilingualFiles()))) {
 
                 $type       = 'Zend\Form\Element\Text';
-                $attributes = array('class' => 'form-control', 'data-type' => 'image', 'id' => $field);
+                $attributes = array('class' => 'form-control', 'id' => $field);
+                if (in_array($field, $this->getImages())) {
+                    $attributes = array_merge($attributes,array('data-type' => 'image'));
+                } else {
+                    $attributes = array_merge($attributes,array('data-type' => 'file'));
+                }
                 $name       = $field;
                 $label      = $field;
 
@@ -642,7 +647,14 @@ class TableHandler extends AbstractModelTable implements InputFilterAwareInterfa
     {
         return $this->followRelations;
     }
-	
+
+    /*
+     * Just for checking if this is a generic component
+     */
+    public function genericComponent()
+    {
+        return true;
+    }
 
 	////////////////////////////////////////////////////////////////
 	// Setter Methods
