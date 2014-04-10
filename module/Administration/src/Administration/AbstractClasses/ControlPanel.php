@@ -13,6 +13,7 @@ class ControlPanel
     private $sql;
     protected $siteLanguagesArray  = array();
     protected $adminLanguagesArray = array();
+    protected $logged = false;
 
     public function __construct($adapter)
     {
@@ -20,6 +21,14 @@ class ControlPanel
         $this->sql     = new Sql($this->adapter);
         $this->initialiseSiteLanguages();
         //$this->initialiseSiteLanguages();
+        $this->initialiseLoginProcess();
+    }
+
+    private function initialiseLoginProcess()
+    {
+        if (!isset($_SESSION['sessionHash'])) {
+
+        }
     }
 
     private function  initialiseAdminLanguages()
@@ -58,6 +67,11 @@ class ControlPanel
         } else {
             throw new Exception\InvalidArgumentException('Something is wrong with your site setup. No Site Languages are detected!');
         }
+    }
+
+    public function isUserLogged()
+    {
+        return $this->logged;
     }
 
     public function getSiteLanguages()

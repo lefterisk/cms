@@ -22,6 +22,9 @@ class IndexController extends AbstractActionController
     protected function initializeComponent()
     {
         $this->controlPanel = new ControlPanel($this->getServiceLocator()->get('Zend\Db\Adapter\Adapter'));
+        if (!$this->controlPanel->isUserLogged() && $this->params()->fromRoute('model') != 'login' ) {
+            return $this->redirect()->toRoute('administration', array('model'  => 'login'));
+        }
         $model              = 'Administration\\Model\\'.$this->params()->fromRoute('model');
         $this->component    = new $model($this->getServiceLocator()->get('Zend\Db\Adapter\Adapter'), $this->controlPanel);
     }
@@ -44,6 +47,9 @@ class IndexController extends AbstractActionController
                     'controlPanel'         => $this->controlPanel,
                 )
             );
+        } elseif ($this->params()->fromRoute('model') == 'login') {
+            $viewModel = new ViewModel();
+            $viewModel->setTemplate('layout/login.phtml');
         } else {
             $viewModel = new ViewModel();
             $viewModel->setTemplate('administration/index/'.$this->params()->fromRoute('model').'.phtml');
@@ -172,6 +178,11 @@ class IndexController extends AbstractActionController
             }
         }
         $this->redirectToComponentListing();
+    }
+
+    public function loginAction()
+    {
+
     }
 
     protected function redirectToComponentListing()
