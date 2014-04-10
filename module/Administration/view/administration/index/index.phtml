@@ -28,7 +28,7 @@ $form->setAttribute('method', 'post');
                     <tr>
                         <td class="text-center"><input type="checkbox" name="multipleDeleteCheck[]" value="<?php echo $item->id ?>"/></td>
                         <?php foreach ($visibleListingFields as $field) : ?>
-                        <td><?php echo $this->escapeHtml($item->$field); ?></td>
+                        <td><a href="<?php echo $this->url('administration', array('action' => 'edit', 'model' => $model, 'item' => $this->escapeHtml($item->id) )); ?>" ><?php echo $this->escapeHtml($item->$field); ?></a></td>
                         <?php endforeach; ?>
                         <?php foreach ($listingSwitches as $switch) : ?>
                             <td><?php echo $this->escapeHtml($item->$switch); ?></td>

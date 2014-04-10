@@ -604,6 +604,9 @@ class TableHandler extends AbstractModelTable implements InputFilterAwareInterfa
 
             if (in_array($field, $this->getAllMultilingualFields())) {
                 foreach ($this->controlPanel->getSiteLanguages() as $languageId => $language) {
+                    if (array_key_exists('id', $attributes)) {
+                        $attributes['id'] = $attributes['id'] . '-' . $languageId;
+                    }
                     $form->add(array(
                         'type' => $type,
                         'name' => $name . '[' . $languageId . ']',
