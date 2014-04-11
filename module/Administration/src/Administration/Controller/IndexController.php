@@ -13,6 +13,8 @@ use Zend\Mvc\Controller\AbstractActionController;
 use Zend\View\Model\ViewModel;
 use Administration\Model;
 use Administration\AbstractClasses\ControlPanel;
+use Zend\Db\TableGateway\Exception;
+
 
 class IndexController extends AbstractActionController
 {
@@ -22,9 +24,6 @@ class IndexController extends AbstractActionController
     protected function initializeComponent()
     {
         $this->controlPanel = new ControlPanel($this->getServiceLocator()->get('Zend\Db\Adapter\Adapter'));
-        if (!$this->controlPanel->isUserLogged() && $this->params()->fromRoute('model') != 'login' ) {
-            return $this->redirect()->toRoute('administration', array('model'  => 'login'));
-        }
         $model              = 'Administration\\Model\\'.$this->params()->fromRoute('model');
         $this->component    = new $model($this->getServiceLocator()->get('Zend\Db\Adapter\Adapter'), $this->controlPanel);
     }
@@ -32,26 +31,32 @@ class IndexController extends AbstractActionController
     public function indexAction()
     {
     	$this->initializeComponent();
+
+        if (!$this->controlPanel->isUserLogged() && $this->params()->fromRoute('model') != 'login') {
+            return $this->redirect()->toRoute('administration', array('model'  => 'login'));
+        }
+
         if ($this->isGenericComponent()) {
             $viewModel = new ViewModel(
                 array(
                     'listing' => $this->component->getListing(
-                            ($this->params()->fromRoute('itemsperpage'))? $this->params()->fromRoute('itemsperpage'): 20,
-                            ($this->params()->fromRoute('page'))        ? $this->params()->fromRoute('page'): 1,
-                            ($this->params()->fromRoute('order'))       ? $this->params()->fromRoute('order'): null,
-                            ($this->params()->fromRoute('direction'))   ? $this->params()->fromRoute('direction'): null
-                        ),
+                        ($this->params()->fromRoute('itemsperpage'))? $this->params()->fromRoute('itemsperpage'): 20,
+                        ($this->params()->fromRoute('page'))        ? $this->params()->fromRoute('page'): 1,
+                        ($this->params()->fromRoute('order'))       ? $this->params()->fromRoute('order'): null,
+                        ($this->params()->fromRoute('direction'))   ? $this->params()->fromRoute('direction'): null
+                    ),
                     'visibleListingFields' => $this->component->getListingFields(),
                     'listingSwitches'      => $this->component->getListingSwitches(),
                     'model'                => $this->params()->fromRoute('model'),
                     'controlPanel'         => $this->controlPanel,
                 )
             );
-        } elseif ($this->params()->fromRoute('model') == 'login') {
-            $viewModel = new ViewModel();
-            $viewModel->setTemplate('layout/login.phtml');
         } else {
-            $viewModel = new ViewModel();
+            if (method_exists($this->component ,'getViewVariablesArray')) {
+                $viewModel = new ViewModel(array_merge($this->component->getViewVariablesArray(),array()));
+            } else {
+                throw new Exception\InvalidArgumentException('All non generic components must extend the CustomComponent Interface (you are missing the ViewVariablesArray method)');
+            }
             $viewModel->setTemplate('administration/index/'.$this->params()->fromRoute('model').'.phtml');
         }
         return $viewModel;
@@ -60,6 +65,10 @@ class IndexController extends AbstractActionController
     public function addAction()
     {
         $this->initializeComponent();
+
+        if (!$this->controlPanel->isUserLogged()) {
+            return $this->redirect()->toRoute('administration', array('model'  => 'login'));
+        }
 
         $request = $this->getRequest();
         $form    = $this->component->getForm();
@@ -89,6 +98,10 @@ class IndexController extends AbstractActionController
     public function editAction()
     {
         $this->initializeComponent();
+
+        if (!$this->controlPanel->isUserLogged()) {
+            return $this->redirect()->toRoute('administration', array('model'  => 'login'));
+        }
 
         $request = $this->getRequest();
         $form    = $this->component->getForm();
@@ -138,6 +151,11 @@ class IndexController extends AbstractActionController
     public function deleteAction()
     {
         $this->initializeComponent();
+
+        if (!$this->controlPanel->isUserLogged()) {
+            return $this->redirect()->toRoute('administration', array('model'  => 'login'));
+        }
+
         $itemId = $this->params()->fromRoute('item');
         if ( !empty( $itemId )) {
             try {
@@ -160,6 +178,11 @@ class IndexController extends AbstractActionController
     public function deleteMultipleAction()
     {
         $this->initializeComponent();
+
+        if (!$this->controlPanel->isUserLogged()) {
+            return $this->redirect()->toRoute('administration', array('model'  => 'login'));
+        }
+
         $request = $this->getRequest();
 
         if ($request->isPost() && is_array($this->params()->fromPost('multipleDeleteCheck')) && count($this->params()->fromPost('multipleDeleteCheck')) > 0 ) {
@@ -182,7 +205,23 @@ class IndexController extends AbstractActionController
 
     public function loginAction()
     {
+        $this->initializeComponent();
 
+        $request = $this->getRequest();
+
+        $email     = $this->params()->fromPost('email');
+        $password  = $this->params()->fromPost('password');
+
+        //if user-pass is set and login info validates
+        if ($request->isPost() && $email && $password) {
+            $this->controlPanel->attemptAdminLogin($email, $password);
+        }
+
+        if (!$this->controlPanel->isUserLogged()) {
+            return $this->redirect()->toRoute('administration', array('model'  => 'login'));
+        } else {
+            return $this->redirect()->toRoute('administration', array('model'  => 'home'));
+        }
     }
 
     protected function redirectToComponentListing()

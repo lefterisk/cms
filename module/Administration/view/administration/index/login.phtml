@@ -1,0 +1,18 @@
+<div class="container">
+    <div class="row">
+        <div class="col-sm-6 col-md-4 col-md-offset-4">
+            <h1 class="text-center login-title">Sign in to continue </h1>
+            <div class="account-wall">
+                <img class="profile-img" src="<?php echo $this->basePath('img/generic_user.png') ?>" alt="">
+                <form class="form-signin" action="<?php echo $this->url('administration', array('action' => 'login', 'model' => 'login')); ?>" method="post">
+                    <input type="text" name="email" class="form-control" placeholder="Email" required autofocus>
+                    <input type="password" name="password" class="form-control" placeholder="Password" required>
+                    <label class="checkbox">
+                        <input type="checkbox" value="remember-me"> Remember me
+                    </label>
+                    <button class="btn btn-lg btn-primary btn-block" type="submit">Sign in</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

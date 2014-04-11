@@ -1,15 +1,20 @@
 <?php 
 namespace Administration\Model;
 
-use Zend\Mvc\Controller\AbstractActionController;
+use Administration\ModelInterface\CustomComponentInterface;
 
-class Login
+class Login implements CustomComponentInterface
 {
-	protected $variable;
+	protected $viewVariables = array();
 
-	public function __construct()
+	public function __construct($dbAdapter, $controlPanel)
     {
         
 
+    }
+
+    public function getViewVariablesArray()
+    {
+        return $this->viewVariables;
     }
 }
