@@ -20,12 +20,16 @@ class IndexController extends AbstractActionController
 {
     protected $controlPanel;
     protected $component;
+    protected $authservice;
 
     protected function initializeComponent()
     {
         $this->controlPanel = new ControlPanel($this->getServiceLocator()->get('Zend\Db\Adapter\Adapter'));
         $model              = 'Administration\\Model\\'.$this->params()->fromRoute('model');
         $this->component    = new $model($this->getServiceLocator()->get('Zend\Db\Adapter\Adapter'), $this->controlPanel);
+        if (! $this->authservice) {
+            $this->authservice = $this->getServiceLocator()->get('AuthService');
+        }
     }
 
     public function indexAction()
@@ -214,8 +218,22 @@ class IndexController extends AbstractActionController
 
         //if user-pass is set and login info validates
         if ($request->isPost() && $email && $password) {
-            $this->controlPanel->attemptAdminLogin($email, $password);
+            $this->authservice->getAdapter()->setIdentity($email);
+            $this->authservice->getAdapter()->setCredential($password);
+            $result = $this->authservice->authenticate();
+
+            foreach($result->getMessages() as $message)
+            {
+                //save message temporary into flashmessenger
+                $this->flashmessenger()->addMessage($message);
+            }
+            //$this->controlPanel->attemptAdminLogin($email, $password);
         }
+        echo 'before<br/>';
+        //var_dump($this->authservice->getStorage());
+        //$this->authservice->clearIdentity();
+        var_dump($_SESSION);
+        exit();
 
         if (!$this->controlPanel->isUserLogged()) {
             return $this->redirect()->toRoute('administration', array('model'  => 'login'));

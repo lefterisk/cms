@@ -11,9 +11,11 @@ namespace Administration;
 
 use Zend\Mvc\ModuleRouteListener;
 use Zend\Mvc\MvcEvent;
-use Administration\AbstractClasses\AbstractModelTable;
-use Zend\Db\ResultSet\ResultSet;
-use Zend\Db\TableGateway\TableGateway;
+use Administration\Authentication\Adapter\UserAuthAdapter;
+use Administration\Authentication\Storage\DatabaseStorage;
+use Zend\Authentication\AuthenticationService;
+use Zend\Authentication\Storage\Session;
+use Zend\Authentication\Storage\Chain;
 
 class Module
 {
@@ -58,6 +60,25 @@ class Module
                     $dbAdapter = $sm->get('Zend\Db\Adapter\Adapter');
                     return $dbAdapter;
                 },
+                'DbAuthStorage' => function ($sm) {
+                    $dbAdapter       = $sm->get('Zend\Db\Adapter\Adapter');
+                    $databaseStorage = new DatabaseStorage($dbAdapter, 'userSession', 'email');
+                    return $databaseStorage;
+                },
+                'AuthService' => function ($sm) {
+                    $dbAdapter           = $sm->get('Zend\Db\Adapter\Adapter');
+                    $dbTableAuthAdapter  = new UserAuthAdapter($dbAdapter, 'user','email','password');
+                    $sessionStorage      = new Session();
+
+                    $authService = new AuthenticationService();
+                    $authService->setAdapter($dbTableAuthAdapter);
+                    $storage = new Chain;
+                    $storage->add($sessionStorage);
+                    $storage->add($sm->get('DbAuthStorage'));
+                    $authService->setStorage($storage);
+
+                    return $authService;
+                }
             ),
         );
     }
