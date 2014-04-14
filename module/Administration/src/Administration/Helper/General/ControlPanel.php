@@ -1,34 +1,26 @@
 <?php
-namespace Administration\AbstractClasses;
+namespace Administration\Helper\General;
 
 use Zend\Db\Adapter\Adapter;
 use Zend\Db\TableGateway\Exception;
-use Zend\Db\Sql\Select;
 use Zend\Db\Sql\Sql;
-use Zend\Crypt\Password\Bcrypt;
-use Zend\Db\Sql\Expression;
 use Zend\Session\Container;
 
 class ControlPanel
 {
     private $adapter;
     private $sql;
-    private $sessionTable = 'userSession';
-    private $userTable    = 'user';
-    private $session;
+    private $auth;
     protected $siteLanguagesArray  = array();
     protected $adminLanguagesArray = array();
-    protected $logged = false;
 
-    public function __construct($adapter)
+    public function __construct($adapter, $authentication)
     {
         $this->adapter = $adapter;
+        $this->auth    = $authentication;
         $this->sql     = new Sql($this->adapter);
-        $this->session = new Container('user');
-        //$this->maintainSessionTable();
         $this->initialiseSiteLanguages();
         //$this->initialiseSiteLanguages();
-        //$this->initialiseAdminLoginCheck();
     }
 
     private function  initialiseAdminLanguages()
@@ -90,6 +82,11 @@ class ControlPanel
         return $this->adminLanguagesArray;
     }
 
+    public function getAuthService()
+    {
+        return $this->auth;
+    }
+
     public function getDefaultAdminLanguageId()
     {
         foreach ($this->getAdminLanguages() as $key => $language) {
@@ -100,7 +97,4 @@ class ControlPanel
         //if no default language is detected then throw exception
         throw new Exception\InvalidArgumentException('Something is wrong with your site setup. No Default Admin Language was detected!');
     }
-
-
 }
-

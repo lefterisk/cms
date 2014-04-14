@@ -1,6 +1,6 @@
 <?php
 
-namespace Administration\Authentication\Adapter;
+namespace Administration\Helper\Authentication\Adapter;
 
 use Zend\Authentication\Adapter\AdapterInterface;
 use Zend\Authentication\Adapter\DbTable\AbstractAdapter;
@@ -21,7 +21,8 @@ class UserAuthAdapter extends AbstractAdapter implements AdapterInterface
     protected function authenticateValidateResult($resultIdentity)
     {
         if ($this->verifyPassword($this->getCredential(), $resultIdentity[$this->credentialColumn])) {
-            return new Result(Result::SUCCESS, $this->getIdentity(), array( $this->getIdentity() . ' authentication successful'));
+            unset($resultIdentity[$this->credentialColumn]);
+            return new Result(Result::SUCCESS, $resultIdentity, array( $this->getIdentity() . ' authentication successful'));
         } else {
             return new Result(Result::FAILURE_CREDENTIAL_INVALID, $this->getIdentity(), array( $this->getIdentity() . ' invalid credentials'));
         }

@@ -11,11 +11,16 @@ namespace Administration;
 
 use Zend\Mvc\ModuleRouteListener;
 use Zend\Mvc\MvcEvent;
-use Administration\Authentication\Adapter\UserAuthAdapter;
-use Administration\Authentication\Storage\DatabaseStorage;
+use Administration\Helper\Authentication\Adapter\UserAuthAdapter;
+use Administration\Helper\Authentication\Storage\SessionDBStorage;
 use Zend\Authentication\AuthenticationService;
-use Zend\Authentication\Storage\Session;
-use Zend\Authentication\Storage\Chain;
+use Zend\Db\TableGateway\TableGateway;
+use Zend\Session\SaveHandler\DbTableGateway;
+use Zend\Session\SaveHandler\DbTableGatewayOptions;
+use Zend\Session\SessionManager;
+use Zend\Session\Config\SessionConfig;
+use Administration\Helper\General\ControlPanel;
+
 
 class Module
 {
@@ -53,32 +58,41 @@ class Module
     }
 
     public function getServiceConfig()
-     {
+    {
         return array(
             'factories' => array(
                 'DbAdapter' => function ($sm) {
                     $dbAdapter = $sm->get('Zend\Db\Adapter\Adapter');
                     return $dbAdapter;
                 },
-                'DbAuthStorage' => function ($sm) {
-                    $dbAdapter       = $sm->get('Zend\Db\Adapter\Adapter');
-                    $databaseStorage = new DatabaseStorage($dbAdapter, 'userSession', 'email');
-                    return $databaseStorage;
+                'SessionSaveHandler' => function ($sm) {
+                    $dbAdapter     = $sm->get('DbAdapter');
+                    $tableGateway  = new TableGateway('Session', $dbAdapter);
+                    $saveHandler   = new DbTableGateway($tableGateway, new DbTableGatewayOptions());
+                    return $saveHandler;
+                 },
+                'AuthStorage' => function($sm) {
+                    $manager       = new SessionManager();
+                    $sessionConfig = new SessionConfig();
+                    $saveHandler   = $sm->get('SessionSaveHandler');
+                    $saveHandler->open($sessionConfig->getOption('save_path'), 'user');
+                    $manager->setSaveHandler($saveHandler);
+                    $authStorage   = new SessionDBStorage('user', null, $manager);
+                    return $authStorage;
                 },
                 'AuthService' => function ($sm) {
-                    $dbAdapter           = $sm->get('Zend\Db\Adapter\Adapter');
+                    $dbAdapter           = $sm->get('DbAdapter');
                     $dbTableAuthAdapter  = new UserAuthAdapter($dbAdapter, 'user','email','password');
-                    $sessionStorage      = new Session();
-
-                    $authService = new AuthenticationService();
-                    $authService->setAdapter($dbTableAuthAdapter);
-                    $storage = new Chain;
-                    $storage->add($sessionStorage);
-                    $storage->add($sm->get('DbAuthStorage'));
-                    $authService->setStorage($storage);
-
+                    $storage             = $sm->get('AuthStorage');
+                    $authService         = new AuthenticationService($storage, $dbTableAuthAdapter);
                     return $authService;
-                }
+                },
+                'ControlPanel' => function ($sm) {
+                    $dbAdapter    = $sm->get('DbAdapter');
+                    $authService  = $sm->get('AuthService');
+                    $controlPanel = new ControlPanel($dbAdapter, $authService);
+                    return $controlPanel;
+                },
             ),
         );
     }

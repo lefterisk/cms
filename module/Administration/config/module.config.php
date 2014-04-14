@@ -81,4 +81,20 @@ return array(
             ),
         ),
     ),
+    'session' => array(
+        'config' => array(
+            'class' => 'Zend\Session\Config\SessionConfig',
+            'options' => array(
+                'name' => 'cms',
+            ),
+        ),
+        'save_handler' => 'SessionSaveHandler',
+        'storage' => 'Zend\Session\Storage\SessionArrayStorage',
+        'validators' => array(
+            array(
+                'Zend\Session\Validator\RemoteAddr',
+                'Zend\Session\Validator\HttpUserAgent',
+            ),
+        ),
+    ),
 );
