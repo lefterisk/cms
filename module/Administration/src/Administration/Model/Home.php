@@ -1,13 +1,13 @@
 <?php 
 namespace Administration\Model;
 
-use Administration\ModelInterface\CustomComponentInterface;
+use Administration\Helper\Model\CustomModelInterface;
 
-class Home implements CustomComponentInterface
+class Home implements CustomModelInterface
 {
     protected $viewVariables = array();
 
-	public function __construct($dbAdapter, $controlPanel)
+	public function __construct($controlPanel)
     {
         
 

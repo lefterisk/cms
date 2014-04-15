@@ -1,16 +1,17 @@
 <?php 
 namespace Administration\Model;
 
-use Administration\AbstractClasses\TableHandler;
-use Administration\AbstractClasses\RelationsHandler;
+use Administration\Helper\Model\CustomSelectionHandler;
+use Administration\Helper\Model\TableHandler;
+use Administration\Helper\Model\RelationsHandler;
 
 class UserGroup  extends TableHandler
 {
 	public $manager;
 
-    public function __construct($dbAdapter, $controlPanel, $followRelations = true)
+    public function __construct($controlPanel, $followRelations = true)
     {
-        parent::__construct('UserGroup', $dbAdapter, $controlPanel);
+        parent::__construct('UserGroup', $controlPanel);
 
         $this->setListingFields(array("name"));
         $this->setPrefix("user_group_");
@@ -31,6 +32,13 @@ class UserGroup  extends TableHandler
 //		$this->setMultilingualFiles(array('multiLangfile'));
 //		$this->setRequiredFields(array());
 //		$this->setMultilingualRequiredFields(array());
+
+        $optionsArray = array();
+        foreach ($this->controlPanel->getExistingModelsArray() as $modelName) {
+            $optionsArray[$modelName] = $modelName;
+        }
+
+        $this->setCustomSelections(array($customSelect = new CustomSelectionHandler('group_view_permission', $optionsArray, true, 'UserGroupsPermission') ));
 		$this->setRelations(array($user = new RelationsHandler('User','oneToMany','email')));
         $this->finaliseTable();
 //		$this->setMetaTitle();

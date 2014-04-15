@@ -1,8 +1,8 @@
 <?php 
 namespace Administration\Model;
 
-use Administration\AbstractClasses\TableHandler;
-use Administration\AbstractClasses\RelationsHandler;
+use Administration\Helper\Model\TableHandler;
+use Administration\Helper\Model\RelationsHandler;
 use Zend\InputFilter\InputFilter;
 use Zend\InputFilter\InputFilterAwareInterface;
 use Zend\InputFilter\InputFilterInterface;
@@ -10,9 +10,9 @@ use Zend\InputFilter\InputFilterInterface;
 class SiteLanguage  extends TableHandler implements InputFilterAwareInterface
 {
 
-    public function __construct($dbAdapter, $controlPanel, $followRelations = true)
+    public function __construct($controlPanel, $followRelations = true)
     {
-        parent::__construct('SiteLanguage', $dbAdapter, $controlPanel);
+        parent::__construct('SiteLanguage', $controlPanel);
 
         $this->setListingFields(array("name"));
         $this->setListingSwitches(array("status" , "default"));

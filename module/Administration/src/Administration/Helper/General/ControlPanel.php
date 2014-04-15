@@ -5,14 +5,17 @@ use Zend\Db\Adapter\Adapter;
 use Zend\Db\TableGateway\Exception;
 use Zend\Db\Sql\Sql;
 use Zend\Session\Container;
+use Zend\Code\Scanner\DirectoryScanner;
 
 class ControlPanel
 {
-    private $adapter;
-    private $sql;
-    private $auth;
+    protected $adapter;
+    protected $sql;
+    protected $auth;
     protected $siteLanguagesArray  = array();
     protected $adminLanguagesArray = array();
+    protected $modelRootPath;
+
 
     public function __construct($adapter, $authentication)
     {
@@ -20,6 +23,8 @@ class ControlPanel
         $this->auth    = $authentication;
         $this->sql     = new Sql($this->adapter);
         $this->initialiseSiteLanguages();
+
+
         //$this->initialiseSiteLanguages();
     }
 
@@ -82,11 +87,6 @@ class ControlPanel
         return $this->adminLanguagesArray;
     }
 
-    public function getAuthService()
-    {
-        return $this->auth;
-    }
-
     public function getDefaultAdminLanguageId()
     {
         foreach ($this->getAdminLanguages() as $key => $language) {
@@ -96,5 +96,31 @@ class ControlPanel
         }
         //if no default language is detected then throw exception
         throw new Exception\InvalidArgumentException('Something is wrong with your site setup. No Default Admin Language was detected!');
+    }
+
+    public function getAuthService()
+    {
+        return $this->auth;
+    }
+
+    public function getDbAdapter()
+    {
+        return $this->adapter;
+    }
+
+    public function getSQL()
+    {
+        return $this->sql;
+    }
+
+    public function getExistingModelsArray()
+    {
+        $scanner = new DirectoryScanner(__DIR__ . '/../../Model/');
+        $models = array();
+        foreach ($scanner->getClassNames() as $fullName) {
+            $explodedNameArray = explode('\\', $fullName);
+            $models[] = array_pop($explodedNameArray);
+        }
+        return $models;
     }
 }

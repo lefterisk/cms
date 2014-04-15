@@ -1,5 +1,5 @@
 <?php
-namespace Administration\AbstractClasses;
+namespace Administration\Helper\Model;
 
 use Zend\Db\TableGateway\Exception;
 use Zend\Form\Form;

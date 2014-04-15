@@ -1,15 +1,14 @@
 <?php
-namespace Administration\AbstractClasses;
+namespace Administration\Helper\Model;
 
 use Zend\Db\TableGateway\Exception;
 use Zend\Form\Element;
 use Zend\Form\Form;
-use Zend\Db\Sql\Sql;
 use Zend\InputFilter\InputFilter;
 use Zend\InputFilter\InputFilterAwareInterface;
 use Zend\InputFilter\InputFilterInterface;
 
-class TableHandler extends AbstractModelTable implements InputFilterAwareInterface
+class TableHandler extends GenericModelTableGateway implements InputFilterAwareInterface
 {
 	//Table properties
 	private $tableName;
@@ -82,11 +81,11 @@ class TableHandler extends AbstractModelTable implements InputFilterAwareInterfa
 	/**
 	 * Instantiates a new TableHandler object
 	 */
-	public function __construct($tableName, $dbAdapter, $controlPanel = null)
+	public function __construct($tableName, $controlPanel)
 	{
-        $this->adapter = $dbAdapter;
-        $this->sql     = new Sql($this->adapter);
         $this->controlPanel = $controlPanel;
+        $this->adapter      = $this->controlPanel->getDbAdapter();
+        $this->sql          = $this->controlPanel->getSQL();
         $this->setTableName($tableName);
         $this->setTableDescriptionName($tableName.'Description');
 	}
@@ -398,7 +397,7 @@ class TableHandler extends AbstractModelTable implements InputFilterAwareInterfa
 	 */
 	public function getSimpleFields()
 	{
-		$simpleFields = array_merge($this->dates, $this->varchars, $this->enums, $this->customSelections, $this->customFields, $this->integers, $this->texts, $this->MultilingualVarchars, $this->MultilingualTexts);
+		$simpleFields = array_merge($this->dates, $this->varchars, $this->enums, $this->customFields, $this->integers, $this->texts, $this->MultilingualVarchars, $this->MultilingualTexts);
 		// Treat Meta Fields seperately
 		for ($i=0; $i<count($simpleFields); $i++)
 		{
@@ -411,7 +410,7 @@ class TableHandler extends AbstractModelTable implements InputFilterAwareInterfa
 	}
 
     /**
-     * Returns Relations Fields.
+     * Returns Relations Field names
      */
     public function getRelationsFields()
     {
@@ -420,6 +419,18 @@ class TableHandler extends AbstractModelTable implements InputFilterAwareInterfa
             $relationsFields[] = $relation->inputFieldName;
         }
         return $relationsFields;
+    }
+
+    /**
+     * Returns Custom Selections Field names.
+     */
+    public function getCustomSelectionFields()
+    {
+        $customSelectionFields = array();
+        foreach ($this->getCustomSelections() as $select) {
+            $customSelectionFields[] = $select->getFieldName();
+        }
+        return $customSelectionFields;
     }
 	
 	/**
@@ -466,7 +477,7 @@ class TableHandler extends AbstractModelTable implements InputFilterAwareInterfa
      */
     public function getAllFields()
     {
-        return array_merge($this->getSimpleFields(), $this->getAdvancedFields(), $this->getAllFileFields(), $this->getRelations());
+        return array_merge($this->getSimpleFields(), $this->getAdvancedFields(), $this->getAllFileFields(), $this->getRelations(), $this->getCustomSelections());
     }
 
     /**
@@ -486,6 +497,12 @@ class TableHandler extends AbstractModelTable implements InputFilterAwareInterfa
             foreach ($this->getRelations() as $relation) {
                 $inputFilter->add(array(
                     'name' => $relation->inputFieldName,
+                    'required' => false,
+                ));
+            }
+            foreach ($this->getCustomSelections() as $selection) {
+                $inputFilter->add(array(
+                    'name' => $selection->getFieldName(),
                     'required' => false,
                 ));
             }
@@ -513,7 +530,7 @@ class TableHandler extends AbstractModelTable implements InputFilterAwareInterfa
     {
         $this->tableFormManager = new FormManager($this->getFormObject());
         if (count($this->getSimpleFields()) > 0 ) {
-            $this->tableFormManager->addTab('Tab1', array_merge($this->getSimpleFields(), $this->getRelationsFields(), array('id')));
+            $this->tableFormManager->addTab('Tab1', array_merge($this->getSimpleFields(), $this->getRelationsFields(), $this->getCustomSelectionFields(), array('id')));
         }
         if (count($this->getAdvancedFields()) > 0 ) {
             $this->tableFormManager->addTab('Tab2', $this->getAdvancedFields());
@@ -600,6 +617,20 @@ class TableHandler extends AbstractModelTable implements InputFilterAwareInterfa
                 foreach ($field->activeModel->getListing() as $listingItem) {
                     $value_options[$listingItem->id] = $listingItem->{$field->getRelatedSelectDisplayFields()};
                 }
+            } elseif (in_array($field , $this->getCustomSelections())) {
+                $type       = 'Zend\Form\Element\Select';
+                $attributes = array('class' => 'form-control');
+
+                if ($field->isMultiple()) {
+                    $attributes['multiple'] = 'multiple';
+                    $value_options = $field->getSelectOptions();
+                } else {
+                    $value_options = array_merge(array('0' => 'Please Choose a ' . $label), $field->getSelectOptions());
+                }
+
+                $name       = $field->getFieldName();
+                $label      = $field->getFieldName();
+
             }
 
             if (in_array($field, $this->getAllMultilingualFields())) {
@@ -881,7 +912,7 @@ class TableHandler extends AbstractModelTable implements InputFilterAwareInterfa
         foreach ($relations as $relation) {
             if ($this->followRelations()) {
                 $relationModelPath = 'Administration\\Model\\' . $relation->getRelatedModel();
-                $relationModel = new $relationModelPath($this->adapter, $this->controlPanel, false);
+                $relationModel = new $relationModelPath($this->controlPanel, false);
                 if ($relationModel->getPrefix() == '') {
                     throw new Exception\InvalidArgumentException('Please set the prefix in the ' . $relationModel->getTableName() . ' model!');
                 }

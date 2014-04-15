@@ -1,15 +1,15 @@
 <?php 
 namespace Administration\Model;
 
-use Administration\AbstractClasses\TableHandler;
-use Administration\AbstractClasses\RelationsHandler;
+use Administration\Helper\Model\TableHandler;
+use Administration\Helper\Model\RelationsHandler;
 
 class User  extends TableHandler
 {
 
-    public function __construct($dbAdapter, $controlPanel, $followRelations = true)
+    public function __construct($controlPanel, $followRelations = true)
     {
-        parent::__construct('User', $dbAdapter, $controlPanel);//<--Table name
+        parent::__construct('User', $controlPanel);//<--Table name
 
         $this->setListingFields(array("email"));
         $this->setListingSwitches(array("status"));

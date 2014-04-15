@@ -26,7 +26,7 @@ class IndexController extends AbstractActionController
     {
         $this->controlPanel = $this->getServiceLocator()->get('ControlPanel');
         $model              = 'Administration\\Model\\'.$this->params()->fromRoute('model');
-        $this->component    = new $model($this->getServiceLocator()->get('Zend\Db\Adapter\Adapter'), $this->controlPanel);
+        $this->component    = new $model($this->controlPanel);
     }
 
     public function indexAction()

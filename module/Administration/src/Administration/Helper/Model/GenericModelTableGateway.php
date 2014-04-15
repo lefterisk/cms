@@ -1,39 +1,39 @@
 <?php
-namespace Administration\AbstractClasses;
+namespace Administration\Helper\Model;
 
 use Zend\Db\Adapter\Adapter;
 use Zend\Db\TableGateway\Exception;
 use Zend\Db\Sql\Select;
 
 
-class AbstractModelTable
+class GenericModelTableGateway
 {
     protected $lastInsertValue;
 
     public function finaliseTable()
     {
         $this->createTablesIfNotExist();
-        $this->addFieldsCollumnsIfDontExist('integers',                 $this->getIntegers());
-        $this->addFieldsCollumnsIfDontExist('enums',                    $this->getEnums());
-        $this->addFieldsCollumnsIfDontExist('dates',                    $this->getDates());
-        $this->addFieldsCollumnsIfDontExist('varchars',                 $this->getVarchars());
-        $this->addFieldsCollumnsIfDontExist('images',                   $this->getImages());
-        $this->addFieldsCollumnsIfDontExist('files',                    $this->getFiles());
-        $this->addFieldsCollumnsIfDontExist('customSelections',         $this->getCustomSelections());
-        $this->addFieldsCollumnsIfDontExist('texts',                    $this->getTexts());
-        $this->addFieldsCollumnsIfDontExist('longTexts',                $this->getLongTexts());
-        $this->addFieldsCollumnsIfDontExist('imageCaptions',            $this->getImageCaptions());
-        $this->addFieldsCollumnsIfDontExist('fileCaptions',             $this->getFileCaptions());
+        $this->addFieldsColumnsIfDontExist('integers',      $this->getIntegers());
+        $this->addFieldsColumnsIfDontExist('enums',         $this->getEnums());
+        $this->addFieldsColumnsIfDontExist('dates',         $this->getDates());
+        $this->addFieldsColumnsIfDontExist('varchars',      $this->getVarchars());
+        $this->addFieldsColumnsIfDontExist('images',        $this->getImages());
+        $this->addFieldsColumnsIfDontExist('files',         $this->getFiles());
+        $this->addFieldsColumnsIfDontExist('texts',         $this->getTexts());
+        $this->addFieldsColumnsIfDontExist('longTexts',     $this->getLongTexts());
+        $this->addFieldsColumnsIfDontExist('imageCaptions', $this->getImageCaptions());
+        $this->addFieldsColumnsIfDontExist('fileCaptions',  $this->getFileCaptions());
         if ($this->isMultiLingual()) {
-            $this->addFieldsCollumnsIfDontExist('multiLingualFileCaptions', $this->getMultilingualFilesCaptions());
-            $this->addFieldsCollumnsIfDontExist('multiLingualTexts',        $this->getMultilingualTexts());
-            $this->addFieldsCollumnsIfDontExist('multiLingualLongTexts',    $this->getMultilingualLongTexts());
-            $this->addFieldsCollumnsIfDontExist('multiLingualVarchars',     $this->getMultilingualVarchars());
-            $this->addFieldsCollumnsIfDontExist('multiLingualFiles',        $this->getMultilingualFiles());
+            $this->addFieldsColumnsIfDontExist('multiLingualFileCaptions', $this->getMultilingualFilesCaptions());
+            $this->addFieldsColumnsIfDontExist('multiLingualTexts',        $this->getMultilingualTexts());
+            $this->addFieldsColumnsIfDontExist('multiLingualLongTexts',    $this->getMultilingualLongTexts());
+            $this->addFieldsColumnsIfDontExist('multiLingualVarchars',     $this->getMultilingualVarchars());
+            $this->addFieldsColumnsIfDontExist('multiLingualFiles',        $this->getMultilingualFiles());
         }
         if ($this->followRelations()) {
             $this->addJoinRelationsIfNotExist($this->getRelations());
         }
+        $this->addCustomSelectionFieldsIfNotExist($this->getCustomSelections());
     }
 
     private function createTablesIfNotExist()
@@ -63,7 +63,7 @@ class AbstractModelTable
         }
     }
 
-    private function addFieldsCollumnsIfDontExist($type, $fieldsArray)
+    private function addFieldsColumnsIfDontExist($type, $fieldsArray)
     {
 
         $tableToAddTheColumn = '';
@@ -85,7 +85,6 @@ class AbstractModelTable
             case 'varchars':
             case 'images':
             case 'files':
-            case 'customSelections':
                 $tableToAddTheColumn = $this->getTableName();
                 $fieldType = " VARCHAR( 255 ) ";
                 break;
@@ -132,36 +131,44 @@ class AbstractModelTable
         }
     }
 
-    private function addJoinRelationsIfNotExist($relations)
+    private function addCustomSelectionFieldsIfNotExist(Array $selects)
     {
-        if (is_array($relations)) {
-            foreach ($relations as $relation) {
+        foreach ($selects as $select) {
 
-                if ($relation->activeModel->getPrefix() == '') {
-                    throw new Exception\InvalidArgumentException('Please set the prefix in the ' . $relation->activeModel->getTableName() . ' model!');
-                }
-                if ($this->getPrefix() == '') {
-                    throw new Exception\InvalidArgumentException('Please set the prefix in the ' . $this->getTableName() . ' model!');
-                }
-                if ($relation->hasLookUpTable()) {
-                    $this->adapter->query('CREATE TABLE IF NOT EXISTS `' . $relation->getLookUpTableName() . '` ( `'.$this->getPrefix().'id` int(11) DEFAULT NULL, `'.$relation->activeModel->getPrefix().'id` int(11) DEFAULT NULL)', Adapter::QUERY_MODE_EXECUTE);
-                } elseif ($relation->hasLookupColumn()) {
-                    $statement = $this->adapter->createStatement("SHOW COLUMNS FROM " . $this->getTableName() . " LIKE '" . $relation->activeModel->getPrefix() . "id'" );
-                    $result    = $statement->execute();
-                    if ($result->count()==0)
-                    {
-                        $this->adapter->query("ALTER TABLE " . $this->getTableName() . " ADD `" . $relation->activeModel->getPrefix() . "id` int(11) DEFAULT 0;", Adapter::QUERY_MODE_EXECUTE);
-                    }
+            if ($select->isMultiple()) {
+                $this->adapter->query('CREATE TABLE IF NOT EXISTS `' . $select->getLookUpTableName() . '` ( `'.$this->getPrefix().'id` int(11) DEFAULT NULL, `' . $select->getFieldName() . '` VARCHAR( 255 ) DEFAULT NULL, PRIMARY KEY (`' . $this->getPrefix() . 'id`, `' . $select->getFieldName() . '`))', Adapter::QUERY_MODE_EXECUTE);
+            } else {
+                $statement = $this->adapter->createStatement("SHOW COLUMNS FROM " . $this->getTableName() . " LIKE '" .  $select->getFieldName() . "'" );
+                $result    = $statement->execute();
+                if ($result->count()==0)
+                {
+                    $this->adapter->query("ALTER TABLE " . $this->getTableName() . " ADD `" . $select->getFieldName() . "` VARCHAR( 255 ) DEFAULT '0';", Adapter::QUERY_MODE_EXECUTE);
                 }
             }
-        } else {
-            throw new Exception\InvalidArgumentException('Relations must be an array!');
         }
     }
 
-    private function addCustomSelectionFieldsIfNotExist()
+    private function addJoinRelationsIfNotExist(Array $relations)
     {
+        foreach ($relations as $relation) {
 
+            if ($relation->activeModel->getPrefix() == '') {
+                throw new Exception\InvalidArgumentException('Please set the prefix in the ' . $relation->activeModel->getTableName() . ' model!');
+            }
+            if ($this->getPrefix() == '') {
+                throw new Exception\InvalidArgumentException('Please set the prefix in the ' . $this->getTableName() . ' model!');
+            }
+            if ($relation->hasLookUpTable()) {
+                $this->adapter->query('CREATE TABLE IF NOT EXISTS `' . $relation->getLookUpTableName() . '` ( `'.$this->getPrefix().'id` int(11) DEFAULT NULL, `'.$relation->activeModel->getPrefix().'id` int(11) DEFAULT NULL)', Adapter::QUERY_MODE_EXECUTE);
+            } elseif ($relation->hasLookupColumn()) {
+                $statement = $this->adapter->createStatement("SHOW COLUMNS FROM " . $this->getTableName() . " LIKE '" . $relation->activeModel->getPrefix() . "id'" );
+                $result    = $statement->execute();
+                if ($result->count()==0)
+                {
+                    $this->adapter->query("ALTER TABLE " . $this->getTableName() . " ADD `" . $relation->activeModel->getPrefix() . "id` int(11) DEFAULT 0;", Adapter::QUERY_MODE_EXECUTE);
+                }
+            }
+        }
     }
 
     public function getListing($itemsPerPage = 'all', $page = null, $order = null, $orderDirection = null, $filters = null)
@@ -252,6 +259,22 @@ class AbstractModelTable
                 }
             }
         }
+        //Attach Data from Custom (Multiple) Selections
+        if (count($this->getCustomSelections()) > 0) {
+            foreach ($this->getCustomSelections() as $selection) {
+                if ($selection->isMultiple()) {
+                    $statement        = $this->sql->select($selection->getLookUpTableName())->where(array($this->getPrefix().'id' => $id));
+                    $selectString     = $this->sql->getSqlStringForSqlObject($statement);
+                    $selectionResults = $this->adapter->query($selectString, Adapter::QUERY_MODE_EXECUTE);
+
+                    if ($selectionResults->count() > 0) {
+                        foreach ($selectionResults as $result) {
+                            $results[$selection->getFieldName()][] =  $result[$selection->getFieldName()];
+                        }
+                    }
+                }
+            }
+        }
         return $results;
     }
 
@@ -259,8 +282,9 @@ class AbstractModelTable
     {
         $queryTableData            = array();
         $queryTableDescriptionData = array();
-        $queryM2MRelationsData     = array();
-        $queryO2MRelationsData     = array();
+        $queryM2MRelationsData     = array();  // Many to Many Relations (with lookup Table)
+        $queryO2MRelationsData     = array();  // One to Many Relations (with Column In Main Table)
+        $queryCSMultiData          = array();  // Custom Selections Multiple (with Lookup Table)
 
         foreach ($data as $fieldName => $fieldValue) {
             if (in_array( $fieldName, $this->getAllNonMultilingualFields())) {
@@ -275,10 +299,10 @@ class AbstractModelTable
                         }
                     }
                 }
-            } else {
+            } elseif (in_array( $fieldName, $this->getRelationsFields())) {
                 foreach ($this->getRelations() as $relation) {
                     if ( $relation->inputFieldName ==  $fieldName && $relation->hasLookupColumn()) {
-                        //If relation is oneToMany use the main data array
+                        //If relation is manyToOne use the main data array
                         $queryTableData[$fieldName] = $fieldValue;
                     } elseif ($relation->inputFieldName ==  $fieldName && $relation->hasLookUpTable() ) {
                         //Setup data arrays for manyToMany relations queries
@@ -297,6 +321,22 @@ class AbstractModelTable
                                 $queryO2MRelationsData[$relation->activeModel->getTableName()][] =  $value;
                             }
                         }
+                    }
+                }
+            } elseif (in_array( $fieldName, $this->getCustomSelectionFields())) {
+                foreach ($this->getCustomSelections() as $selection) {
+                    if ($selection->isMultiple()) {
+                        if (is_array($fieldValue)) {
+                            foreach ($fieldValue as $value) {
+                                //Setup data array for Custom Selection Lookup Table Queries
+                                $queryCSMultiData[$selection->getLookUpTableName()][] = array( $selection->getFieldName() => $value);
+                            }
+                        } else {
+                            $queryCSMultiData[$selection->getLookUpTableName()] = array();
+                        }
+                    } else {
+                        //If Custom Selection is not multiple then use main Table
+                        $queryTableData[$fieldName] = $fieldValue;
                     }
                 }
             }
@@ -321,6 +361,12 @@ class AbstractModelTable
             if (count($queryO2MRelationsData) > 0) {
                 $this->insertUpdateO2MRelations($data['id'], $queryO2MRelationsData);
             }
+
+            //Custom multiple selections Queries
+            if (count($queryCSMultiData) > 0) {
+                $this->insertUpdateMSelections($data['id'], $queryCSMultiData);
+            }
+
         } else {
 
             //Main Table Query
@@ -339,6 +385,11 @@ class AbstractModelTable
             //OneToMany Relations Queries
             if (count($queryO2MRelationsData) > 0) {
                 $this->insertUpdateO2MRelations($this->lastInsertValue, $queryO2MRelationsData);
+            }
+
+            //Custom multiple selections Queries
+            if (count($queryCSMultiData) > 0) {
+                $this->insertUpdateMSelections($this->lastInsertValue, $queryCSMultiData);
             }
         }
     }
@@ -415,6 +466,24 @@ class AbstractModelTable
         }
     }
 
+    private function insertUpdateMSelections ($id, $dataArray)
+    {
+        foreach ($dataArray as $lookUpTable => $selectionEntries) {
+            $deleteStatement = $this->sql->delete($lookUpTable)->where(array($this->getPrefix() . 'id' => $id));
+            $deleteSqlString = $this->sql->getSqlStringForSqlObject($deleteStatement);
+            $this->adapter->query($deleteSqlString, Adapter::QUERY_MODE_EXECUTE);
+
+            if (count($selectionEntries) > 0) {
+                foreach ($selectionEntries as $selectionEntry) {
+                    $statement = $this->sql->insert($lookUpTable);
+                    $statement->values(array_merge($selectionEntry, array($this->getPrefix() . 'id' => $id)));
+                    $sqlString = $this->sql->getSqlStringForSqlObject($statement);
+                    $this->adapter->query($sqlString, Adapter::QUERY_MODE_EXECUTE);
+                }
+            }
+        }
+    }
+
     private function insertUpdateO2MRelations ($id, $dataArray)
     {
         foreach ($dataArray as $entityTable => $entityIds) {
@@ -464,6 +533,14 @@ class AbstractModelTable
                 } elseif ($relation->getRelationType() == 'oneToMany') {
                     //If relation is oneToMany
                     $this->deleteFromRelatedEntityTable($relation->activeModel->getTableName(), $itemId);
+                }
+            }
+        }
+        //Multiple Custom Selection If they exit
+        if (count($this->getCustomSelections())) {
+            foreach ($this->getCustomSelections() as $selection) {
+                if ($selection->isMultiple()) {
+                    $this->deleteFromLookUpTable($selection->getLookUpTableName(), $itemId);
                 }
             }
         }
