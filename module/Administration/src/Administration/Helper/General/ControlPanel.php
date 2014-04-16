@@ -14,8 +14,13 @@ class ControlPanel
     protected $auth;
     protected $siteLanguagesArray  = array();
     protected $adminLanguagesArray = array();
-    protected $modelRootPath;
-
+    protected $modelPath           = 'Administration\\Model\\';
+    //Models that should not appear in any list
+    protected $hiddenModels        = array('Login');
+    //Developer ToolBox Models
+    protected $devToolsModels      = array('AdminLanguage','SiteLanguage','User', 'UserGroup');
+    //Support ToolBox Models
+    protected $supportToolsModels  = array();
 
     public function __construct($adapter, $authentication)
     {
@@ -23,8 +28,6 @@ class ControlPanel
         $this->auth    = $authentication;
         $this->sql     = new Sql($this->adapter);
         $this->initialiseSiteLanguages();
-
-
         //$this->initialiseSiteLanguages();
     }
 
@@ -43,7 +46,7 @@ class ControlPanel
                 );
             }
         } else {
-            throw new Exception\InvalidArgumentException('Something is wrong with your site setup. No Site Languages are detected!');
+            throw new Exception\InvalidArgumentException('Something is wrong with your site setup. No Admin Languages are detected!');
         }
     }
 
@@ -113,14 +116,170 @@ class ControlPanel
         return $this->sql;
     }
 
+    /*
+     * Set Models to hide from all menus and lists
+     */
+    public function setHiddenModels(Array $models)
+    {
+        $this->hiddenModels = $models;
+    }
+
+    /*
+     * Get Models to hide from all menus and lists
+     */
+    public function getHiddenModels()
+    {
+        return $this->hiddenModels;
+    }
+
+    /*
+     * Set Models to appear in the left
+     * Column Developer-tools box regardless of access
+     */
+    public function setDevToolsModels(Array $models)
+    {
+        $this->devToolsModels = $models;
+    }
+
+    /*
+     * Get Models to appear in the left
+     * Column Developer-tools box regardless of access
+     */
+    public function getDevToolsModels()
+    {
+        return $this->devToolsModels;
+    }
+
+    /*
+     * Set Models to appear in the left
+     * Column Support-tools box regardless of access
+     */
+    public function setSupportToolsModels(Array $models)
+    {
+        $this->supportToolsModels = $models;
+    }
+
+    /*
+     * Get Models to appear in the left
+     * Column Support-tools box regardless of access
+     */
+    public function getSupportToolsModels()
+    {
+        return $this->supportToolsModels;
+    }
+
+    /*
+     * Get Models to appear in the left
+     * Content Management box regardless of access
+     */
+    public function getContentModels()
+    {
+        return array_diff(
+            $this->getExistingModelsArray(),
+            array_merge(
+                $this->getDevToolsModels(),
+                $this->getSupportToolsModels(),
+                $this->getHiddenModels()
+            )
+        );
+    }
+
+    /*
+     * Get Models to appear in the left
+     * Content Management box for current access level
+     */
+    public function getContentBoxModels()
+    {
+        return array_intersect(
+            $this->getPermittedModelsForUser(),
+            $this->getContentModels()
+        );
+    }
+
+    /*
+     * Get Models to appear in the left
+     * Developer Tool box for current access level
+     */
+    public function getDeveloperBoxModels()
+    {
+        return array_intersect(
+            $this->getPermittedModelsForUser(),
+            $this->getDevToolsModels()
+        );
+    }
+
+    /*
+     * Get Models to appear in the left
+     * Support & help box for current access level
+     */
+    public function getSupportBoxModels()
+    {
+        return array_intersect(
+            $this->getPermittedModelsForUser(),
+            $this->getSupportToolsModels()
+        );
+    }
+
+    /*
+     * Returns all available models except
+     * the hidden ones (returned by getHiddenModels)
+     */
     public function getExistingModelsArray()
     {
         $scanner = new DirectoryScanner(__DIR__ . '/../../Model/');
-        $models = array();
+        $models  = array();
         foreach ($scanner->getClassNames() as $fullName) {
             $explodedNameArray = explode('\\', $fullName);
-            $models[] = array_pop($explodedNameArray);
+            $modelName = array_pop($explodedNameArray);
+            if (!in_array($modelName, $this->getHiddenModels())) {
+                $models[] = $modelName;
+            }
         }
         return $models;
+    }
+
+    /*
+     * Returns all models that the current
+     * user is permitted to access
+     */
+    public function getPermittedModelsForUser()
+    {
+        if ($this->auth->hasIdentity()) {
+            $user = $this->auth->getIdentity();
+            if ($user['user_group_id']) {
+                $userGroupModel = $this->instantiateModel('UserGroup');
+                $group          = $userGroupModel->getItemById($user['user_group_id']);
+                return array_merge(array('Login'), $group['group_view_permission']);
+            }
+        }
+        //Login is available to all users
+        return array('Login');
+    }
+
+    /*
+     * Instantiate an existing model
+     */
+    public function instantiateModel($model)
+    {
+        if (in_array(ucfirst($model), $this->getExistingModelsArray())) {
+            $modelName = $this->modelPath . ucfirst($model);
+            return new $modelName($this);
+        } else {
+            return false;
+        }
+    }
+
+    /*
+     * Instantiate an existing model only
+     * if the user is permitted to access it
+     */
+    public function instantiateModelForUser($model)
+    {
+        if (in_array(ucfirst($model), $this->getPermittedModelsForUser())) {
+            $modelName = $this->modelPath . ucfirst($model);
+            return new $modelName($this);
+        } else {
+            return false;
+        }
     }
 }

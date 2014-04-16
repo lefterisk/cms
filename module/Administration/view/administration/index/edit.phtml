@@ -17,7 +17,7 @@
                 <div class="tab-pane <?php echo ($key == 0)? 'active': '' ?>" id="tab-<?php echo $key; ?>">
                     <?php foreach ($tab['fields'] as $field) : ?>
                         <?php if (is_array($multilingualFields) && in_array($field , $multilingualFields)) : ?>
-                            <?php foreach ($controlPanel->getSiteLanguages() as $languageId => $language): ?>
+                            <?php foreach ($this->controlPanel->getSiteLanguages() as $languageId => $language): ?>
                                 <?php echo $form->getFormObject()->get($field . '[' . $languageId . ']')->getLabel() . '( ' . $language['name'] . ' )' ?>
                                 <?php echo $this->formElementErrors($form->getFormObject()->get($field . '[' . $languageId . ']')); ?>
                                 <?php if (array_key_exists('data-type', $form->getFormObject()->get($field . '[' . $languageId . ']')->getAttributes())) : ?>

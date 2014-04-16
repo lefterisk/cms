@@ -12,7 +12,6 @@ namespace Administration\Controller;
 use Zend\Mvc\Controller\AbstractActionController;
 use Zend\View\Model\ViewModel;
 use Administration\Model;
-use Administration\AbstractClasses\ControlPanel;
 use Zend\Db\TableGateway\Exception;
 
 
@@ -20,21 +19,27 @@ class IndexController extends AbstractActionController
 {
     protected $controlPanel;
     protected $component;
-    protected $authservice;
 
     protected function initializeComponent()
     {
         $this->controlPanel = $this->getServiceLocator()->get('ControlPanel');
-        $model              = 'Administration\\Model\\'.$this->params()->fromRoute('model');
-        $this->component    = new $model($this->controlPanel);
+        $this->component    = $this->controlPanel->instantiateModelForUser($this->params()->fromRoute('model'));
+        $this->layout()->setVariable('controlPanel' , $this->controlPanel);
     }
 
     public function indexAction()
     {
     	$this->initializeComponent();
 
+        //If user not logged in redirect to Login Page
         if (!$this->controlPanel->getAuthService()->hasIdentity() && $this->params()->fromRoute('model') != 'login') {
             return $this->redirect()->toRoute('administration', array('model'  => 'login'));
+        }
+
+        //If Model does not exist or is not available to userGroup throw 404
+        if (!$this->component && $this->params()->fromRoute('model') != 'login') {
+            $this->getResponse()->setStatusCode(404);
+            return;
         }
 
         if ($this->isGenericComponent()) {
@@ -67,8 +72,15 @@ class IndexController extends AbstractActionController
     {
         $this->initializeComponent();
 
+        //If user not logged in redirect to Login Page
         if (!$this->controlPanel->getAuthService()->hasIdentity()) {
             return $this->redirect()->toRoute('administration', array('model'  => 'login'));
+        }
+
+        //If Model does not exist or is not available to userGroup throw 404
+        if (!$this->component) {
+            $this->getResponse()->setStatusCode(404);
+            return;
         }
 
         $request = $this->getRequest();
@@ -100,8 +112,15 @@ class IndexController extends AbstractActionController
     {
         $this->initializeComponent();
 
+        //If user not logged in redirect to Login Page
         if (!$this->controlPanel->getAuthService()->hasIdentity()) {
             return $this->redirect()->toRoute('administration', array('model'  => 'login'));
+        }
+
+        //If Model does not exist or is not available to userGroup throw 404
+        if (!$this->component) {
+            $this->getResponse()->setStatusCode(404);
+            return;
         }
 
         $request = $this->getRequest();
@@ -153,8 +172,15 @@ class IndexController extends AbstractActionController
     {
         $this->initializeComponent();
 
+        //If user not logged in redirect to Login Page
         if (!$this->controlPanel->getAuthService()->hasIdentity()) {
             return $this->redirect()->toRoute('administration', array('model'  => 'login'));
+        }
+
+        //If Model does not exist or is not available to userGroup throw 404
+        if (!$this->component) {
+            $this->getResponse()->setStatusCode(404);
+            return;
         }
 
         $itemId = $this->params()->fromRoute('item');
@@ -180,8 +206,15 @@ class IndexController extends AbstractActionController
     {
         $this->initializeComponent();
 
+        //If user not logged in redirect to Login Page
         if (!$this->controlPanel->getAuthService()->hasIdentity()) {
             return $this->redirect()->toRoute('administration', array('model'  => 'login'));
+        }
+
+        //If Model does not exist or is not available to userGroup throw 404
+        if (!$this->component) {
+            $this->getResponse()->setStatusCode(404);
+            return;
         }
 
         $request = $this->getRequest();

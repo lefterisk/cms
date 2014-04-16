@@ -51,32 +51,43 @@
             <div class="row">
                 <div class="col-md-3">
                     
-                    <div class="panel panel-default">
-                        <div class="panel-heading">
-                            <h3 class="panel-title"><?php echo $this->translate('Developer Tools') ?></h3>
+                    <?php if (count($this->controlPanel->getDeveloperBoxModels())): ?>
+                        <div class="panel panel-default">
+                            <div class="panel-heading">
+                                <h3 class="panel-title"><?php echo $this->translate('Developer Tools') ?></h3>
+                            </div>
+                            <div class="list-group">
+                                <?php foreach ($this->controlPanel->getDeveloperBoxModels() as $model) : ?>
+                                    <a href="<?php echo $this->url('administration', array( 'model' => $model)); ?>" class="list-group-item"><?php echo $model; ?></a>
+                                <?php endforeach; ?>
+                            </div>
                         </div>
-                        <div class="panel-body">
-                           
+                    <?php endif; ?>
+                    <?php if (count($this->controlPanel->getContentBoxModels())): ?>
+                        <div class="panel panel-default">
+                            <div class="panel-heading">
+                                <h3 class="panel-title"><?php echo $this->translate('Contents') ?></h3>
+                            </div>
+                            <div class="list-group">
+                                <a href="/filemanager/dialog.php?type=0" class="list-group-item iframe-btn">Open Filemanager</a>
+                                <?php foreach ($this->controlPanel->getContentBoxModels() as $model) : ?>
+                                    <a href="<?php echo $this->url('administration', array( 'model' => $model)); ?>" class="list-group-item "><?php echo $model; ?></a>
+                                <?php endforeach; ?>
+                            </div>
                         </div>
-                    </div>
-
-                    <div class="panel panel-default">
-                        <div class="panel-heading">
-                            <h3 class="panel-title"><?php echo $this->translate('Contents') ?></h3>
+                    <?php endif; ?>
+                    <?php if (count($this->controlPanel->getSupportBoxModels())): ?>
+                        <div class="panel panel-default">
+                            <div class="panel-heading">
+                                <h3 class="panel-title"><?php echo $this->translate('Help &amp; Support') ?></h3>
+                            </div>
+                            <div class="list-group">
+                                <?php foreach ($this->controlPanel->getSupportBoxModels() as $model) : ?>
+                                    <a href="<?php echo $this->url('administration', array( 'model' => $model)); ?>" class="list-group-item"><?php echo $model; ?></a>
+                                <?php endforeach; ?>
+                            </div>
                         </div>
-                        <div class="list-group">
-                            <a href="/filemanager/dialog.php?type=0" class="list-group-item iframe-btn">Open Filemanager</a>
-                        </div>
-                    </div>
-
-                    <div class="panel panel-default">
-                        <div class="panel-heading">
-                            <h3 class="panel-title"><?php echo $this->translate('Help &amp; Support') ?></h3>
-                        </div>
-                        <div class="panel-body">
-                           
-                        </div>
-                    </div>
+                    <?php endif; ?>
 
                 </div>
                 <div class="col-md-9">
