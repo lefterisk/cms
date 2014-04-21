@@ -46,13 +46,16 @@ class IndexController extends AbstractActionController
             $viewModel = new ViewModel(
                 array(
                     'listing' => $this->component->getListing(
-                        ($this->params()->fromRoute('itemsperpage'))? $this->params()->fromRoute('itemsperpage'): 20,
-                        ($this->params()->fromRoute('page'))        ? $this->params()->fromRoute('page'): 1,
-                        ($this->params()->fromRoute('order'))       ? $this->params()->fromRoute('order'): null,
-                        ($this->params()->fromRoute('direction'))   ? $this->params()->fromRoute('direction'): null
+                        ($this->params()->fromRoute('parent'))         ? $this->params()->fromRoute('parent'): 0,
+                        ($this->params()->fromRoute('itemsperpage'))   ? $this->params()->fromRoute('itemsperpage'): 20,
+                        ($this->params()->fromRoute('page'))           ? $this->params()->fromRoute('page'): 1,
+                        ($this->params()->fromRoute('order'))          ? $this->params()->fromRoute('order'): null,
+                        ($this->params()->fromRoute('direction'))      ? $this->params()->fromRoute('direction'): null,
+                        ($this->params()->fromPost('relationFilters')) ? $this->params()->fromPost('relationFilters'): array()
                     ),
                     'visibleListingFields' => $this->component->getListingFields(),
                     'listingSwitches'      => $this->component->getListingSwitches(),
+                    'relationFilters'      => $this->component->getListingRelationFilters(),
                     'model'                => $this->params()->fromRoute('model'),
                     'controlPanel'         => $this->controlPanel,
                 )

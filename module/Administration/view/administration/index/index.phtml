@@ -8,6 +8,24 @@ $form->setAttribute('method', 'post');
             <h3 class="panel-title"><?php echo $this->translate('Follow Development') ?></h3>
         </div>
         <div class="panel-body">
+            <?php $relationFilters->prepare(); ?>
+            <?php echo $this->form()->openTag($relationFilters); ?>
+            Filter by:
+            <?php foreach ($relationFilters as $element) : ?>
+                <div class="form-group">
+                    <?php  echo $this->formElement($element); ?>
+                </div>
+            <?php endforeach; ?>
+            <?php if (count($relationFilters)) : ?>
+                <div class="form-group">
+                    <button type="submit" name="Filter" class="btn btn-success btn-sm">
+                        <span class="glyphicon glyphicon-search"></span>
+                    </button>
+                </div>
+            <?php endif; ?>
+            <?php echo $this->form()->closeTag(); ?>
+            <div class="clearfix"></div>
+
             <?php $form->prepare(); ?>
             <?php echo $this->form()->openTag($form); ?>
             <table class="table  table-striped" width="100%">
@@ -28,15 +46,26 @@ $form->setAttribute('method', 'post');
                     <tr>
                         <td class="text-center"><input type="checkbox" name="multipleDeleteCheck[]" value="<?php echo $item->id ?>"/></td>
                         <?php foreach ($visibleListingFields as $field) : ?>
-                        <td><a href="<?php echo $this->url('administration', array('action' => 'edit', 'model' => $model, 'item' => $this->escapeHtml($item->id) )); ?>" ><?php echo $this->escapeHtml($item->$field); ?></a></td>
+                            <?php if (isset($item->childCount) && (int)$item->childCount > 0): ?>
+                                <td><a href="<?php echo $this->url('administration', array('model' => $model, 'parent' => $this->escapeHtml($item->id) )); ?>" ><?php echo $this->escapeHtml($item->$field); ?></a></td>
+                            <?php else: ?>
+                                <td><a href="<?php echo $this->url('administration', array('action' => 'edit', 'model' => $model, 'item' => $this->escapeHtml($item->id) )); ?>" ><?php echo $this->escapeHtml($item->$field); ?></a></td>
+                            <?php endif; ?>
                         <?php endforeach; ?>
                         <?php foreach ($listingSwitches as $switch) : ?>
                             <td><?php echo $this->escapeHtml($item->$switch); ?></td>
                         <?php endforeach; ?>
-                        <td class="text-center" width="2%">
-                            <a href="<?php echo $this->url('administration', array('action' => 'delete', 'model' => $model, 'item' => $this->escapeHtml($item->id) )); ?>" type="button" class="btn btn-xs btn-default">
-                                <span class="glyphicon  glyphicon-trash"></span>
-                            </a>
+                        <td class="text-center" width="70">
+                            <div class="btn-group">
+                                <?php if (isset($item->childCount) && (int)$item->childCount > 0): ?>
+                                    <a href="<?php echo $this->url('administration', array('action' => 'edit', 'model' => $model, 'item' => $this->escapeHtml($item->id) )); ?>" type="button" class="btn btn-xs btn-info">
+                                        <span class="glyphicon  glyphicon-pencil"></span>
+                                    </a>
+                                <?php endif; ?>
+                                <a href="<?php echo $this->url('administration', array('action' => 'delete', 'model' => $model, 'item' => $this->escapeHtml($item->id) )); ?>" type="button" class="btn btn-xs btn-warning">
+                                    <span class="glyphicon  glyphicon-trash"></span>
+                                </a>
+                            </div>
                         </td>
                     </tr>
                 <?php endforeach; ?>

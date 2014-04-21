@@ -61,6 +61,9 @@ class GenericModelTableGateway
                 }
             }
         }
+        if ($this->getMaximumTreeDepth() > 0) {
+            $this->adapter->query('CREATE TABLE IF NOT EXISTS `' . $this->getParentLookupTableName() . '` (`' . $this->getPrefix() . 'id' . '` int(11) unsigned NOT NULL, `parent_id` int(11) unsigned NOT NULL, PRIMARY KEY (`' . $this->getPrefix() . 'id' . '`, `parent_id`))', Adapter::QUERY_MODE_EXECUTE);
+        }
     }
 
     private function addFieldsColumnsIfDontExist($type, $fieldsArray)
@@ -171,7 +174,7 @@ class GenericModelTableGateway
         }
     }
 
-    public function getListing($itemsPerPage = 'all', $page = null, $order = null, $orderDirection = null, $filters = null)
+    public function getListing( $parent = 0, $itemsPerPage = 'all', $page = null, $order = null, $orderDirection = null, Array $filters = array(), Array $notInArray = array())
     {
         if (is_array($this->getListingFields()) && count($this->getListingFields()) > 0) {
 
@@ -179,6 +182,31 @@ class GenericModelTableGateway
                 $statement = $this->sql->select($this->getTableName())->join(array( 'dc' => $this->getTableDescriptionName()),'dc.' . $this->getPrefix() . 'id = ' . $this->getTableName() . '.id' , Select::SQL_STAR , Select::JOIN_LEFT)->where(array($this->getLanguageID() => $this->controlPanel->getDefaultSiteLanguageId()));
             } else {
                 $statement = $this->sql->select($this->getTableName());
+            }
+
+            if ($this->getMaximumTreeDepth() > 0) {
+                $subQry =  $this->sql->select()->from(array('dpc' => $this->getParentLookupTableName()))->columns(array('childCount' => new \Zend\Db\Sql\Expression('COUNT(dpc.parent_id)')))->where(array('dpc.parent_id' => new \Zend\Db\Sql\Expression( $this->getTableName() . '.' . 'id')));
+                $statement->join(array( 'dp' => $this->getParentLookupTableName()),'dp.' . $this->getPrefix() . 'id = ' . $this->getTableName() . '.id' , array(Select::SQL_STAR, 'childCount' => new \Zend\Db\Sql\Expression('?', array($subQry))) , Select::JOIN_LEFT)->where(array('dp.parent_id' => $parent));
+            }
+
+            if (count($filters) > 0) {
+                foreach ($filters as $relationField => $value) {
+                    if ($value != 'all') {
+                        foreach ($this->getRelations() as $relation) {
+                            if ($relationField == $relation->inputFieldName) {
+                                if ($relation->hasLookupColumn()) {
+                                    $statement->where(array($relation->inputFieldName => $value));
+                                } elseif ($relation->hasLookUpTable()) {
+                                    $statement->join(array( 'dr' => $relation->getLookUpTableName()),'dr.' . $this->getPrefix() . 'id = ' . $this->getTableName() . '.id' , Select::SQL_STAR , Select::JOIN_LEFT)->where(array('dr.' . $relation->inputFieldName => $value));
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            if (count($notInArray) > 0) {
+                $statement->where->addPredicate(new \Zend\Db\Sql\Predicate\Expression($this->getTableName() . '.id NOT IN (?)', $notInArray));
             }
 
             $offset = 0;
@@ -206,6 +234,31 @@ class GenericModelTableGateway
         } else {
             throw new Exception\InvalidArgumentException('List of fields for the listing must be an Array!');
         }
+    }
+
+    public function getListingForSelect($parentCat = 0, $treeLevel = 0)
+    {
+        $toReturn = array();
+        $results  = $this->getListing($parentCat);
+
+        foreach ($results as $result) {
+            $depthString    = '';
+            for ($i=1; $i <= $treeLevel; $i++ ) {
+                if ($i == $treeLevel) {
+                    $depthString .= '**|--';
+                } else {
+                    $depthString .= '**';
+                }
+            }
+            $listingFields = $this->getListingFields();
+            $result[$listingFields[0]] = $depthString . $result[$listingFields[0]];
+            $toReturn[] = $result;
+
+            if ($this->getMaximumTreeDepth() > 0 && $treeLevel < ($this->getMaximumTreeDepth()-1) && isset($result['childCount']) && $result['childCount'] > 0) {
+                $toReturn = array_merge($toReturn, $this->getListingForSelect($result['id'],$treeLevel+1));
+            }
+        }
+        return $toReturn;
     }
 
     public function getItemById($id)
@@ -275,6 +328,18 @@ class GenericModelTableGateway
                 }
             }
         }
+        //Attach Data from Parent Lookup Table
+        if ($this->getMaximumTreeDepth() > 0) {
+            $statement        = $this->sql->select($this->getParentLookupTableName())->where(array($this->getPrefix().'id' => $id));
+            $selectString     = $this->sql->getSqlStringForSqlObject($statement);
+            $parentResults    = $this->adapter->query($selectString, Adapter::QUERY_MODE_EXECUTE);
+
+            if ($parentResults->count() > 0) {
+                foreach ($parentResults as $result) {
+                    $results['parent_' . $this->getPrefix() . 'id'][] =  $result['parent_id'];
+                }
+            }
+        }
         return $results;
     }
 
@@ -285,6 +350,7 @@ class GenericModelTableGateway
         $queryM2MRelationsData     = array();  // Many to Many Relations (with lookup Table)
         $queryO2MRelationsData     = array();  // One to Many Relations (with Column In Main Table)
         $queryCSMultiData          = array();  // Custom Selections Multiple (with Lookup Table)
+        $queryParentData           = array();  // Parent lookup (manyToMany)
 
         foreach ($data as $fieldName => $fieldValue) {
             if (in_array( $fieldName, $this->getAllNonMultilingualFields())) {
@@ -339,6 +405,13 @@ class GenericModelTableGateway
                         $queryTableData[$fieldName] = $fieldValue;
                     }
                 }
+            } elseif ($this->getMaximumTreeDepth() > 0 && $fieldName == 'parent_' . $this->getPrefix() . 'id') {
+                if (is_array($fieldValue)) {
+                    foreach ($fieldValue as $value) {
+                        //Setup data array for Parent Lookup Table Queries
+                        $queryParentData[] = $value;
+                    }
+                }
             }
         }
 
@@ -367,6 +440,11 @@ class GenericModelTableGateway
                 $this->insertUpdateMSelections($data['id'], $queryCSMultiData);
             }
 
+            //Parent Table Queries
+            if ($this->getMaximumTreeDepth() > 0) {
+                $this->insertUpdateParentLookup($data['id'], $queryParentData);
+            }
+
         } else {
 
             //Main Table Query
@@ -379,7 +457,7 @@ class GenericModelTableGateway
 
             //ManyTOMany Relations Queries
             if (count($queryM2MRelationsData) > 0) {
-                $this->insertUpdateToEntityRelationsTables($this->lastInsertValue, $queryM2MRelationsData);
+                $this->insertUpdateM2MRelations($this->lastInsertValue, $queryM2MRelationsData);
             }
 
             //OneToMany Relations Queries
@@ -390,6 +468,11 @@ class GenericModelTableGateway
             //Custom multiple selections Queries
             if (count($queryCSMultiData) > 0) {
                 $this->insertUpdateMSelections($this->lastInsertValue, $queryCSMultiData);
+            }
+
+            //Parent Table Queries
+            if ($this->getMaximumTreeDepth() > 0) {
+                $this->insertUpdateParentLookup($this->lastInsertValue, $queryParentData);
             }
         }
     }
@@ -466,24 +549,6 @@ class GenericModelTableGateway
         }
     }
 
-    private function insertUpdateMSelections ($id, $dataArray)
-    {
-        foreach ($dataArray as $lookUpTable => $selectionEntries) {
-            $deleteStatement = $this->sql->delete($lookUpTable)->where(array($this->getPrefix() . 'id' => $id));
-            $deleteSqlString = $this->sql->getSqlStringForSqlObject($deleteStatement);
-            $this->adapter->query($deleteSqlString, Adapter::QUERY_MODE_EXECUTE);
-
-            if (count($selectionEntries) > 0) {
-                foreach ($selectionEntries as $selectionEntry) {
-                    $statement = $this->sql->insert($lookUpTable);
-                    $statement->values(array_merge($selectionEntry, array($this->getPrefix() . 'id' => $id)));
-                    $sqlString = $this->sql->getSqlStringForSqlObject($statement);
-                    $this->adapter->query($sqlString, Adapter::QUERY_MODE_EXECUTE);
-                }
-            }
-        }
-    }
-
     private function insertUpdateO2MRelations ($id, $dataArray)
     {
         foreach ($dataArray as $entityTable => $entityIds) {
@@ -511,6 +576,38 @@ class GenericModelTableGateway
                 $sqlString = $this->sql->getSqlStringForSqlObject($statement);
                 $this->adapter->query($sqlString, Adapter::QUERY_MODE_EXECUTE);
             }
+        }
+    }
+
+    private function insertUpdateMSelections ($id, $dataArray)
+    {
+        foreach ($dataArray as $lookUpTable => $selectionEntries) {
+            $deleteStatement = $this->sql->delete($lookUpTable)->where(array($this->getPrefix() . 'id' => $id));
+            $deleteSqlString = $this->sql->getSqlStringForSqlObject($deleteStatement);
+            $this->adapter->query($deleteSqlString, Adapter::QUERY_MODE_EXECUTE);
+
+            if (count($selectionEntries) > 0) {
+                foreach ($selectionEntries as $selectionEntry) {
+                    $statement = $this->sql->insert($lookUpTable);
+                    $statement->values(array_merge($selectionEntry, array($this->getPrefix() . 'id' => $id)));
+                    $sqlString = $this->sql->getSqlStringForSqlObject($statement);
+                    $this->adapter->query($sqlString, Adapter::QUERY_MODE_EXECUTE);
+                }
+            }
+        }
+    }
+
+    private function insertUpdateParentLookup ($id, $dataArray)
+    {
+        $deleteStatement = $this->sql->delete($this->getParentLookupTableName())->where(array($this->getPrefix() . 'id' => $id));
+        $deleteSqlString = $this->sql->getSqlStringForSqlObject($deleteStatement);
+        $this->adapter->query($deleteSqlString, Adapter::QUERY_MODE_EXECUTE);
+
+        foreach ($dataArray as $parent) {
+            $statement = $this->sql->insert($this->getParentLookupTableName());
+            $statement->values(array($this->getPrefix() . 'id' => $id, 'parent_id' => $parent));
+            $sqlString = $this->sql->getSqlStringForSqlObject($statement);
+            $this->adapter->query($sqlString, Adapter::QUERY_MODE_EXECUTE);
         }
     }
 
@@ -544,6 +641,12 @@ class GenericModelTableGateway
                 }
             }
         }
+
+        //Parent Table Queries
+        if ($this->getMaximumTreeDepth() > 0) {
+            $this->deleteFromLookUpTable($this->getParentLookupTableName(), $itemId);
+            $this->deleteParentFromLookupTable($itemId);
+        }
         return true;
     }
 
@@ -576,6 +679,20 @@ class GenericModelTableGateway
         $statement->where(
             array(
                 $this->getPrefix().'id' => $itemId,
+            )
+        );
+        $sqlString = $this->sql->getSqlStringForSqlObject($statement);
+        $this->adapter->query($sqlString, Adapter::QUERY_MODE_EXECUTE);
+    }
+
+    private function deleteParentFromLookupTable($itemId)
+    {
+        //mark all previously related entries as '0' (un-categorized)
+        $statement = $this->sql->update($this->getParentLookupTableName());
+        $statement->set(array('parent_id' => '0'));
+        $statement->where(
+            array(
+                'parent_id' => $itemId,
             )
         );
         $sqlString = $this->sql->getSqlStringForSqlObject($statement);

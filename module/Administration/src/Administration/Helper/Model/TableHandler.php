@@ -15,6 +15,7 @@ class TableHandler extends GenericModelTableGateway implements InputFilterAwareI
 	private $tableDescriptionName;
     private $languageID = 'languageId';
     private $followRelations = true;
+    private $maximumTreeDepth = 0;
     private $listingFields = array();
     private $listingSwitches = array();
     private $inputFilter;
@@ -109,6 +110,14 @@ class TableHandler extends GenericModelTableGateway implements InputFilterAwareI
 	{
 		return $this->tableDescriptionName;
 	}
+
+    /**
+     * Returns parent lookup table name, which stores manyToMany relation to the model itself.
+     */
+    public function getParentLookupTableName()
+    {
+        return $this->getTableName() . 'ToParent';
+    }
 	
 	/**
 	 * Returns languageID.
@@ -480,6 +489,12 @@ class TableHandler extends GenericModelTableGateway implements InputFilterAwareI
         return array_merge($this->getSimpleFields(), $this->getAdvancedFields(), $this->getAllFileFields(), $this->getRelations(), $this->getCustomSelections());
     }
 
+    public function getMaximumTreeDepth()
+    {
+        return $this->maximumTreeDepth;
+    }
+
+
     /**
      * Returns all action managers associated with this table.
      */
@@ -523,6 +538,15 @@ class TableHandler extends GenericModelTableGateway implements InputFilterAwareI
         return $this->tableFormManager;
     }
 
+    public function getDefaultFieldNames()
+    {
+        $defaultFields = array('id');
+        if ($this->getMaximumTreeDepth() > 0 ) {
+            $defaultFields[] = 'parent_' . $this->getPrefix() . 'id';
+        }
+        return $defaultFields;
+    }
+
     /**
      * Instantiates the default formmanager.
      */
@@ -530,7 +554,7 @@ class TableHandler extends GenericModelTableGateway implements InputFilterAwareI
     {
         $this->tableFormManager = new FormManager($this->getFormObject());
         if (count($this->getSimpleFields()) > 0 ) {
-            $this->tableFormManager->addTab('Tab1', array_merge($this->getSimpleFields(), $this->getRelationsFields(), $this->getCustomSelectionFields(), array('id')));
+            $this->tableFormManager->addTab('Tab1', array_merge($this->getSimpleFields(), $this->getRelationsFields(), $this->getCustomSelectionFields(), $this->getDefaultFieldNames()));
         }
         if (count($this->getAdvancedFields()) > 0 ) {
             $this->tableFormManager->addTab('Tab2', $this->getAdvancedFields());
@@ -551,6 +575,29 @@ class TableHandler extends GenericModelTableGateway implements InputFilterAwareI
             'type' => 'hidden',
             'name' => 'id',
         ));
+
+        if ($this->getMaximumTreeDepth() > 0) {
+            $value_options = array();
+            $value_options[0] = '---Root Item---';
+
+            foreach ($this->getListingForSelect() as $listingItem) {
+                $optionString = '';
+                foreach ($this->getListingFields() as $listingField) {
+                    $optionString .= $listingItem->{$listingField} . ' ';
+                }
+                $value_options[$listingItem->id] = $optionString;
+            }
+
+            $form->add(array(
+                'type' => 'Zend\Form\Element\Select',
+                'name' => 'parent_' . $this->getPrefix() . 'id',
+                'options' => array(
+                    'label' => 'parent_' . $this->getPrefix() . 'id',
+                    'value_options' => $value_options,
+                ),
+                'attributes' => array('class' => 'form-control', 'multiple' => 'multiple'),
+            ));
+        }
 
         foreach ($this->getAllFields() as $field) {
 
@@ -614,7 +661,7 @@ class TableHandler extends GenericModelTableGateway implements InputFilterAwareI
                     $value_options[0] = 'Please Choose a ' . $label;
                 }
 
-                foreach ($field->activeModel->getListing() as $listingItem) {
+                foreach ($field->activeModel->getListingForSelect() as $listingItem) {
                     $value_options[$listingItem->id] = $listingItem->{$field->getRelatedSelectDisplayFields()};
                 }
             } elseif (in_array($field , $this->getCustomSelections())) {
@@ -657,6 +704,35 @@ class TableHandler extends GenericModelTableGateway implements InputFilterAwareI
                         'value_options' => $value_options,
                     ),
                     'attributes' => array_merge($attributes,array('placeholder' => $name)),
+                ));
+            }
+        }
+        return $form;
+    }
+
+    public function getListingRelationFilters()
+    {
+        $form = new Form('Filters');
+        $form->setAttribute('class', 'form-inline pull-right');
+        if (count($this->getRelations()) > 0) {
+            foreach ($this->getRelations() as $relation) {
+                $value_options['all'] = '---All---';
+                foreach ($relation->activeModel->getListingForSelect() as $listingItem) {
+                    $optionString = '';
+                    foreach ($relation->activeModel->getListingFields() as $listingField) {
+                        $optionString .= $listingItem->{$listingField} . ' ';
+                    }
+                    $value_options[$listingItem->id] = $optionString;
+                }
+
+                $form->add(array(
+                    'type' => 'Zend\Form\Element\Select',
+                    'name' => 'relationFilters['. $relation->inputFieldName . ']',
+                    'options' => array(
+                        'label'         => $relation->inputFieldName,
+                        'value_options' => $value_options,
+                    ),
+                    'attributes' => array('class' => 'form-control input-sm'),
                 ));
             }
         }
@@ -908,11 +984,9 @@ class TableHandler extends GenericModelTableGateway implements InputFilterAwareI
 	 */
 	public function setRelations(Array $relations)
 	{
-
         foreach ($relations as $relation) {
             if ($this->followRelations()) {
-                $relationModelPath = 'Administration\\Model\\' . $relation->getRelatedModel();
-                $relationModel = new $relationModelPath($this->controlPanel, false);
+                $relationModel = $this->controlPanel->instantiateModel($relation->getRelatedModel(), false);
                 if ($relationModel->getPrefix() == '') {
                     throw new Exception\InvalidArgumentException('Please set the prefix in the ' . $relationModel->getTableName() . ' model!');
                 }
@@ -920,7 +994,7 @@ class TableHandler extends GenericModelTableGateway implements InputFilterAwareI
                 $relation->inputFieldName = $relationModel->getPrefix().'id';
                 $relation->activeModel    = $relationModel;
             }
-            $this->relations[]        = $relation;
+            $this->relations[] = $relation;
         }
 	}
 	
@@ -939,6 +1013,15 @@ class TableHandler extends GenericModelTableGateway implements InputFilterAwareI
 	{
 		$this->customSelections = $customSelections;
 	}
+
+    public function setMaximumTreeDepth($maximumTreeDepth)
+    {
+        if (is_int($maximumTreeDepth)) {
+            $this->maximumTreeDepth = $maximumTreeDepth;
+        } else {
+            throw new Exception\InvalidArgumentException('Maximum tree depth must be an Integer in the ' . $this->getTableName() . ' model!');
+        }
+    }
 
 	/**
 	 * Sets prefix.

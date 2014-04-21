@@ -16,7 +16,7 @@ class ControlPanel
     protected $adminLanguagesArray = array();
     protected $modelPath           = 'Administration\\Model\\';
     //Models that should not appear in any list
-    protected $hiddenModels        = array('Login');
+    protected $hiddenModels        = array('Login','Home');
     //Developer ToolBox Models
     protected $devToolsModels      = array('AdminLanguage','SiteLanguage','User', 'UserGroup');
     //Support ToolBox Models
@@ -226,16 +226,19 @@ class ControlPanel
      */
     public function getExistingModelsArray()
     {
-        $scanner = new DirectoryScanner(__DIR__ . '/../../Model/');
-        $models  = array();
-        foreach ($scanner->getClassNames() as $fullName) {
-            $explodedNameArray = explode('\\', $fullName);
-            $modelName = array_pop($explodedNameArray);
-            if (!in_array($modelName, $this->getHiddenModels())) {
-                $models[] = $modelName;
+        if (!isset($this->existingModels)) {
+            $scanner = new DirectoryScanner(__DIR__ . '/../../Model/');
+            $models  = array();
+            foreach ($scanner->getClassNames() as $fullName) {
+                $explodedNameArray = explode('\\', $fullName);
+                $modelName = array_pop($explodedNameArray);
+                if (!in_array($modelName, $this->getHiddenModels())) {
+                    $models[] = $modelName;
+                }
             }
+            $this->existingModels = $models;
         }
-        return $models;
+        return $this->existingModels;
     }
 
     /*
@@ -244,26 +247,32 @@ class ControlPanel
      */
     public function getPermittedModelsForUser()
     {
-        if ($this->auth->hasIdentity()) {
-            $user = $this->auth->getIdentity();
-            if ($user['user_group_id']) {
-                $userGroupModel = $this->instantiateModel('UserGroup');
-                $group          = $userGroupModel->getItemById($user['user_group_id']);
-                return array_merge(array('Login'), $group['group_view_permission']);
+        if (!isset($this->permittedModels)) {
+            if ($this->auth->hasIdentity()) {
+                $user = $this->auth->getIdentity();
+                if ($user['user_group_id']) {
+                    $userGroupModel        = $this->instantiateModel('UserGroup');
+                    $group                 = $userGroupModel->getItemById($user['user_group_id']);
+                    $this->permittedModels = array_merge(array('Login'), $group['group_view_permission']);
+                } else {
+                    $this->permittedModels = array('Login');
+                }
+            } else {
+                $this->permittedModels = array('Login');
             }
         }
         //Login is available to all users
-        return array('Login');
+        return $this->permittedModels;
     }
 
     /*
      * Instantiate an existing model
      */
-    public function instantiateModel($model)
+    public function instantiateModel($model, $followRelations = true)
     {
         if (in_array(ucfirst($model), $this->getExistingModelsArray())) {
             $modelName = $this->modelPath . ucfirst($model);
-            return new $modelName($this);
+            return new $modelName($this, $followRelations);
         } else {
             return false;
         }
@@ -273,11 +282,11 @@ class ControlPanel
      * Instantiate an existing model only
      * if the user is permitted to access it
      */
-    public function instantiateModelForUser($model)
+    public function instantiateModelForUser($model, $followRelations = true)
     {
         if (in_array(ucfirst($model), $this->getPermittedModelsForUser())) {
             $modelName = $this->modelPath . ucfirst($model);
-            return new $modelName($this);
+            return new $modelName($this, $followRelations);
         } else {
             return false;
         }
