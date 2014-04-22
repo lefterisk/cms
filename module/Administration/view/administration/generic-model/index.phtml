@@ -1,6 +1,6 @@
 <?php
 $form = new Zend\Form\Form();
-$form->setAttribute('action',  $this->url('administration', array('action' => 'delete-multiple', 'model' => $model)));
+$form->setAttribute('action',  $this->url('genericModel', array('action' => 'delete-multiple', 'model' => $model)));
 $form->setAttribute('method', 'post');
 ?>
     <div class="panel panel-default">
@@ -8,23 +8,23 @@ $form->setAttribute('method', 'post');
             <h3 class="panel-title"><?php echo $this->translate('Follow Development') ?></h3>
         </div>
         <div class="panel-body">
-            <?php $relationFilters->prepare(); ?>
-            <?php echo $this->form()->openTag($relationFilters); ?>
-            Filter by:
-            <?php foreach ($relationFilters as $element) : ?>
-                <div class="form-group">
-                    <?php  echo $this->formElement($element); ?>
-                </div>
-            <?php endforeach; ?>
             <?php if (count($relationFilters)) : ?>
-                <div class="form-group">
-                    <button type="submit" name="Filter" class="btn btn-success btn-sm">
-                        <span class="glyphicon glyphicon-search"></span>
-                    </button>
-                </div>
+                <?php $relationFilters->prepare(); ?>
+                <?php echo $this->form()->openTag($relationFilters); ?>
+                Filter by:
+                <?php foreach ($relationFilters as $element) : ?>
+                    <div class="form-group">
+                        <?php  echo $this->formElement($element); ?>
+                    </div>
+                <?php endforeach; ?>
+                    <div class="form-group">
+                        <button type="submit" name="Filter" class="btn btn-success btn-sm">
+                            <span class="glyphicon glyphicon-search"></span>
+                        </button>
+                    </div>
+                <?php echo $this->form()->closeTag(); ?>
+                <div class="clearfix"></div>
             <?php endif; ?>
-            <?php echo $this->form()->closeTag(); ?>
-            <div class="clearfix"></div>
 
             <?php $form->prepare(); ?>
             <?php echo $this->form()->openTag($form); ?>
@@ -47,9 +47,9 @@ $form->setAttribute('method', 'post');
                         <td class="text-center"><input type="checkbox" name="multipleDeleteCheck[]" value="<?php echo $item->id ?>"/></td>
                         <?php foreach ($visibleListingFields as $field) : ?>
                             <?php if (isset($item->childCount) && (int)$item->childCount > 0): ?>
-                                <td><a href="<?php echo $this->url('administration', array('model' => $model, 'parent' => $this->escapeHtml($item->id) )); ?>" ><?php echo $this->escapeHtml($item->$field); ?></a></td>
+                                <td><a href="<?php echo $this->url('genericModel', array('model' => $model, 'parent' => $this->escapeHtml($item->id) )); ?>" ><?php echo $this->escapeHtml($item->$field); ?></a></td>
                             <?php else: ?>
-                                <td><a href="<?php echo $this->url('administration', array('action' => 'edit', 'model' => $model, 'item' => $this->escapeHtml($item->id) )); ?>" ><?php echo $this->escapeHtml($item->$field); ?></a></td>
+                                <td><a href="<?php echo $this->url('genericModel', array('action' => 'edit', 'model' => $model, 'item' => $this->escapeHtml($item->id) )); ?>" ><?php echo $this->escapeHtml($item->$field); ?></a></td>
                             <?php endif; ?>
                         <?php endforeach; ?>
                         <?php foreach ($listingSwitches as $switch) : ?>
@@ -58,11 +58,11 @@ $form->setAttribute('method', 'post');
                         <td class="text-center" width="70">
                             <div class="btn-group">
                                 <?php if (isset($item->childCount) && (int)$item->childCount > 0): ?>
-                                    <a href="<?php echo $this->url('administration', array('action' => 'edit', 'model' => $model, 'item' => $this->escapeHtml($item->id) )); ?>" type="button" class="btn btn-xs btn-info">
+                                    <a href="<?php echo $this->url('genericModel', array('action' => 'edit', 'model' => $model, 'item' => $this->escapeHtml($item->id) )); ?>" type="button" class="btn btn-xs btn-info">
                                         <span class="glyphicon  glyphicon-pencil"></span>
                                     </a>
                                 <?php endif; ?>
-                                <a href="<?php echo $this->url('administration', array('action' => 'delete', 'model' => $model, 'item' => $this->escapeHtml($item->id) )); ?>" type="button" class="btn btn-xs btn-warning">
+                                <a href="<?php echo $this->url('genericModel', array('action' => 'delete', 'model' => $model, 'item' => $this->escapeHtml($item->id) )); ?>" type="button" class="btn btn-xs btn-warning">
                                     <span class="glyphicon  glyphicon-trash"></span>
                                 </a>
                             </div>
@@ -72,7 +72,7 @@ $form->setAttribute('method', 'post');
                 </tbody>
             </table>
             <div class="btn-group">
-                <a href="<?php echo $this->url('administration', array('action' => 'add', 'model' => $model)); ?>" class="btn btn-primary">
+                <a href="<?php echo $this->url('genericModel', array('action' => 'add', 'model' => $model)); ?>" class="btn btn-primary">
                     <span class="glyphicon glyphicon-plus-sign"></span>
                     Add New
                 </a>

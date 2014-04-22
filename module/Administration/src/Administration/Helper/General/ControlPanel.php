@@ -253,7 +253,7 @@ class ControlPanel
                 if ($user['user_group_id']) {
                     $userGroupModel        = $this->instantiateModel('UserGroup');
                     $group                 = $userGroupModel->getItemById($user['user_group_id']);
-                    $this->permittedModels = array_merge(array('Login'), $group['group_view_permission']);
+                    $this->permittedModels = array_merge($this->hiddenModels, $group['group_view_permission']);
                 } else {
                     $this->permittedModels = array('Login');
                 }

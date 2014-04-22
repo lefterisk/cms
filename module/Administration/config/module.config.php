@@ -10,11 +10,20 @@
 return array(
     'router' => array(
         'routes' => array(
-            
-            'administration' => array(
+            'adminHome' => array(
                 'type' => 'segment',
                 'options' => array(
-                    'route'    => '/administration[/:model][/parent/:parent][/itemsperpage/:itemsperpage][/page/:page][/order/:order][/direction/:direction][/:item][/:action]',
+                    'route'    => '/administration[/home/:action]',
+                    'defaults' => array(
+                        'controller' => 'Administration\Controller\Home',
+                        'action'     => 'index',
+                    ),
+                ),
+            ),
+            'genericModel' => array(
+                'type' => 'segment',
+                'options' => array(
+                    'route'    => '/administration/model[/:model][/parent/:parent][/itemsperpage/:itemsperpage][/page/:page][/order/:order][/direction/:direction][/:item][/:action]',
                     'constraints' => array(
                         'model'         => '[a-zA-Z][a-zA-Z0-9_-]*',
                         'itemsperpage'  => '[0-9]+',
@@ -26,9 +35,37 @@ return array(
                         'action'        => '[a-zA-Z][a-zA-Z0-9_-]*',
                     ),
                     'defaults' => array(
-                        'controller' => 'Administration\Controller\Index',
+                        'controller' => 'Administration\Controller\GenericModel',
                         'action'     => 'index',
-                        'model'      => 'home',
+                    ),
+                ),
+            ),
+            'sitemanager' => array(
+                'type' => 'segment',
+                'options' => array(
+                    'route'    => '/administration/sitemanager[/page/:page][/model/:model][/:action]',
+                    'constraints' => array(
+                        'page'          => '[0-9]*',
+                        'model'         => '[a-zA-Z][a-zA-Z0-9_-]*',
+                        'action'        => '[a-zA-Z][a-zA-Z0-9_-]*',
+                    ),
+                    'defaults' => array(
+                        'controller' => 'Administration\Controller\SiteManager',
+                        'action'     => 'index',
+                    ),
+                ),
+            ),
+            'adminLogin' => array(
+                'type' => 'segment',
+                'options' => array(
+                    'route'    => '/administration/login[/:action]',
+                    'constraints' => array(
+                        'action'        => '[a-zA-Z][a-zA-Z0-9_-]*',
+                    ),
+                    'defaults' => array(
+                        'controller' => 'Administration\Controller\Login',
+                        'action'     => 'index',
+                        'model'      => 'login',
                     ),
                 ),
             ),
@@ -55,7 +92,10 @@ return array(
     ),
     'controllers' => array(
         'invokables' => array(
-            'Administration\Controller\Index' => 'Administration\Controller\IndexController'
+            'Administration\Controller\GenericModel' => 'Administration\Controller\GenericModelController',
+            'Administration\Controller\SiteManager'  => 'Administration\Controller\SiteManagerController',
+            'Administration\Controller\Home'         => 'Administration\Controller\HomeController',
+            'Administration\Controller\Login'        => 'Administration\Controller\LoginController'
         ),
     ),
     'view_manager' => array(

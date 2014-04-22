@@ -4,7 +4,7 @@
             <h1 class="text-center login-title">Sign in to continue </h1>
             <div class="account-wall">
                 <img class="profile-img" src="<?php echo $this->basePath('img/generic_user.png') ?>" alt="">
-                <form class="form-signin" action="<?php echo $this->url('administration', array('action' => 'login', 'model' => 'login')); ?>" method="post">
+                <form class="form-signin" action="<?php echo $this->url('adminLogin', array('action' => 'login')); ?>" method="post">
                     <input type="text" name="email" class="form-control" placeholder="Email" required autofocus>
                     <input type="password" name="password" class="form-control" placeholder="Password" required>
                     <label class="checkbox">

@@ -1,0 +1,52 @@
+<?php
+$form = new Zend\Form\Form();
+$form->setAttribute('action',  $this->url('sitemanager', array('action' => 'delete-multiple')));
+$form->setAttribute('method', 'post');
+?>
+<div class="panel panel-default">
+    <div class="panel-heading">
+        <h3 class="panel-title"><?php echo $this->translate('Site Management') ?></h3>
+    </div>
+    <div class="panel-body">
+        <?php $form->prepare(); ?>
+        <?php echo $this->form()->openTag($form); ?>
+        <table class="table  table-striped" width="100%">
+            <thead>
+                <tr>
+                    <td class="text-center" width="2%">#</td>
+                    <td>Page Alias</td>
+                    <td>Published</td>
+                    <td>&nbsp;</td>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>&nbsp;</td>
+                    <td>&nbsp;</td>
+                    <td>&nbsp;</td>
+                    <td>&nbsp;</td>
+                </tr>
+            </tbody>
+        </table>
+        <div class="btn-group">
+            <div class="btn-group">
+                <span type="button" class="btn btn-primary dropdown-toggle" data-toggle="dropdown">
+                    <span class="glyphicon glyphicon-plus-sign"></span>
+                    Add New Page
+                    <span class="caret"></span>
+                    <span class="sr-only">Toggle Dropdown</span>
+                </span>
+                <ul class="dropdown-menu" role="menu">
+                    <?php foreach ($controlPanel->getContentBoxModels() as $model) : ?>
+                    <li><a href="#">Type <?php echo $model ?></a></li>
+                    <?php endforeach; ?>
+                </ul>
+            </div>
+            <button type="submit" class="btn btn-warning">
+                <span class="glyphicon glyphicon-trash"></span>
+                Delete selected
+            </button>
+        </div>
+        <?php echo $this->form()->closeTag(); ?>
+    </div>
+</div>

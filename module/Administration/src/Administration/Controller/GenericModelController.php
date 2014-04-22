@@ -15,7 +15,7 @@ use Administration\Model;
 use Zend\Db\TableGateway\Exception;
 
 
-class IndexController extends AbstractActionController
+class GenericModelController extends AbstractActionController
 {
     protected $controlPanel;
     protected $component;
@@ -32,12 +32,12 @@ class IndexController extends AbstractActionController
     	$this->initializeComponent();
 
         //If user not logged in redirect to Login Page
-        if (!$this->controlPanel->getAuthService()->hasIdentity() && $this->params()->fromRoute('model') != 'login') {
-            return $this->redirect()->toRoute('administration', array('model'  => 'login'));
+        if (!$this->controlPanel->getAuthService()->hasIdentity()) {
+            return $this->redirect()->toRoute('adminLogin');
         }
 
         //If Model does not exist or is not available to userGroup throw 404
-        if (!$this->component && $this->params()->fromRoute('model') != 'login') {
+        if (!$this->component) {
             $this->getResponse()->setStatusCode(404);
             return;
         }
@@ -77,7 +77,7 @@ class IndexController extends AbstractActionController
 
         //If user not logged in redirect to Login Page
         if (!$this->controlPanel->getAuthService()->hasIdentity()) {
-            return $this->redirect()->toRoute('administration', array('model'  => 'login'));
+            return $this->redirect()->toRoute('adminLogin');
         }
 
         //If Model does not exist or is not available to userGroup throw 404
@@ -95,7 +95,7 @@ class IndexController extends AbstractActionController
             if ($form->getFormObject()->isValid()) {
                 $this->component->save($form->getFormObject()->getData());
                 //After Save redirect to listing
-                return $this->redirect()->toRoute('administration', array(
+                return $this->redirect()->toRoute('genericModel', array(
                     'action' => 'index',
                     'model'  => $this->params()->fromRoute('model')
                 ));
@@ -117,7 +117,7 @@ class IndexController extends AbstractActionController
 
         //If user not logged in redirect to Login Page
         if (!$this->controlPanel->getAuthService()->hasIdentity()) {
-            return $this->redirect()->toRoute('administration', array('model'  => 'login'));
+            return $this->redirect()->toRoute('adminLogin');
         }
 
         //If Model does not exist or is not available to userGroup throw 404
@@ -136,7 +136,7 @@ class IndexController extends AbstractActionController
             if ($form->getFormObject()->isValid()) {
                 $this->component->save($form->getFormObject()->getData());
                 //After Save redirect to listing
-                return $this->redirect()->toRoute('administration', array(
+                return $this->redirect()->toRoute('genericModel', array(
                     'action' => 'index',
                     'model'  => $this->params()->fromRoute('model')
                 ));
@@ -147,13 +147,13 @@ class IndexController extends AbstractActionController
             $item = $this->component->getItemById($this->params()->fromRoute('item'));
         }
         catch (\Exception $ex) {
-            return $this->redirect()->toRoute('administration', array(
+            return $this->redirect()->toRoute('genericModel', array(
                 'action' => 'index',
                 'model'  => $this->params()->fromRoute('model')
             ));
         }
         if (!$item) {
-            return $this->redirect()->toRoute('administration', array(
+            return $this->redirect()->toRoute('genericModel', array(
                 'action' => 'index',
                 'model'  => $this->params()->fromRoute('model')
             ));
@@ -177,7 +177,7 @@ class IndexController extends AbstractActionController
 
         //If user not logged in redirect to Login Page
         if (!$this->controlPanel->getAuthService()->hasIdentity()) {
-            return $this->redirect()->toRoute('administration', array('model'  => 'login'));
+            return $this->redirect()->toRoute('adminLogin');
         }
 
         //If Model does not exist or is not available to userGroup throw 404
@@ -211,7 +211,7 @@ class IndexController extends AbstractActionController
 
         //If user not logged in redirect to Login Page
         if (!$this->controlPanel->getAuthService()->hasIdentity()) {
-            return $this->redirect()->toRoute('administration', array('model'  => 'login'));
+            return $this->redirect()->toRoute('adminLogin');
         }
 
         //If Model does not exist or is not available to userGroup throw 404
@@ -240,36 +240,6 @@ class IndexController extends AbstractActionController
         $this->redirectToComponentListing();
     }
 
-    public function loginAction()
-    {
-        $this->initializeComponent();
-
-        $request = $this->getRequest();
-
-        $email     = $this->params()->fromPost('email');
-        $password  = $this->params()->fromPost('password');
-
-        //if user-pass is set and login info validates
-        if ($request->isPost() && $email && $password) {
-            $this->controlPanel->getAuthService()->getAdapter()->setIdentity($email);
-            $this->controlPanel->getAuthService()->getAdapter()->setCredential($password);
-            $result = $this->controlPanel->getAuthService()->authenticate();
-
-            foreach($result->getMessages() as $message)
-            {
-                //save message temporary into flashmessenger
-                $this->flashmessenger()->addMessage($message);
-            }
-            //$this->controlPanel->attemptAdminLogin($email, $password);
-        }
-
-        if (!$this->controlPanel->getAuthService()->hasIdentity()) {
-            return $this->redirect()->toRoute('administration', array('model'  => 'login'));
-        } else {
-            return $this->redirect()->toRoute('administration', array('model'  => 'home'));
-        }
-    }
-
     protected function redirectToComponentListing()
     {
         $listingParams = array();
@@ -286,7 +256,7 @@ class IndexController extends AbstractActionController
             $listingParams['direction'] = $this->params()->fromRoute('direction');
         }
 
-        return $this->redirect()->toRoute('administration', array_merge(
+        return $this->redirect()->toRoute('genericModel', array_merge(
             $listingParams,
             array(
                 'action' => 'index',
