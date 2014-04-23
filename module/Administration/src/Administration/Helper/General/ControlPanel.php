@@ -27,50 +27,29 @@ class ControlPanel
         $this->adapter = $adapter;
         $this->auth    = $authentication;
         $this->sql     = new Sql($this->adapter);
-        $this->initialiseSiteLanguages();
-        //$this->initialiseSiteLanguages();
-    }
 
-    private function  initialiseAdminLanguages()
-    {
-        $statement    = $this->sql->select('AdminLanguage')->where(array('status' => '1'));
-        $selectString = $this->sql->getSqlStringForSqlObject($statement);
-        $results      = $this->adapter->query($selectString, Adapter::QUERY_MODE_EXECUTE);
-        if (count($results) > 0) {
-            foreach ($results as $language) {
-                $this->adminLanguagesArray[$language['id']] = array(
-                    'name'    => $language['name'],
-                    'code'    => $language['code'],
-                    'image'   => $language['image'],
-                    'default' => $language['default']
-                );
-            }
-        } else {
-            throw new Exception\InvalidArgumentException('Something is wrong with your site setup. No Admin Languages are detected!');
-        }
-    }
-
-    private function  initialiseSiteLanguages()
-    {
-        $statement    = $this->sql->select('SiteLanguage')->where(array('status' => '1'));
-        $selectString = $this->sql->getSqlStringForSqlObject($statement);
-        $results      = $this->adapter->query($selectString, Adapter::QUERY_MODE_EXECUTE);
-        if (count($results) > 0) {
-            foreach ($results as $language) {
-                $this->siteLanguagesArray[$language['id']] = array(
-                    'name'    => $language['name'],
-                    'code'    => $language['code'],
-                    'image'   => $language['image'],
-                    'default' => $language['default']
-                );
-            }
-        } else {
-            throw new Exception\InvalidArgumentException('Something is wrong with your site setup. No Site Languages are detected!');
-        }
     }
 
     public function getSiteLanguages()
     {
+        if (count($this->siteLanguagesArray) <= 0 ) {
+            $statement    = $this->sql->select('SiteLanguage')->where(array('status' => '1'));
+            $selectString = $this->sql->getSqlStringForSqlObject($statement);
+            $results      = $this->adapter->query($selectString, Adapter::QUERY_MODE_EXECUTE);
+            if (count($results) > 0) {
+                foreach ($results as $language) {
+                    $this->siteLanguagesArray[$language['id']] = array(
+                        'name'    => $language['name'],
+                        'code'    => $language['code'],
+                        'image'   => $language['image'],
+                        'default' => $language['default']
+                    );
+                }
+            } else {
+                throw new Exception\InvalidArgumentException('Something is wrong with your site setup. No Site Languages are detected!');
+            }
+        }
+
         return $this->siteLanguagesArray;
     }
 
@@ -87,6 +66,24 @@ class ControlPanel
 
     public function getAdminLanguages()
     {
+        if (count($this->adminLanguagesArray) <= 0 ) {
+            $statement    = $this->sql->select('AdminLanguage')->where(array('status' => '1'));
+            $selectString = $this->sql->getSqlStringForSqlObject($statement);
+            $results      = $this->adapter->query($selectString, Adapter::QUERY_MODE_EXECUTE);
+            if (count($results) > 0) {
+                foreach ($results as $language) {
+                    $this->adminLanguagesArray[$language['id']] = array(
+                        'name'    => $language['name'],
+                        'code'    => $language['code'],
+                        'image'   => $language['image'],
+                        'default' => $language['default']
+                    );
+                }
+            } else {
+                throw new Exception\InvalidArgumentException('Something is wrong with your site setup. No Admin Languages are detected!');
+            }
+        }
+
         return $this->adminLanguagesArray;
     }
 
