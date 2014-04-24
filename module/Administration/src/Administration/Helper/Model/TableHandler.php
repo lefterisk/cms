@@ -612,21 +612,21 @@ class TableHandler extends GenericModelTableGateway implements InputFilterAwareI
                 $type       = 'Zend\Form\Element\Text';
                 $attributes = array('class' => 'form-control');
                 $name       = $field;
-                $label      = $field;
+                $label      = $this->getPrefix() . $field;
 
             } elseif (in_array($field, array_merge($this->getTexts(), $this->getMultilingualTexts()))) {
 
                 $type       = 'Zend\Form\Element\Textarea';
                 $attributes = array('class' => 'form-control');
                 $name       = $field;
-                $label      = $field;
+                $label      = $this->getPrefix() . $field;
 
             } elseif (in_array($field, array_merge($this->getLongTexts(), $this->getMultilingualLongTexts()))) {
 
                 $type       = 'Zend\Form\Element\Textarea';
                 $attributes = array('class' => 'tinyMce');
                 $name       = $field;
-                $label      = $field;
+                $label      = $this->getPrefix() . $field;
 
             } elseif (in_array($field, $this->getEnums())) {
 
@@ -634,7 +634,7 @@ class TableHandler extends GenericModelTableGateway implements InputFilterAwareI
                 $attributes = array('class' => 'switch','value' => '0');
                 $value_options = array('0' => 'No', '1' => 'Yes');
                 $name       = $field;
-                $label      = $field;
+                $label      = $this->getPrefix() . $field;
 
             } elseif (in_array($field, array_merge($this->getImages(), $this->getFiles(), $this->getMultilingualFiles()))) {
 
@@ -646,19 +646,19 @@ class TableHandler extends GenericModelTableGateway implements InputFilterAwareI
                     $attributes = array_merge($attributes,array('data-type' => 'file'));
                 }
                 $name       = $field;
-                $label      = $field;
+                $label      = $this->getPrefix() . $field;
 
             } elseif (in_array($field , $this->getRelations())) {
                 $type       = 'Zend\Form\Element\Select';
                 $attributes = array('class' => 'form-control');
 
                 $name       = $field->inputFieldName;
-                $label      = $field->activeModel->getTableName();
+                $label      = $field->inputFieldName;
 
                 if (in_array($field->getRelationType(), array('oneToMany', 'manyToMany'))) {
                     $attributes['multiple'] = 'multiple';
                 } else {
-                    $value_options[0] = 'Please Choose a ' . $label;
+                    $value_options[0] = 'Please Choose';
                 }
 
                 foreach ($field->activeModel->getListingForSelect() as $listingItem) {
@@ -672,11 +672,11 @@ class TableHandler extends GenericModelTableGateway implements InputFilterAwareI
                     $attributes['multiple'] = 'multiple';
                     $value_options = $field->getSelectOptions();
                 } else {
-                    $value_options = array_merge(array('0' => 'Please Choose a ' . $label), $field->getSelectOptions());
+                    $value_options = array_merge(array('0' => 'Please Choose'), $field->getSelectOptions());
                 }
 
                 $name       = $field->getFieldName();
-                $label      = $field->getFieldName();
+                $label      = $this->getPrefix() . $field->getFieldName();
 
             }
 
@@ -716,24 +716,26 @@ class TableHandler extends GenericModelTableGateway implements InputFilterAwareI
         $form->setAttribute('class', 'form-inline pull-right');
         if (count($this->getRelations()) > 0) {
             foreach ($this->getRelations() as $relation) {
-                $value_options['all'] = '---All---';
-                foreach ($relation->activeModel->getListingForSelect() as $listingItem) {
-                    $optionString = '';
-                    foreach ($relation->activeModel->getListingFields() as $listingField) {
-                        $optionString .= $listingItem->{$listingField} . ' ';
+                if (in_array($relation->getRelationType(), array('manyToMany','manyToOne'))) {
+                    $value_options['all'] = '---All---';
+                    foreach ($relation->activeModel->getListingForSelect() as $listingItem) {
+                        $optionString = '';
+                        foreach ($relation->activeModel->getListingFields() as $listingField) {
+                            $optionString .= $listingItem->{$listingField} . ' ';
+                        }
+                        $value_options[$listingItem->id] = $optionString;
                     }
-                    $value_options[$listingItem->id] = $optionString;
-                }
 
-                $form->add(array(
-                    'type' => 'Zend\Form\Element\Select',
-                    'name' => 'relationFilters['. $relation->inputFieldName . ']',
-                    'options' => array(
-                        'label'         => $relation->inputFieldName,
-                        'value_options' => $value_options,
-                    ),
-                    'attributes' => array('class' => 'form-control input-sm'),
-                ));
+                    $form->add(array(
+                        'type' => 'Zend\Form\Element\Select',
+                        'name' => 'relationFilters['. $relation->inputFieldName . ']',
+                        'options' => array(
+                            'label'         => $relation->inputFieldName,
+                            'value_options' => $value_options,
+                        ),
+                        'attributes' => array('class' => 'form-control input-sm'),
+                    ));
+                }
             }
         }
         return $form;

@@ -25,10 +25,10 @@ class User  extends TableHandler
 		$this->setIntegers(array());
 		$this->setImages(array());
 		$this->setFiles(array());
-		$this->setMultilingualVarchars(array('title'));
+		$this->setMultilingualVarchars(array());
 //		$this->setMultilingualTexts(array('description'));
-		$this->setMultilingualLongTexts(array('longDescription'));
-		$this->setMultilingualFiles(array('multiLangfile'));
+		$this->setMultilingualLongTexts(array());
+		$this->setMultilingualFiles(array());
 //		$this->setRequiredFields(array());
 //		$this->setMultilingualRequiredFields(array());
 		//$this->setRelations(array($userGroup = new RelationsHandler('UserGroup','manyToMany','name','UserToUserGroups')));

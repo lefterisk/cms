@@ -22,7 +22,7 @@ class LoginController extends AbstractActionController
     protected function initializeComponent()
     {
         $this->controlPanel = $this->getServiceLocator()->get('ControlPanel');
-        $this->component    = $this->controlPanel->instantiateModelForUser($this->params()->fromRoute('model'));
+        //$this->component    = $this->controlPanel->instantiateModelForUser($this->params()->fromRoute('model'));
         $this->layout()->setVariable('controlPanel' , $this->controlPanel);
     }
 

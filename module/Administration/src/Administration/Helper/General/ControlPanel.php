@@ -16,7 +16,7 @@ class ControlPanel
     protected $adminLanguagesArray = array();
     protected $modelPath           = 'Administration\\Model\\';
     //Models that should not appear in any list
-    protected $hiddenModels        = array('Login','Home');
+    protected $hiddenModels        = array();
     //Developer ToolBox Models
     protected $devToolsModels      = array('AdminLanguage','SiteLanguage','User', 'UserGroup');
     //Support ToolBox Models
@@ -27,9 +27,12 @@ class ControlPanel
         $this->adapter = $adapter;
         $this->auth    = $authentication;
         $this->sql     = new Sql($this->adapter);
-
     }
 
+    /*
+     * Get Site Languages
+     * returns Array or throws Exception
+     */
     public function getSiteLanguages()
     {
         if (count($this->siteLanguagesArray) <= 0 ) {
@@ -53,6 +56,10 @@ class ControlPanel
         return $this->siteLanguagesArray;
     }
 
+    /*
+     * Get Default Site Language ID
+     * returns ID (pk of SiteLanguage table)
+     */
     public function getDefaultSiteLanguageId()
     {
         foreach ($this->getSiteLanguages() as $key => $language) {
@@ -64,6 +71,10 @@ class ControlPanel
         throw new Exception\InvalidArgumentException('Something is wrong with your site setup. No Default Site Language was detected!');
     }
 
+    /*
+     * Get Admin Languages
+     * returns Array or throws Exception
+     */
     public function getAdminLanguages()
     {
         if (count($this->adminLanguagesArray) <= 0 ) {
@@ -87,6 +98,10 @@ class ControlPanel
         return $this->adminLanguagesArray;
     }
 
+    /*
+     * Get Default Admin Language ID
+     * returns ID (pk of AdminLanguage table)
+     */
     public function getDefaultAdminLanguageId()
     {
         foreach ($this->getAdminLanguages() as $key => $language) {
@@ -252,10 +267,10 @@ class ControlPanel
                     $group                 = $userGroupModel->getItemById($user['user_group_id']);
                     $this->permittedModels = array_merge($this->hiddenModels, $group['group_view_permission']);
                 } else {
-                    $this->permittedModels = array('Login');
+                    $this->permittedModels = array();
                 }
             } else {
-                $this->permittedModels = array('Login');
+                $this->permittedModels = array();
             }
         }
         //Login is available to all users

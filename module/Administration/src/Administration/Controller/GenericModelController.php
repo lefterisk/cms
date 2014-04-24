@@ -56,6 +56,7 @@ class GenericModelController extends AbstractActionController
                     'visibleListingFields' => $this->component->getListingFields(),
                     'listingSwitches'      => $this->component->getListingSwitches(),
                     'relationFilters'      => $this->component->getListingRelationFilters(),
+                    'modelPrefix'          => $this->component->getPrefix(),
                     'model'                => $this->params()->fromRoute('model'),
                     'controlPanel'         => $this->controlPanel,
                 )
@@ -106,6 +107,8 @@ class GenericModelController extends AbstractActionController
             array(
                 'form'               => $form,
                 'multilingualFields' => $this->component->getAllMultilingualFields(),
+                'modelPrefix'        => $this->component->getPrefix(),
+                'model'              => $this->params()->fromRoute('model'),
                 'controlPanel'       => $this->controlPanel,
             )
         );
@@ -165,6 +168,8 @@ class GenericModelController extends AbstractActionController
         return new ViewModel(
             array(
                 'form'               => $form,
+                'modelPrefix'        => $this->component->getPrefix(),
+                'model'              => $this->params()->fromRoute('model'),
                 'multilingualFields' => $this->component->getAllMultilingualFields(),
                 'controlPanel'       => $this->controlPanel,
             )
