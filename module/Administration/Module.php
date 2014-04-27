@@ -32,11 +32,7 @@ class Module
         $sm                  = $e->getApplication()->getServiceManager();
         $e->getApplication()->getEventManager()->getSharedManager()->attach('Zend\Mvc\Controller\AbstractController', 'dispatch', function($e) use ($sm) {
             if ($e->getRouteMatch()->getParam('model')) {
-                switch ($e->getRouteMatch()->getParam('model')) {
-                    case 'login':
-                        $e->getTarget()->layout('administration/login');
-                        break;
-                }
+
             }
         }, 100);
     }

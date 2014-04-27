@@ -25,6 +25,12 @@ class GenericModelController extends AbstractActionController
         $this->controlPanel = $this->getServiceLocator()->get('ControlPanel');
         $this->component    = $this->controlPanel->instantiateModelForUser($this->params()->fromRoute('model'));
         $this->layout()->setVariable('controlPanel' , $this->controlPanel);
+
+        $this->translator = $this->getServiceLocator()->get('translator')->addTranslationFilePattern(
+            'phpArray',
+            __DIR__ . '/../../../language/models',
+            $this->params()->fromRoute('model').'_%s.php'
+        );
     }
 
     public function indexAction()
