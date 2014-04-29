@@ -31,7 +31,10 @@ class Article  extends TableHandler
 		$this->setMultilingualFiles(array());
 //		$this->setRequiredFields(array());
 //		$this->setMultilingualRequiredFields(array());
-		$this->setRelations(array($articleCategory = new RelationsHandler('ArticleCategory','manyToMany','title','ArticleToArticleCategory')));
+		$this->setRelations(array(
+            $articleCategory = new RelationsHandler('ArticleCategory','manyToMany','title','ArticleToArticleCategory'),
+            $articleAuthor   = new RelationsHandler('User','manyToOne','email')
+        ));
         //$this->setRelations(array($userGroup = new RelationsHandler('UserGroup','manyToOne','name')));
         $this->finaliseTable();
 //		$this->setMetaTitle();

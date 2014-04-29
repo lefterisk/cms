@@ -28,7 +28,7 @@ class GenericModelController extends AbstractActionController
 
         $this->translator = $this->getServiceLocator()->get('translator')->addTranslationFilePattern(
             'phpArray',
-            __DIR__ . '/../../../language/models',
+            __DIR__ . '/../../../language/partials',
             $this->params()->fromRoute('model').'_%s.php'
         );
     }

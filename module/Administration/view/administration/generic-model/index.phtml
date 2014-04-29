@@ -14,7 +14,10 @@ $form->setAttribute('method', 'post');
                 <?php echo $this->translate('Filter by:'); ?>
                 <?php foreach ($relationFilters as $element) : ?>
                     <div class="form-group">
-                        <?php  echo $this->formElement($element); ?>
+                        <?php echo $this->translate($element->getLabel()) ; ?>
+                    </div>
+                    <div class="form-group">
+                        <?php echo $this->formElement($element); ?>
                     </div>
                 <?php endforeach; ?>
                     <div class="form-group">
