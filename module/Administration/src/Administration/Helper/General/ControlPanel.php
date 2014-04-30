@@ -72,6 +72,21 @@ class ControlPanel
     }
 
     /*
+     * Get Default Site Language Locale
+     * returns iso code
+     */
+    public function getDefaultSiteLocale()
+    {
+        foreach ($this->getSiteLanguages() as $language) {
+            if ($language['default'] == '1') {
+                return $language['code'];
+            }
+        }
+        //if no default language is detected then throw exception
+        throw new Exception\InvalidArgumentException('Something is wrong with your site setup. No Default Site Language was detected!');
+    }
+
+    /*
      * Get Admin Languages
      * returns Array or throws Exception
      */
@@ -111,6 +126,30 @@ class ControlPanel
         }
         //if no default language is detected then throw exception
         throw new Exception\InvalidArgumentException('Something is wrong with your site setup. No Default Admin Language was detected!');
+    }
+
+    /*
+     * Get Default Admin Language Locale
+     * returns iso code
+     */
+    public function getDefaultAdminLocale()
+    {
+        foreach ($this->getAdminLanguages() as $language) {
+            if ($language['default'] == '1') {
+                return $language['code'];
+            }
+        }
+        //if no default language is detected then throw exception
+        throw new Exception\InvalidArgumentException('Something is wrong with your site setup. No Default Admin Language was detected!');
+    }
+
+    public function isValidAdminLocale($locale) {
+        foreach ($this->getAdminLanguages() as $language) {
+            if ($language['code'] == $locale) {
+                return true;
+            }
+        }
+        return false;
     }
 
     public function getAuthService()

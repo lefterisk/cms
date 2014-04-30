@@ -18,6 +18,7 @@ use Zend\Db\TableGateway\TableGateway;
 use Zend\Session\SaveHandler\DbTableGateway;
 use Zend\Session\SaveHandler\DbTableGatewayOptions;
 use Zend\Session\SessionManager;
+use Zend\Session\Container;
 use Zend\Session\Config\SessionConfig;
 use Administration\Helper\General\ControlPanel;
 
@@ -30,10 +31,25 @@ class Module
         $moduleRouteListener = new ModuleRouteListener();
         $moduleRouteListener->attach($eventManager);
         $sm                  = $e->getApplication()->getServiceManager();
+
         $e->getApplication()->getEventManager()->getSharedManager()->attach('Zend\Mvc\Controller\AbstractController', 'dispatch', function($e) use ($sm) {
             if ($e->getRouteMatch()->getParam('model')) {
 
             }
+
+            $controlPanel = $sm->get('ControlPanel');
+            $session      = $sm->get('Session');
+
+            //Locale setup
+            if (!$session->locale || !$controlPanel->isValidAdminLocale($session->locale)) {
+                $session->locale = $controlPanel->getDefaultAdminLocale();
+            }
+
+            if ($e->getRouteMatch()->getParam('language') && $controlPanel->isValidAdminLocale($e->getRouteMatch()->getParam('language'))) {
+                $session->locale = $e->getRouteMatch()->getParam('language');
+            }
+
+            $e->getApplication()->getServiceManager()->get('translator')->setLocale($session->locale);
         }, 100);
     }
 
@@ -60,6 +76,9 @@ class Module
                 'DbAdapter' => function ($sm) {
                     $dbAdapter = $sm->get('Zend\Db\Adapter\Adapter');
                     return $dbAdapter;
+                },
+                'Session' => function ($sm) {
+                    return new Container();
                 },
                 'SessionSaveHandler' => function ($sm) {
                     $dbAdapter     = $sm->get('DbAdapter');

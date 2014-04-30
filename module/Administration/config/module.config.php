@@ -13,17 +13,21 @@ return array(
             'adminHome' => array(
                 'type' => 'segment',
                 'options' => array(
-                    'route'    => '/administration[/home/:action]',
+                    'route'    => '/administration[/home/:action][/language/:language]',
                     'defaults' => array(
                         'controller' => 'Administration\Controller\Home',
                         'action'     => 'index',
+                        'defaults'  => 'en'
                     ),
+                    'constraints' => array(
+                        'language'   => '[a-z]{2}'
+                    )
                 ),
             ),
             'genericModel' => array(
                 'type' => 'segment',
                 'options' => array(
-                    'route'    => '/administration/model[/:model][/parent/:parent][/itemsperpage/:itemsperpage][/page/:page][/order/:order][/direction/:direction][/:item][/:action]',
+                    'route'    => '/administration/model[/:model][/parent/:parent][/itemsperpage/:itemsperpage][/page/:page][/order/:order][/direction/:direction][/:item][/:action][/language/:language]',
                     'constraints' => array(
                         'model'         => '[a-zA-Z][a-zA-Z0-9_-]*',
                         'itemsperpage'  => '[0-9]+',
@@ -33,21 +37,24 @@ return array(
                         'parent'        => '[0-9]*',
                         'item'          => '[0-9_-]*',
                         'action'        => '[a-zA-Z][a-zA-Z0-9_-]*',
+
                     ),
                     'defaults' => array(
                         'controller' => 'Administration\Controller\GenericModel',
                         'action'     => 'index',
+                        'language'   => '[a-z]{2}'
                     ),
                 ),
             ),
             'sitemanager' => array(
                 'type' => 'segment',
                 'options' => array(
-                    'route'    => '/administration/sitemanager[/page/:page][/model/:model][/:action]',
+                    'route'    => '/administration/sitemanager[/page/:page][/model/:model][/:action][/language/:language]',
                     'constraints' => array(
                         'page'          => '[0-9]*',
                         'model'         => '[a-zA-Z][a-zA-Z0-9_-]*',
                         'action'        => '[a-zA-Z][a-zA-Z0-9_-]*',
+                        'language'   => '[a-z]{2}'
                     ),
                     'defaults' => array(
                         'controller' => 'Administration\Controller\SiteManager',
@@ -58,7 +65,7 @@ return array(
             'adminLogin' => array(
                 'type' => 'segment',
                 'options' => array(
-                    'route'    => '/administration/login[/:action]',
+                    'route'    => '/administration/login[/:action][/language/:language]',
                     'constraints' => array(
                         'action'        => '[a-zA-Z][a-zA-Z0-9_-]*',
                     ),
@@ -66,6 +73,7 @@ return array(
                         'controller' => 'Administration\Controller\Login',
                         'action'     => 'index',
                         'model'      => 'login',
+                        'language'   => '[a-z]{2}'
                     ),
                 ),
             ),
