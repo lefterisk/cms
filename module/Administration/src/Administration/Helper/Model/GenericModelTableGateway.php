@@ -687,7 +687,7 @@ class GenericModelTableGateway
 
     private function deleteParentFromLookupTable($itemId)
     {
-        //mark all previously related entries as '0' (un-categorized)
+        //mark all previously related entries as '0' (root item)
         $statement = $this->sql->update($this->getParentLookupTableName());
         $statement->set(array('parent_id' => '0'));
         $statement->where(

@@ -13,6 +13,7 @@ use Zend\Mvc\Controller\AbstractActionController;
 use Zend\View\Model\ViewModel;
 use Administration\Model;
 use Zend\Db\TableGateway\Exception;
+use Zend\Escaper\Escaper;
 
 
 class SiteManagerController extends AbstractActionController
@@ -24,7 +25,11 @@ class SiteManagerController extends AbstractActionController
     {
         $this->controlPanel = $this->getServiceLocator()->get('ControlPanel');
         //$this->component    = $this->controlPanel->instantiateModelForUser($this->params()->fromRoute('model'));
+        $escaper            = new Escaper('utf-8');
+
         $this->layout()->setVariable('controlPanel' , $this->controlPanel);
+        $this->layout()->setVariable('escaper'      , $escaper);
+        $this->layout()->setVariable('cleanUrl'     , $this->cleanUrlFromLanguage());
     }
 
     public function indexAction()
@@ -115,12 +120,14 @@ class SiteManagerController extends AbstractActionController
         ));
     }
 
-    protected function isGenericComponent()
+    private function cleanUrlFromLanguage()
     {
-        if (method_exists($this->component ,'genericComponent')) {
-            return true;
-        } else {
-            return false;
+        $urlParamsArray = array();
+        foreach (array_merge($this->params()->fromRoute(), $this->params()->fromPost()) as $parameter => $value ) {
+            if (!in_array($parameter, array('language'))) {
+                $urlParamsArray[$parameter] = $value;
+            }
         }
+        return $this->url()->fromRoute('sitemanager', $urlParamsArray);
     }
 }

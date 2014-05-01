@@ -13,6 +13,7 @@ use Zend\Mvc\Controller\AbstractActionController;
 use Zend\View\Model\ViewModel;
 use Administration\Model;
 use Zend\Db\TableGateway\Exception;
+use Zend\Escaper\Escaper;
 
 
 class HomeController extends AbstractActionController
@@ -23,7 +24,11 @@ class HomeController extends AbstractActionController
     {
         $this->controlPanel = $this->getServiceLocator()->get('ControlPanel');
         $this->component    = $this->controlPanel->instantiateModelForUser($this->params()->fromRoute('model'));
+        $escaper            = new Escaper('utf-8');
+
         $this->layout()->setVariable('controlPanel' , $this->controlPanel);
+        $this->layout()->setVariable('escaper'      , $escaper);
+        $this->layout()->setVariable('cleanUrl'     , $this->cleanUrlFromLanguage());
     }
 
     public function indexAction()
@@ -38,6 +43,17 @@ class HomeController extends AbstractActionController
         $viewModel = new ViewModel();
 
         return $viewModel;
+    }
+
+    private function cleanUrlFromLanguage()
+    {
+        $urlParamsArray = array();
+        foreach (array_merge($this->params()->fromRoute(), $this->params()->fromPost()) as $parameter => $value ) {
+            if (!in_array($parameter, array('language'))) {
+                $urlParamsArray[$parameter] = $value;
+            }
+        }
+        return $this->url()->fromRoute('adminHome', $urlParamsArray);
     }
 
 }

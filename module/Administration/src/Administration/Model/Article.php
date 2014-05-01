@@ -35,7 +35,6 @@ class Article  extends TableHandler
             $articleCategory = new RelationsHandler('ArticleCategory','manyToMany','title','ArticleToArticleCategory'),
             $articleAuthor   = new RelationsHandler('User','manyToOne','email')
         ));
-        //$this->setRelations(array($userGroup = new RelationsHandler('UserGroup','manyToOne','name')));
         $this->finaliseTable();
 //		$this->setMetaTitle();
 //		$this->setMetaDescription();
