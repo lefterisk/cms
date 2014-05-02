@@ -1074,4 +1074,13 @@ class TableHandler extends GenericModelTableGateway implements InputFilterAwareI
         }
         return $returnArray;
     }
+
+    /*
+     * Manipulate populated form (Should be called
+     * after form has been bound to an object)
+     */
+    public function populatedFormManipulatorHook ($form)
+    {
+        return $form;
+    }
 }

@@ -32,4 +32,9 @@ class FormManager
     {
         return $this->form;
     }
+
+    public function setFormObject(Form $form)
+    {
+        $this->form = $form;
+    }
 }

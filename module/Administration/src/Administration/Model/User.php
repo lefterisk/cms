@@ -3,6 +3,7 @@ namespace Administration\Model;
 
 use Administration\Helper\Model\TableHandler;
 use Administration\Helper\Model\RelationsHandler;
+use Zend\Crypt\Password\Bcrypt;
 
 class User  extends TableHandler
 {
@@ -38,5 +39,23 @@ class User  extends TableHandler
 //		$this->setMetaDescription();
 //		$this->setMetaKeywords();
 
+    }
+
+    protected function preSaveHook($data)
+    {
+        if (array_key_exists('password', $data) && empty($data['password'])) {
+            unset($data['password']);
+        } elseif (array_key_exists('password', $data) && !empty($data['password'])) {
+            $bcrypt           = new Bcrypt();
+            $data['password'] = $bcrypt->create($data['password']);
+        }
+        return $data;
+    }
+
+    public function populatedFormHook($form)
+    {
+        $formObject = $form->getFormObject();
+        $formObject->get('password')->setValue('');
+        return $form;
     }
 }

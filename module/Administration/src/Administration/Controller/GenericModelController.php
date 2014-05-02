@@ -175,6 +175,7 @@ class GenericModelController extends AbstractActionController
 
         //Bind form to Item
         $form->getFormObject()->bind($item);
+        $form = $this->component->populatedFormHook($form);
 
         return new ViewModel(
             array(

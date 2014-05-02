@@ -345,6 +345,12 @@ class GenericModelTableGateway
 
     public function save($data)
     {
+
+        $data = $this->preSaveHook($data);
+        if (!$data) {
+            throw new Exception\InvalidArgumentException('Pre-save method for model ' . $this->getTableName() . 'Failed!');
+        }
+
         $queryTableData            = array();
         $queryTableDescriptionData = array();
         $queryM2MRelationsData     = array();  // Many to Many Relations (with lookup Table)
@@ -474,6 +480,10 @@ class GenericModelTableGateway
             if ($this->getMaximumTreeDepth() > 0) {
                 $this->insertUpdateParentLookup($this->lastInsertValue, $queryParentData);
             }
+        }
+
+        if (!$this->postSaveHook($data)) {
+            throw new Exception\InvalidArgumentException('Post-save method for model ' . $this->getTableName() . 'Failed!');
         }
     }
 
@@ -613,6 +623,10 @@ class GenericModelTableGateway
 
     public function deleteSingle($itemId)
     {
+        if (!$this->preDeleteHook($itemId)) {
+            throw new Exception\InvalidArgumentException('Pre-delete method for model ' . $this->getTableName() . 'Failed!');
+        }
+
         //Main Entity Table
         $this->deleteFromEntityTable($itemId);
         //Description Table IF it exists
@@ -646,6 +660,10 @@ class GenericModelTableGateway
         if ($this->getMaximumTreeDepth() > 0) {
             $this->deleteFromLookUpTable($this->getParentLookupTableName(), $itemId);
             $this->deleteParentFromLookupTable($itemId);
+        }
+
+        if (!$this->postDeleteHook($itemId)) {
+            throw new Exception\InvalidArgumentException('Pre-delete method for model ' . $this->getTableName() . 'Failed!');
         }
         return true;
     }
@@ -697,5 +715,25 @@ class GenericModelTableGateway
         );
         $sqlString = $this->sql->getSqlStringForSqlObject($statement);
         $this->adapter->query($sqlString, Adapter::QUERY_MODE_EXECUTE);
+    }
+
+    protected function preSaveHook(Array $data)
+    {
+        return $data;
+    }
+
+    protected function postSaveHook(Array $data)
+    {
+        return true;
+    }
+
+    protected function preDeleteHook($id)
+    {
+        return true;
+    }
+
+    protected function postDeleteHook($id)
+    {
+        return true;
     }
 }
