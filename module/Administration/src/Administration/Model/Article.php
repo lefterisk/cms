@@ -7,15 +7,15 @@ use Administration\Helper\Model\RelationsHandler;
 class Article  extends TableHandler
 {
 
-    public function __construct($controlPanel, $followRelations = true)
+    public function __construct($followRelations = true, $controlPanel)
     {
-        parent::__construct('Article', $controlPanel);//<--Table name
+        parent::__construct('Article');//<--Table name
 
         $this->setListingFields(array("title"));
         $this->setListingSwitches(array("status"));
         $this->setPrefix("article_");
         $this->setFollowRelations($followRelations);
-
+        echo '111<br/><br/>';   
         //Fields
 		$this->setDates(array());
 		$this->setEnums(array('status'));
@@ -35,7 +35,7 @@ class Article  extends TableHandler
             $articleCategory = new RelationsHandler('ArticleCategory','manyToMany','title','ArticleToArticleCategory'),
             $articleAuthor   = new RelationsHandler('User','manyToOne','email')
         ));
-        $this->finaliseTable();
+        //$this->finaliseTable();
 //		$this->setMetaTitle();
 //		$this->setMetaDescription();
 //		$this->setMetaKeywords();

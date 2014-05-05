@@ -9,51 +9,72 @@ use Zend\Db\Sql\Select;
 class GenericModelTableGateway
 {
     protected $lastInsertValue;
+    //Entity model
+    protected $model;
+    //Db adapter
+    public  $adapter;
+    //Sql interface
+    public  $sql;
+    //Control object contains languages admin-rights etc
+    public  $controlPanel;
+
+    public function __construct($model, $controlPanel)
+    {
+        $this->controlPanel = $controlPanel;
+        $this->adapter      = $this->controlPanel->getDbAdapter();
+        $this->sql          = $this->controlPanel->getSQL();
+        $this->model        = $model;
+    }
+
+    public function getModel()
+    {
+       return $this->model;
+    }
 
     public function finaliseTable()
     {
         $this->createTablesIfNotExist();
-        $this->addFieldsColumnsIfDontExist('integers',      $this->getIntegers());
-        $this->addFieldsColumnsIfDontExist('enums',         $this->getEnums());
-        $this->addFieldsColumnsIfDontExist('dates',         $this->getDates());
-        $this->addFieldsColumnsIfDontExist('varchars',      $this->getVarchars());
-        $this->addFieldsColumnsIfDontExist('images',        $this->getImages());
-        $this->addFieldsColumnsIfDontExist('files',         $this->getFiles());
-        $this->addFieldsColumnsIfDontExist('texts',         $this->getTexts());
-        $this->addFieldsColumnsIfDontExist('longTexts',     $this->getLongTexts());
-        $this->addFieldsColumnsIfDontExist('imageCaptions', $this->getImageCaptions());
-        $this->addFieldsColumnsIfDontExist('fileCaptions',  $this->getFileCaptions());
-        if ($this->isMultiLingual()) {
-            $this->addFieldsColumnsIfDontExist('multiLingualFileCaptions', $this->getMultilingualFilesCaptions());
-            $this->addFieldsColumnsIfDontExist('multiLingualTexts',        $this->getMultilingualTexts());
-            $this->addFieldsColumnsIfDontExist('multiLingualLongTexts',    $this->getMultilingualLongTexts());
-            $this->addFieldsColumnsIfDontExist('multiLingualVarchars',     $this->getMultilingualVarchars());
-            $this->addFieldsColumnsIfDontExist('multiLingualFiles',        $this->getMultilingualFiles());
+        $this->addFieldsColumnsIfDontExist('integers',      $this->model->getIntegers());
+        $this->addFieldsColumnsIfDontExist('enums',         $this->model->getEnums());
+        $this->addFieldsColumnsIfDontExist('dates',         $this->model->getDates());
+        $this->addFieldsColumnsIfDontExist('varchars',      $this->model->getVarchars());
+        $this->addFieldsColumnsIfDontExist('images',        $this->model->getImages());
+        $this->addFieldsColumnsIfDontExist('files',         $this->model->getFiles());
+        $this->addFieldsColumnsIfDontExist('texts',         $this->model->getTexts());
+        $this->addFieldsColumnsIfDontExist('longTexts',     $this->model->getLongTexts());
+        $this->addFieldsColumnsIfDontExist('imageCaptions', $this->model->getImageCaptions());
+        $this->addFieldsColumnsIfDontExist('fileCaptions',  $this->model->getFileCaptions());
+        if ($this->model->isMultiLingual()) {
+            $this->addFieldsColumnsIfDontExist('multiLingualFileCaptions', $this->model->getMultilingualFilesCaptions());
+            $this->addFieldsColumnsIfDontExist('multiLingualTexts',        $this->model->getMultilingualTexts());
+            $this->addFieldsColumnsIfDontExist('multiLingualLongTexts',    $this->model->getMultilingualLongTexts());
+            $this->addFieldsColumnsIfDontExist('multiLingualVarchars',     $this->model->getMultilingualVarchars());
+            $this->addFieldsColumnsIfDontExist('multiLingualFiles',        $this->model->getMultilingualFiles());
         }
-        if ($this->followRelations()) {
-            $this->addJoinRelationsIfNotExist($this->getRelations());
+        if ($this->model->followRelations()) {
+            $this->addJoinRelationsIfNotExist($this->model->getRelations());
         }
-        $this->addCustomSelectionFieldsIfNotExist($this->getCustomSelections());
+        $this->addCustomSelectionFieldsIfNotExist($this->model->getCustomSelections());
     }
 
     private function createTablesIfNotExist()
     {
-        $this->adapter->query('CREATE TABLE IF NOT EXISTS `' . $this->getTableName() . '` (`id` int(11) unsigned NOT NULL AUTO_INCREMENT, PRIMARY KEY (`id`))', Adapter::QUERY_MODE_EXECUTE);
-        if ($this->isMultiLingual()) {
-            $results = $this->adapter->query("SHOW TABLES LIKE '" . $this->getTableDescriptionName() . "'" , Adapter::QUERY_MODE_EXECUTE);
+        $this->adapter->query('CREATE TABLE IF NOT EXISTS `' . $this->model->getTableName() . '` (`id` int(11) unsigned NOT NULL AUTO_INCREMENT, PRIMARY KEY (`id`))', Adapter::QUERY_MODE_EXECUTE);
+        if ($this->model->isMultiLingual()) {
+            $results = $this->adapter->query("SHOW TABLES LIKE '" . $this->model->getTableDescriptionName() . "'" , Adapter::QUERY_MODE_EXECUTE);
             if ($results->count() <= 0) {
 
-                $this->adapter->query('CREATE TABLE IF NOT EXISTS `'.$this->getTableDescriptionName().'` (`'.$this->getLanguageID().'` int(11) DEFAULT NULL, `'.$this->getPrefix().'id` int(11) DEFAULT NULL, PRIMARY KEY (`'.$this->getLanguageID().'`,`'.$this->getPrefix().'id`))', Adapter::QUERY_MODE_EXECUTE);
+                $this->adapter->query('CREATE TABLE IF NOT EXISTS `'.$this->model->getTableDescriptionName().'` (`'.$this->model->getLanguageID().'` int(11) DEFAULT NULL, `'.$this->model->getPrefix().'id` int(11) DEFAULT NULL, PRIMARY KEY (`'.$this->model->getLanguageID().'`,`'.$this->model->getPrefix().'id`))', Adapter::QUERY_MODE_EXECUTE);
 
                 //Make sure every entry on main table has a corresponding one in description
-                $statement    = $this->sql->select($this->getTableName());
+                $statement    = $this->sql->select($this->model->getTableName());
                 $selectString = $this->sql->getSqlStringForSqlObject($statement);
                 $results      = $this->adapter->query($selectString, Adapter::QUERY_MODE_EXECUTE);
                 if ($results->count() > 0) {
                     foreach ($results as $entry) {
                         foreach ($this->controlPanel->getSiteLanguages() as $languageId => $language) {
-                            $insertStatement = $this->sql->insert($this->getTableDescriptionName());
-                            $insertStatement->values(array($this->getLanguageID() => $languageId, $this->getPrefix().'id' => $entry['id'] ));
+                            $insertStatement = $this->sql->insert($this->model->getTableDescriptionName());
+                            $insertStatement->values(array($this->model->getLanguageID() => $languageId, $this->model->getPrefix().'id' => $entry['id'] ));
                             $insertStatementString = $this->sql->getSqlStringForSqlObject($insertStatement);
                             $this->adapter->query($insertStatementString, Adapter::QUERY_MODE_EXECUTE);
                         }
@@ -61,8 +82,8 @@ class GenericModelTableGateway
                 }
             }
         }
-        if ($this->getMaximumTreeDepth() > 0) {
-            $this->adapter->query('CREATE TABLE IF NOT EXISTS `' . $this->getParentLookupTableName() . '` (`' . $this->getPrefix() . 'id' . '` int(11) unsigned NOT NULL, `parent_id` int(11) unsigned NOT NULL, PRIMARY KEY (`' . $this->getPrefix() . 'id' . '`, `parent_id`))', Adapter::QUERY_MODE_EXECUTE);
+        if ($this->model->getMaximumTreeDepth() > 0) {
+            $this->adapter->query('CREATE TABLE IF NOT EXISTS `' . $this->model->getParentLookupTableName() . '` (`' . $this->model->getPrefix() . 'id' . '` int(11) unsigned NOT NULL, `parent_id` int(11) unsigned NOT NULL, PRIMARY KEY (`' . $this->model->getPrefix() . 'id' . '`, `parent_id`))', Adapter::QUERY_MODE_EXECUTE);
         }
     }
 
@@ -74,26 +95,26 @@ class GenericModelTableGateway
 
         switch($type){
             case 'integers':
-                $tableToAddTheColumn = $this->getTableName();
+                $tableToAddTheColumn = $this->model->getTableName();
                 $fieldType = " INT(11) ";
                 break;
             case 'enums':
-                $tableToAddTheColumn = $this->getTableName();
+                $tableToAddTheColumn = $this->model->getTableName();
                 $fieldType = " ENUM( '0', '1' ) NOT NULL ";
                 break;
             case 'dates':
-                $tableToAddTheColumn = $this->getTableName();
+                $tableToAddTheColumn = $this->model->getTableName();
                 $fieldType = " DATETIME ";
                 break;
             case 'varchars':
             case 'images':
             case 'files':
-                $tableToAddTheColumn = $this->getTableName();
+                $tableToAddTheColumn = $this->model->getTableName();
                 $fieldType = " VARCHAR( 255 ) ";
                 break;
             case 'texts':
             case 'longTexts':
-                $tableToAddTheColumn = $this->getTableName();
+                $tableToAddTheColumn = $this->model->getTableName();
                 $fieldType = " TEXT ";
                 break;
             case 'multiLingualVarchars':
@@ -101,16 +122,16 @@ class GenericModelTableGateway
             case 'imageCaptions':
             case 'fileCaptions':
             case 'multiLingualFileCaptions':
-                if ($this->isMultiLingual()) {
-                    $tableToAddTheColumn = $this->getTableDescriptionName();
+                if ($this->model->isMultiLingual()) {
+                    $tableToAddTheColumn = $this->model->getTableDescriptionName();
                 } else {
-                    $tableToAddTheColumn = $this->getTableName();
+                    $tableToAddTheColumn = $this->model->getTableName();
                 }
                 $fieldType = " VARCHAR( 255 ) ";
                 break;
             case 'multiLingualTexts':
             case 'multiLingualLongTexts':
-                $tableToAddTheColumn = $this->getTableDescriptionName();
+                $tableToAddTheColumn = $this->model->getTableDescriptionName();
                 $fieldType = " TEXT ";
                 break;
         }
@@ -139,13 +160,13 @@ class GenericModelTableGateway
         foreach ($selects as $select) {
 
             if ($select->isMultiple()) {
-                $this->adapter->query('CREATE TABLE IF NOT EXISTS `' . $select->getLookUpTableName() . '` ( `'.$this->getPrefix().'id` int(11) DEFAULT NULL, `' . $select->getFieldName() . '` VARCHAR( 255 ) DEFAULT NULL, PRIMARY KEY (`' . $this->getPrefix() . 'id`, `' . $select->getFieldName() . '`))', Adapter::QUERY_MODE_EXECUTE);
+                $this->adapter->query('CREATE TABLE IF NOT EXISTS `' . $select->getLookUpTableName() . '` ( `'.$this->model->getPrefix().'id` int(11) DEFAULT NULL, `' . $select->getFieldName() . '` VARCHAR( 255 ) DEFAULT NULL, PRIMARY KEY (`' . $this->model->getPrefix() . 'id`, `' . $select->getFieldName() . '`))', Adapter::QUERY_MODE_EXECUTE);
             } else {
-                $statement = $this->adapter->createStatement("SHOW COLUMNS FROM " . $this->getTableName() . " LIKE '" .  $select->getFieldName() . "'" );
+                $statement = $this->adapter->createStatement("SHOW COLUMNS FROM " . $this->model->getTableName() . " LIKE '" .  $select->getFieldName() . "'" );
                 $result    = $statement->execute();
                 if ($result->count()==0)
                 {
-                    $this->adapter->query("ALTER TABLE " . $this->getTableName() . " ADD `" . $select->getFieldName() . "` VARCHAR( 255 ) DEFAULT '0';", Adapter::QUERY_MODE_EXECUTE);
+                    $this->adapter->query("ALTER TABLE " . $this->model->getTableName() . " ADD `" . $select->getFieldName() . "` VARCHAR( 255 ) DEFAULT '0';", Adapter::QUERY_MODE_EXECUTE);
                 }
             }
         }
@@ -158,17 +179,17 @@ class GenericModelTableGateway
             if ($relation->activeModel->getPrefix() == '') {
                 throw new Exception\InvalidArgumentException('Please set the prefix in the ' . $relation->activeModel->getTableName() . ' model!');
             }
-            if ($this->getPrefix() == '') {
-                throw new Exception\InvalidArgumentException('Please set the prefix in the ' . $this->getTableName() . ' model!');
+            if ($this->model->getPrefix() == '') {
+                throw new Exception\InvalidArgumentException('Please set the prefix in the ' . $this->model->getTableName() . ' model!');
             }
             if ($relation->hasLookUpTable()) {
-                $this->adapter->query('CREATE TABLE IF NOT EXISTS `' . $relation->getLookUpTableName() . '` ( `'.$this->getPrefix().'id` int(11) DEFAULT NULL, `'.$relation->activeModel->getPrefix().'id` int(11) DEFAULT NULL)', Adapter::QUERY_MODE_EXECUTE);
+                $this->adapter->query('CREATE TABLE IF NOT EXISTS `' . $relation->getLookUpTableName() . '` ( `'.$this->model->getPrefix().'id` int(11) DEFAULT NULL, `'.$relation->activeModel->getPrefix().'id` int(11) DEFAULT NULL)', Adapter::QUERY_MODE_EXECUTE);
             } elseif ($relation->hasLookupColumn()) {
-                $statement = $this->adapter->createStatement("SHOW COLUMNS FROM " . $this->getTableName() . " LIKE '" . $relation->activeModel->getPrefix() . "id'" );
+                $statement = $this->adapter->createStatement("SHOW COLUMNS FROM " . $this->model->getTableName() . " LIKE '" . $relation->activeModel->getPrefix() . "id'" );
                 $result    = $statement->execute();
                 if ($result->count()==0)
                 {
-                    $this->adapter->query("ALTER TABLE " . $this->getTableName() . " ADD `" . $relation->activeModel->getPrefix() . "id` int(11) DEFAULT 0;", Adapter::QUERY_MODE_EXECUTE);
+                    $this->adapter->query("ALTER TABLE " . $this->model->getTableName() . " ADD `" . $relation->activeModel->getPrefix() . "id` int(11) DEFAULT 0;", Adapter::QUERY_MODE_EXECUTE);
                 }
             }
         }
@@ -176,28 +197,28 @@ class GenericModelTableGateway
 
     public function getListing( $parent = 0, $itemsPerPage = 'all', $page = null, $order = null, $orderDirection = null, Array $filters = array(), Array $notInArray = array())
     {
-        if (is_array($this->getListingFields()) && count($this->getListingFields()) > 0) {
+        if (is_array($this->model->getListingFields()) && count($this->model->getListingFields()) > 0) {
 
-            if ($this->isMultiLingual()) {
-                $statement = $this->sql->select($this->getTableName())->join(array( 'dc' => $this->getTableDescriptionName()),'dc.' . $this->getPrefix() . 'id = ' . $this->getTableName() . '.id' , Select::SQL_STAR , Select::JOIN_LEFT)->where(array($this->getLanguageID() => $this->controlPanel->getDefaultSiteLanguageId()));
+            if ($this->model->isMultiLingual()) {
+                $statement = $this->sql->select($this->model->getTableName())->join(array( 'dc' => $this->model->getTableDescriptionName()),'dc.' . $this->model->getPrefix() . 'id = ' . $this->model->getTableName() . '.id' , Select::SQL_STAR , Select::JOIN_LEFT)->where(array($this->model->getLanguageID() => $this->controlPanel->getDefaultSiteLanguageId()));
             } else {
-                $statement = $this->sql->select($this->getTableName());
+                $statement = $this->sql->select($this->model->getTableName());
             }
 
-            if ($this->getMaximumTreeDepth() > 0) {
-                $subQry =  $this->sql->select()->from(array('dpc' => $this->getParentLookupTableName()))->columns(array('childCount' => new \Zend\Db\Sql\Expression('COUNT(dpc.parent_id)')))->where(array('dpc.parent_id' => new \Zend\Db\Sql\Expression( $this->getTableName() . '.' . 'id')));
-                $statement->join(array( 'dp' => $this->getParentLookupTableName()),'dp.' . $this->getPrefix() . 'id = ' . $this->getTableName() . '.id' , array(Select::SQL_STAR, 'childCount' => new \Zend\Db\Sql\Expression('?', array($subQry))) , Select::JOIN_LEFT)->where(array('dp.parent_id' => $parent));
+            if ($this->model->getMaximumTreeDepth() > 0) {
+                $subQry =  $this->sql->select()->from(array('dpc' => $this->model->getParentLookupTableName()))->columns(array('childCount' => new \Zend\Db\Sql\Expression('COUNT(dpc.parent_id)')))->where(array('dpc.parent_id' => new \Zend\Db\Sql\Expression( $this->model->getTableName() . '.' . 'id')));
+                $statement->join(array( 'dp' => $this->model->getParentLookupTableName()),'dp.' . $this->model->getPrefix() . 'id = ' . $this->model->getTableName() . '.id' , array(Select::SQL_STAR, 'childCount' => new \Zend\Db\Sql\Expression('?', array($subQry))) , Select::JOIN_LEFT)->where(array('dp.parent_id' => $parent));
             }
 
             if (count($filters) > 0) {
                 foreach ($filters as $relationField => $value) {
                     if ($value != 'all') {
-                        foreach ($this->getRelations() as $relation) {
+                        foreach ($this->model->getRelations() as $relation) {
                             if ($relationField == $relation->inputFieldName) {
                                 if ($relation->hasLookupColumn()) {
                                     $statement->where(array($relation->inputFieldName => $value));
                                 } elseif ($relation->hasLookUpTable()) {
-                                    $statement->join(array( 'dr' => $relation->getLookUpTableName()),'dr.' . $this->getPrefix() . 'id = ' . $this->getTableName() . '.id' , Select::SQL_STAR , Select::JOIN_LEFT)->where(array('dr.' . $relation->inputFieldName => $value));
+                                    $statement->join(array( 'dr' => $relation->getLookUpTableName()),'dr.' . $this->model->getPrefix() . 'id = ' . $this->model->getTableName() . '.id' , Select::SQL_STAR , Select::JOIN_LEFT)->where(array('dr.' . $relation->inputFieldName => $value));
                                 }
                             }
                         }
@@ -206,7 +227,7 @@ class GenericModelTableGateway
             }
 
             if (count($notInArray) > 0) {
-                $statement->where->addPredicate(new \Zend\Db\Sql\Predicate\Expression($this->getTableName() . '.id NOT IN (?)', $notInArray));
+                $statement->where->addPredicate(new \Zend\Db\Sql\Predicate\Expression($this->model->getTableName() . '.id NOT IN (?)', $notInArray));
             }
 
             $offset = 0;
@@ -250,11 +271,11 @@ class GenericModelTableGateway
                     $depthString .= '**';
                 }
             }
-            $listingFields = $this->getListingFields();
+            $listingFields = $this->model->getListingFields();
             $result[$listingFields[0]] = $depthString . $result[$listingFields[0]];
             $toReturn[] = $result;
 
-            if ($this->getMaximumTreeDepth() > 0 && $treeLevel < ($this->getMaximumTreeDepth()-1) && isset($result['childCount']) && $result['childCount'] > 0) {
+            if ($this->model->getMaximumTreeDepth() > 0 && $treeLevel < ($this->model->getMaximumTreeDepth()-1) && isset($result['childCount']) && $result['childCount'] > 0) {
                 $toReturn = array_merge($toReturn, $this->getListingForSelect($result['id'],$treeLevel+1));
             }
         }
@@ -264,32 +285,32 @@ class GenericModelTableGateway
     public function getItemById($id)
     {
         //Data from Entity Table
-        $statement    = $this->sql->select($this->getTableName())->where(array($this->getTableName().'.id' => $id));
+        $statement    = $this->sql->select($this->model->getTableName())->where(array($this->model->getTableName().'.id' => $id));
         $selectString = $this->sql->getSqlStringForSqlObject($statement);
         $results      = $this->adapter->query($selectString, Adapter::QUERY_MODE_EXECUTE)->current();
 
         //Attach Data from Description Table
-        if ($this->isMultiLingual()) {
+        if ($this->model->isMultiLingual()) {
 
-            $descriptionStatement    = $this->sql->select($this->getTableDescriptionName())->where(array($this->getPrefix().'id' => $id));
+            $descriptionStatement    = $this->sql->select($this->model->getTableDescriptionName())->where(array($this->model->getPrefix().'id' => $id));
             $descriptionSelectString = $this->sql->getSqlStringForSqlObject($descriptionStatement);
             $descriptionResults      = $this->adapter->query($descriptionSelectString, Adapter::QUERY_MODE_EXECUTE);
 
             if ($descriptionResults->count() > 0) {
                 foreach ($descriptionResults as $descriptionEntry) {
-                    foreach ($this->getAllMultilingualFields() as $multilingualField) {
-                        $results[$multilingualField . '[' . $descriptionEntry[$this->getLanguageID()] . ']'] = $descriptionEntry[$multilingualField];
+                    foreach ($this->model->getAllMultilingualFields() as $multilingualField) {
+                        $results[$multilingualField . '[' . $descriptionEntry[$this->model->getLanguageID()] . ']'] = $descriptionEntry[$multilingualField];
                     }
                 }
             }
         }
 
         //Attach Data from Relations Look Up Tables
-        if (count($this->getRelations()) > 0) {
-            foreach ($this->getRelations() as $relation) {
+        if (count($this->model->getRelations()) > 0) {
+            foreach ($this->model->getRelations() as $relation) {
                 if ($relation->hasLookUpTable()) {
                     //If relation is manyToMany
-                    $lookUpTableStatement    = $this->sql->select($relation->getLookUpTableName())->where(array($this->getPrefix().'id' => $id));
+                    $lookUpTableStatement    = $this->sql->select($relation->getLookUpTableName())->where(array($this->model->getPrefix().'id' => $id));
                     $lookUpTableSelectString = $this->sql->getSqlStringForSqlObject($lookUpTableStatement);
                     $lookUpTableResults      = $this->adapter->query($lookUpTableSelectString, Adapter::QUERY_MODE_EXECUTE);
 
@@ -300,7 +321,7 @@ class GenericModelTableGateway
                     }
                 } elseif ($relation->getRelationType() == 'oneToMany') {
                     //If relation is oneToMany
-                    $relationStatement    = $this->sql->select($relation->activeModel->getTableName())->where(array($this->getPrefix().'id' => $id));
+                    $relationStatement    = $this->sql->select($relation->activeModel->getTableName())->where(array($this->model->getPrefix().'id' => $id));
                     $relationSelectString = $this->sql->getSqlStringForSqlObject($relationStatement);
                     $relationResults      = $this->adapter->query($relationSelectString, Adapter::QUERY_MODE_EXECUTE);
 
@@ -313,10 +334,10 @@ class GenericModelTableGateway
             }
         }
         //Attach Data from Custom (Multiple) Selections
-        if (count($this->getCustomSelections()) > 0) {
-            foreach ($this->getCustomSelections() as $selection) {
+        if (count($this->model->getCustomSelections()) > 0) {
+            foreach ($this->model->getCustomSelections() as $selection) {
                 if ($selection->isMultiple()) {
-                    $statement        = $this->sql->select($selection->getLookUpTableName())->where(array($this->getPrefix().'id' => $id));
+                    $statement        = $this->sql->select($selection->getLookUpTableName())->where(array($this->model->getPrefix().'id' => $id));
                     $selectString     = $this->sql->getSqlStringForSqlObject($statement);
                     $selectionResults = $this->adapter->query($selectString, Adapter::QUERY_MODE_EXECUTE);
 
@@ -329,14 +350,14 @@ class GenericModelTableGateway
             }
         }
         //Attach Data from Parent Lookup Table
-        if ($this->getMaximumTreeDepth() > 0) {
-            $statement        = $this->sql->select($this->getParentLookupTableName())->where(array($this->getPrefix().'id' => $id));
+        if ($this->model->getMaximumTreeDepth() > 0) {
+            $statement        = $this->sql->select($this->model->getParentLookupTableName())->where(array($this->model->getPrefix().'id' => $id));
             $selectString     = $this->sql->getSqlStringForSqlObject($statement);
             $parentResults    = $this->adapter->query($selectString, Adapter::QUERY_MODE_EXECUTE);
 
             if ($parentResults->count() > 0) {
                 foreach ($parentResults as $result) {
-                    $results['parent_' . $this->getPrefix() . 'id'][] =  $result['parent_id'];
+                    $results['parent_' . $this->model->getPrefix() . 'id'][] =  $result['parent_id'];
                 }
             }
         }
@@ -346,9 +367,9 @@ class GenericModelTableGateway
     public function save($data)
     {
 
-        $data = $this->preSaveHook($data);
+        $data = $this->model->preSaveHook($data);
         if (!$data) {
-            throw new Exception\InvalidArgumentException('Pre-save method for model ' . $this->getTableName() . 'Failed!');
+            throw new Exception\InvalidArgumentException('Pre-save method for model ' . $this->model->getTableName() . 'Failed!');
         }
 
         $queryTableData            = array();
@@ -359,20 +380,20 @@ class GenericModelTableGateway
         $queryParentData           = array();  // Parent lookup (manyToMany)
 
         foreach ($data as $fieldName => $fieldValue) {
-            if (in_array( $fieldName, $this->getAllNonMultilingualFields())) {
+            if (in_array( $fieldName, $this->model->getAllNonMultilingualFields())) {
                 //Setup the data array for the main table
                 $queryTableData[$fieldName] = $fieldValue;
-            } elseif ($this->isMultiLingual() && in_array( $fieldName, $this->getAllMultilingualFieldNames())) {
+            } elseif ($this->model->isMultiLingual() && in_array( $fieldName, $this->getAllMultilingualFieldNames())) {
                 //Setup data arrays for the description queries
-                foreach ($this->getAllMultilingualFields() as $multilingualField) {
+                foreach ($this->model->getAllMultilingualFields() as $multilingualField) {
                     foreach ($this->controlPanel->getSiteLanguages() as $languageId => $language) {
                         if ($multilingualField . '[' . $languageId . ']' == $fieldName) {
                             $queryTableDescriptionData[ $languageId ][ $multilingualField ] = $fieldValue;
                         }
                     }
                 }
-            } elseif (in_array( $fieldName, $this->getRelationsFields())) {
-                foreach ($this->getRelations() as $relation) {
+            } elseif (in_array( $fieldName, $this->model->getRelationsFields())) {
+                foreach ($this->model->getRelations() as $relation) {
                     if ( $relation->inputFieldName ==  $fieldName && $relation->hasLookupColumn()) {
                         //If relation is manyToOne use the main data array
                         $queryTableData[$fieldName] = $fieldValue;
@@ -395,8 +416,8 @@ class GenericModelTableGateway
                         }
                     }
                 }
-            } elseif (in_array( $fieldName, $this->getCustomSelectionFields())) {
-                foreach ($this->getCustomSelections() as $selection) {
+            } elseif (in_array( $fieldName, $this->model->getCustomSelectionFields())) {
+                foreach ($this->model->getCustomSelections() as $selection) {
                     if ($selection->isMultiple()) {
                         if (is_array($fieldValue)) {
                             foreach ($fieldValue as $value) {
@@ -411,7 +432,7 @@ class GenericModelTableGateway
                         $queryTableData[$fieldName] = $fieldValue;
                     }
                 }
-            } elseif ($this->getMaximumTreeDepth() > 0 && $fieldName == 'parent_' . $this->getPrefix() . 'id') {
+            } elseif ($this->model->getMaximumTreeDepth() > 0 && $fieldName == 'parent_' . $this->model->getPrefix() . 'id') {
                 if (is_array($fieldValue)) {
                     foreach ($fieldValue as $value) {
                         //Setup data array for Parent Lookup Table Queries
@@ -427,7 +448,7 @@ class GenericModelTableGateway
             $this->updateEntityTable($data['id'], $queryTableData);
 
             //Description Table Queries (1 per language)
-            if ($this->isMultiLingual()) {
+            if ($this->model->isMultiLingual()) {
                 $this->updateEntityDescriptionTable($data['id'], $queryTableDescriptionData);
             }
 
@@ -447,7 +468,7 @@ class GenericModelTableGateway
             }
 
             //Parent Table Queries
-            if ($this->getMaximumTreeDepth() > 0) {
+            if ($this->model->getMaximumTreeDepth() > 0) {
                 $this->insertUpdateParentLookup($data['id'], $queryParentData);
             }
 
@@ -457,7 +478,7 @@ class GenericModelTableGateway
             $this->insertToEntityTable($queryTableData);
 
             //Description Table Queries (1 per language)
-            if ($this->isMultiLingual()) {
+            if ($this->model->isMultiLingual()) {
                 $this->insertToEntityDescriptionTable($queryTableDescriptionData);
             }
 
@@ -477,19 +498,19 @@ class GenericModelTableGateway
             }
 
             //Parent Table Queries
-            if ($this->getMaximumTreeDepth() > 0) {
+            if ($this->model->getMaximumTreeDepth() > 0) {
                 $this->insertUpdateParentLookup($this->lastInsertValue, $queryParentData);
             }
         }
 
-        if (!$this->postSaveHook($data)) {
-            throw new Exception\InvalidArgumentException('Post-save method for model ' . $this->getTableName() . 'Failed!');
+        if (!$this->model->postSaveHook($data)) {
+            throw new Exception\InvalidArgumentException('Post-save method for model ' . $this->model->getTableName() . 'Failed!');
         }
     }
 
     private function insertToEntityTable ($dataArray)
     {
-        $statement = $this->sql->insert($this->getTableName());
+        $statement = $this->sql->insert($this->model->getTableName());
         $statement->values($dataArray);
         $sqlString = $this->sql->getSqlStringForSqlObject($statement);
         $this->adapter->query($sqlString, Adapter::QUERY_MODE_EXECUTE);
@@ -498,7 +519,7 @@ class GenericModelTableGateway
 
     private function updateEntityTable ($id, $dataArray)
     {
-        $statement = $this->sql->update($this->getTableName());
+        $statement = $this->sql->update($this->model->getTableName());
         $statement->set($dataArray);
         $statement->where(array('id' => $id));
 
@@ -509,13 +530,13 @@ class GenericModelTableGateway
     private function insertToEntityDescriptionTable ($dataArray)
     {
         foreach ($this->controlPanel->getSiteLanguages() as $languageId => $language) {
-            $statement = $this->sql->insert($this->getTableDescriptionName());
+            $statement = $this->sql->insert($this->model->getTableDescriptionName());
             $statement->values(
                 array_merge(
                     $dataArray[$languageId],
                     array(
-                        $this->getPrefix().'id' => $this->lastInsertValue,
-                        $this->getLanguageID() => $languageId
+                        $this->model->getPrefix().'id' => $this->lastInsertValue,
+                        $this->model->getLanguageID() => $languageId
                     )
                 )
             );
@@ -528,12 +549,12 @@ class GenericModelTableGateway
     {
         foreach ($this->controlPanel->getSiteLanguages() as $languageId => $language) {
 
-            $statement = $this->sql->update($this->getTableDescriptionName());
+            $statement = $this->sql->update($this->model->getTableDescriptionName());
             $statement->set($dataArray[$languageId]);
             $statement->where(
                 array(
-                    $this->getPrefix().'id' => $id,
-                    $this->getLanguageID() => $languageId
+                    $this->model->getPrefix().'id' => $id,
+                    $this->model->getLanguageID() => $languageId
                 )
             );
             $sqlString = $this->sql->getSqlStringForSqlObject($statement);
@@ -544,14 +565,14 @@ class GenericModelTableGateway
     private function insertUpdateM2MRelations ($id, $dataArray)
     {
         foreach ($dataArray as $lookUpTable => $relationEntries) {
-            $deleteRelationStatement = $this->sql->delete($lookUpTable)->where(array($this->getPrefix() . 'id' => $id));
+            $deleteRelationStatement = $this->sql->delete($lookUpTable)->where(array($this->model->getPrefix() . 'id' => $id));
             $deleteRelationSqlString = $this->sql->getSqlStringForSqlObject($deleteRelationStatement);
             $this->adapter->query($deleteRelationSqlString, Adapter::QUERY_MODE_EXECUTE);
 
             if (count($relationEntries) > 0) {
                 foreach ($relationEntries as $relationEntry) {
                     $relationStatement = $this->sql->insert($lookUpTable);
-                    $relationStatement->values(array_merge($relationEntry, array($this->getPrefix() . 'id' => $id)));
+                    $relationStatement->values(array_merge($relationEntry, array($this->model->getPrefix() . 'id' => $id)));
                     $relationSqlString = $this->sql->getSqlStringForSqlObject($relationStatement);
                     $this->adapter->query($relationSqlString, Adapter::QUERY_MODE_EXECUTE);
                 }
@@ -564,10 +585,10 @@ class GenericModelTableGateway
         foreach ($dataArray as $entityTable => $entityIds) {
             //mark all previously related entries as '0' (un-categorized)
             $statement = $this->sql->update($entityTable);
-            $statement->set(array($this->getPrefix() . 'id' => '0'));
+            $statement->set(array($this->model->getPrefix() . 'id' => '0'));
             $statement->where(
                 array(
-                    $this->getPrefix().'id' => $id,
+                    $this->model->getPrefix().'id' => $id,
                 )
             );
 
@@ -577,7 +598,7 @@ class GenericModelTableGateway
             //Update all currently related entries (if any exist)
             if (count($entityIds) > 0) {
                 $statement = $this->sql->update($entityTable);
-                $statement->set(array($this->getPrefix() . 'id' => $id));
+                $statement->set(array($this->model->getPrefix() . 'id' => $id));
                 $statement->where(
                     array(
                         'id' => $entityIds,
@@ -592,14 +613,14 @@ class GenericModelTableGateway
     private function insertUpdateMSelections ($id, $dataArray)
     {
         foreach ($dataArray as $lookUpTable => $selectionEntries) {
-            $deleteStatement = $this->sql->delete($lookUpTable)->where(array($this->getPrefix() . 'id' => $id));
+            $deleteStatement = $this->sql->delete($lookUpTable)->where(array($this->model->getPrefix() . 'id' => $id));
             $deleteSqlString = $this->sql->getSqlStringForSqlObject($deleteStatement);
             $this->adapter->query($deleteSqlString, Adapter::QUERY_MODE_EXECUTE);
 
             if (count($selectionEntries) > 0) {
                 foreach ($selectionEntries as $selectionEntry) {
                     $statement = $this->sql->insert($lookUpTable);
-                    $statement->values(array_merge($selectionEntry, array($this->getPrefix() . 'id' => $id)));
+                    $statement->values(array_merge($selectionEntry, array($this->model->getPrefix() . 'id' => $id)));
                     $sqlString = $this->sql->getSqlStringForSqlObject($statement);
                     $this->adapter->query($sqlString, Adapter::QUERY_MODE_EXECUTE);
                 }
@@ -609,13 +630,13 @@ class GenericModelTableGateway
 
     private function insertUpdateParentLookup ($id, $dataArray)
     {
-        $deleteStatement = $this->sql->delete($this->getParentLookupTableName())->where(array($this->getPrefix() . 'id' => $id));
+        $deleteStatement = $this->sql->delete($this->model->getParentLookupTableName())->where(array($this->model->getPrefix() . 'id' => $id));
         $deleteSqlString = $this->sql->getSqlStringForSqlObject($deleteStatement);
         $this->adapter->query($deleteSqlString, Adapter::QUERY_MODE_EXECUTE);
 
         foreach ($dataArray as $parent) {
-            $statement = $this->sql->insert($this->getParentLookupTableName());
-            $statement->values(array($this->getPrefix() . 'id' => $id, 'parent_id' => $parent));
+            $statement = $this->sql->insert($this->model->getParentLookupTableName());
+            $statement->values(array($this->model->getPrefix() . 'id' => $id, 'parent_id' => $parent));
             $sqlString = $this->sql->getSqlStringForSqlObject($statement);
             $this->adapter->query($sqlString, Adapter::QUERY_MODE_EXECUTE);
         }
@@ -623,19 +644,19 @@ class GenericModelTableGateway
 
     public function deleteSingle($itemId)
     {
-        if (!$this->preDeleteHook($itemId)) {
-            throw new Exception\InvalidArgumentException('Pre-delete method for model ' . $this->getTableName() . 'Failed!');
+        if (!$this->model->preDeleteHook($itemId)) {
+            throw new Exception\InvalidArgumentException('Pre-delete method for model ' . $this->model->getTableName() . 'Failed!');
         }
 
         //Main Entity Table
         $this->deleteFromEntityTable($itemId);
         //Description Table IF it exists
-        if ($this->isMultilingual()) {
+        if ($this->model->isMultilingual()) {
             $this->deleteFromEntityDescriptionTable($itemId);
         }
         //Relations If they exist
-        if (count($this->getRelations()) > 0 ) {
-            foreach ($this->getRelations() as $relation) {
+        if (count($this->model->getRelations()) > 0 ) {
+            foreach ($this->model->getRelations() as $relation) {
                 if ($relation->hasLookupColumn()) {
                     //If relation is oneToMany the main delete query will take care of it
                 } elseif ($relation->hasLookUpTable() ) {
@@ -648,8 +669,8 @@ class GenericModelTableGateway
             }
         }
         //Multiple Custom Selection If they exit
-        if (count($this->getCustomSelections())) {
-            foreach ($this->getCustomSelections() as $selection) {
+        if (count($this->model->getCustomSelections())) {
+            foreach ($this->model->getCustomSelections() as $selection) {
                 if ($selection->isMultiple()) {
                     $this->deleteFromLookUpTable($selection->getLookUpTableName(), $itemId);
                 }
@@ -657,34 +678,34 @@ class GenericModelTableGateway
         }
 
         //Parent Table Queries
-        if ($this->getMaximumTreeDepth() > 0) {
-            $this->deleteFromLookUpTable($this->getParentLookupTableName(), $itemId);
+        if ($this->model->getMaximumTreeDepth() > 0) {
+            $this->deleteFromLookUpTable($this->model->getParentLookupTableName(), $itemId);
             $this->deleteParentFromLookupTable($itemId);
         }
 
-        if (!$this->postDeleteHook($itemId)) {
-            throw new Exception\InvalidArgumentException('Pre-delete method for model ' . $this->getTableName() . 'Failed!');
+        if (!$this->model->postDeleteHook($itemId)) {
+            throw new Exception\InvalidArgumentException('Pre-delete method for model ' . $this->model->getTableName() . 'Failed!');
         }
         return true;
     }
 
     private function deleteFromEntityTable($itemId)
     {
-        $statement = $this->sql->delete($this->getTableName())->where(array('id' => $itemId));
+        $statement = $this->sql->delete($this->model->getTableName())->where(array('id' => $itemId));
         $sqlString = $this->sql->getSqlStringForSqlObject($statement);
         $this->adapter->query($sqlString, Adapter::QUERY_MODE_EXECUTE);
     }
 
     private function deleteFromEntityDescriptionTable($itemId)
     {
-        $statement = $this->sql->delete($this->getTableDescriptionName())->where(array($this->getPrefix().'id' => $itemId));
+        $statement = $this->sql->delete($this->model->getTableDescriptionName())->where(array($this->model->getPrefix().'id' => $itemId));
         $sqlString = $this->sql->getSqlStringForSqlObject($statement);
         $this->adapter->query($sqlString, Adapter::QUERY_MODE_EXECUTE);
     }
 
     private function deleteFromLookUpTable($lookUpTable, $itemId)
     {
-        $statement = $this->sql->delete($lookUpTable)->where(array($this->getPrefix() . 'id' => $itemId));
+        $statement = $this->sql->delete($lookUpTable)->where(array($this->model->getPrefix() . 'id' => $itemId));
         $sqlString = $this->sql->getSqlStringForSqlObject($statement);
         $this->adapter->query($sqlString, Adapter::QUERY_MODE_EXECUTE);
     }
@@ -693,10 +714,10 @@ class GenericModelTableGateway
     {
         //mark all previously related entries as '0' (un-categorized)
         $statement = $this->sql->update($relatedEntityTable);
-        $statement->set(array($this->getPrefix() . 'id' => '0'));
+        $statement->set(array($this->model->getPrefix() . 'id' => '0'));
         $statement->where(
             array(
-                $this->getPrefix().'id' => $itemId,
+                $this->model->getPrefix().'id' => $itemId,
             )
         );
         $sqlString = $this->sql->getSqlStringForSqlObject($statement);
@@ -706,7 +727,7 @@ class GenericModelTableGateway
     private function deleteParentFromLookupTable($itemId)
     {
         //mark all previously related entries as '0' (root item)
-        $statement = $this->sql->update($this->getParentLookupTableName());
+        $statement = $this->sql->update($this->model->getParentLookupTableName());
         $statement->set(array('parent_id' => '0'));
         $statement->where(
             array(
@@ -717,23 +738,17 @@ class GenericModelTableGateway
         $this->adapter->query($sqlString, Adapter::QUERY_MODE_EXECUTE);
     }
 
-    protected function preSaveHook(Array $data)
+    /**
+     * Returns all Multilingual field names (language-specific).
+     */
+    public function getAllMultilingualFieldNames()
     {
-        return $data;
-    }
-
-    protected function postSaveHook(Array $data)
-    {
-        return true;
-    }
-
-    protected function preDeleteHook($id)
-    {
-        return true;
-    }
-
-    protected function postDeleteHook($id)
-    {
-        return true;
+        $fieldsArray = array();
+        foreach ($this->model->getAllMultilingualFields() as $field) {
+            foreach ($this->controlPanel->getSiteLanguages() as $languageId => $language) {
+                $fieldsArray[] = $field . '[' . $languageId . ']';
+            }
+        }
+        return $fieldsArray;
     }
 }

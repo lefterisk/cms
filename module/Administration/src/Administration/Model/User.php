@@ -8,9 +8,9 @@ use Zend\Crypt\Password\Bcrypt;
 class User  extends TableHandler
 {
 
-    public function __construct($controlPanel, $followRelations = true)
+    public function __construct($followRelations = true, $controlPanel)
     {
-        parent::__construct('User', $controlPanel);//<--Table name
+        parent::__construct('User');//<--Table name
 
         $this->setListingFields(array("email"));
         $this->setListingSwitches(array("status"));
@@ -34,14 +34,14 @@ class User  extends TableHandler
 //		$this->setMultilingualRequiredFields(array());
 		//$this->setRelations(array($userGroup = new RelationsHandler('UserGroup','manyToMany','name','UserToUserGroups')));
         $this->setRelations(array($userGroup = new RelationsHandler('UserGroup','manyToOne','name')));
-        $this->finaliseTable();
+        //$this->finaliseTable();
 //		$this->setMetaTitle();
 //		$this->setMetaDescription();
 //		$this->setMetaKeywords();
 
     }
 
-    protected function preSaveHook($data)
+    public function preSaveHook(Array $data)
     {
         if (array_key_exists('password', $data) && empty($data['password'])) {
             unset($data['password']);

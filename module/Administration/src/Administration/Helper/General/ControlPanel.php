@@ -6,6 +6,7 @@ use Zend\Db\TableGateway\Exception;
 use Zend\Db\Sql\Sql;
 use Zend\Session\Container;
 use Zend\Code\Scanner\DirectoryScanner;
+use Administration\Helper\Model\GenericModelTableGateway;
 
 class ControlPanel
 {
@@ -322,8 +323,10 @@ class ControlPanel
     public function instantiateModel($model, $followRelations = true)
     {
         if (in_array(ucfirst($model), $this->getExistingModelsArray())) {
-            $modelName = $this->modelPath . ucfirst($model);
-            return new $modelName($this, $followRelations);
+            $modelName    = $this->modelPath . ucfirst($model);
+            $entityModel  = new $modelName($followRelations, $this);
+            $tableGateway = new GenericModelTableGateway($entityModel, $this);
+            return $tableGateway;
         } else {
             return false;
         }
@@ -336,8 +339,10 @@ class ControlPanel
     public function instantiateModelForUser($model, $followRelations = true)
     {
         if (in_array(ucfirst($model), $this->getPermittedModelsForUser())) {
-            $modelName = $this->modelPath . ucfirst($model);
-            return new $modelName($this, $followRelations);
+            $modelName    = $this->modelPath . ucfirst($model);
+            $entityModel  = new $modelName($followRelations, $this);
+            $tableGateway = new GenericModelTableGateway($entityModel, $this);
+            return $tableGateway;
         } else {
             return false;
         }

@@ -14,6 +14,8 @@ use Zend\View\Model\ViewModel;
 use Administration\Model;
 use Zend\Db\TableGateway\Exception;
 use Zend\Escaper\Escaper;
+use Administration\Helper\Model\GenericRelationFilter;
+use Administration\Helper\Model\FormManager;
 
 
 class GenericModelController extends AbstractActionController
@@ -54,7 +56,8 @@ class GenericModelController extends AbstractActionController
         }
 
         if ($this->isGenericComponent()) {
-            $viewModel = new ViewModel(
+            $relationFilters = new GenericRelationFilter($this->component->getModel(), $this->controlPanel);
+            $viewModel       = new ViewModel(
                 array(
                     'listing' => $this->component->getListing(
                         ($this->params()->fromRoute('parent'))         ? $this->params()->fromRoute('parent'): 0,
@@ -64,10 +67,10 @@ class GenericModelController extends AbstractActionController
                         ($this->params()->fromRoute('direction'))      ? $this->params()->fromRoute('direction'): null,
                         ($this->params()->fromPost('relationFilters')) ? $this->params()->fromPost('relationFilters'): array()
                     ),
-                    'visibleListingFields' => $this->component->getListingFields(),
-                    'listingSwitches'      => $this->component->getListingSwitches(),
-                    'relationFilters'      => $this->component->getListingRelationFilters(),
-                    'modelPrefix'          => $this->component->getPrefix(),
+                    'visibleListingFields' => $this->component->getModel()->getListingFields(),
+                    'listingSwitches'      => $this->component->getModel()->getListingSwitches(),
+                    'relationFilters'      => $relationFilters->getForm(),
+                    'modelPrefix'          => $this->component->getModel()->getPrefix(),
                     'model'                => $this->params()->fromRoute('model'),
                     'controlPanel'         => $this->controlPanel,
                 )
@@ -99,11 +102,11 @@ class GenericModelController extends AbstractActionController
         }
 
         $request = $this->getRequest();
-        $form    = $this->component->getForm();
+        $form    = new FormManager($this->component, $this->controlPanel);
 
         if ($request->isPost()) {
-            $form->getFormObject()->setInputFilter($this->component->getInputFilter());
-            $form->getFormObject()->setData($this->component->preparePostData($request->getPost()));
+            $form->getFormObject()->setInputFilter($this->component->getModel()->getInputFilter());
+            $form->getFormObject()->setData($this->component->getModel()->preparePostData($request->getPost()));
             if ($form->getFormObject()->isValid()) {
                 $this->component->save($form->getFormObject()->getData());
                 //After Save redirect to listing
@@ -117,8 +120,8 @@ class GenericModelController extends AbstractActionController
         return new ViewModel(
             array(
                 'form'               => $form,
-                'multilingualFields' => $this->component->getAllMultilingualFields(),
-                'modelPrefix'        => $this->component->getPrefix(),
+                'multilingualFields' => $this->component->getModel()->getAllMultilingualFields(),
+                'modelPrefix'        => $this->component->getModel()->getPrefix(),
                 'model'              => $this->params()->fromRoute('model'),
                 'controlPanel'       => $this->controlPanel,
             )
@@ -141,11 +144,11 @@ class GenericModelController extends AbstractActionController
         }
 
         $request = $this->getRequest();
-        $form    = $this->component->getForm();
+        $form    = new FormManager($this->component, $this->controlPanel);
 
         if ($request->isPost()) {
-            $form->getFormObject()->setInputFilter($this->component->getInputFilter());
-            $form->getFormObject()->setData($this->component->preparePostData($request->getPost()));
+            $form->getFormObject()->setInputFilter($this->component->getModel()->getInputFilter());
+            $form->getFormObject()->setData($this->component->getModel()->preparePostData($request->getPost()));
 
             if ($form->getFormObject()->isValid()) {
                 $this->component->save($form->getFormObject()->getData());
@@ -175,14 +178,14 @@ class GenericModelController extends AbstractActionController
 
         //Bind form to Item
         $form->getFormObject()->bind($item);
-        $form = $this->component->populatedFormHook($form);
+        $form = $this->component->getModel()->populatedFormHook($form);
 
         return new ViewModel(
             array(
                 'form'               => $form,
-                'modelPrefix'        => $this->component->getPrefix(),
+                'modelPrefix'        => $this->component->getModel()->getPrefix(),
                 'model'              => $this->params()->fromRoute('model'),
-                'multilingualFields' => $this->component->getAllMultilingualFields(),
+                'multilingualFields' => $this->component->getModel()->getAllMultilingualFields(),
                 'controlPanel'       => $this->controlPanel,
             )
         );
@@ -284,11 +287,7 @@ class GenericModelController extends AbstractActionController
 
     protected function isGenericComponent()
     {
-        if (method_exists($this->component ,'genericComponent')) {
-            return true;
-        } else {
-            return false;
-        }
+        return true;
     }
 
     private function cleanUrlFromLanguage()

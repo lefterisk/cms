@@ -7,9 +7,9 @@ use Administration\Helper\Model\RelationsHandler;
 class ArticleCategory  extends TableHandler
 {
 
-    public function __construct($controlPanel, $followRelations = true)
+    public function __construct($followRelations = true, $controlPanel)
     {
-        parent::__construct('ArticleCategory', $controlPanel);//<--Table name
+        parent::__construct('ArticleCategory');//<--Table name
 
         $this->setListingFields(array("title"));
         $this->setMaximumTreeDepth(4);
@@ -35,7 +35,7 @@ class ArticleCategory  extends TableHandler
 		//$this->setRelations(array($userGroup = new RelationsHandler('UserGroup','manyToMany','name','UserToUserGroups')));
         $this->setRelations(array($article = new RelationsHandler('Article','manyToMany','title','ArticleToArticleCategory')));
         //$this->setRelations(array($userGroup = new RelationsHandler('UserGroup','manyToOne','name')));
-        $this->finaliseTable();
+        //$this->finaliseTable();
 //		$this->setMetaTitle();
 //		$this->setMetaDescription();
 //		$this->setMetaKeywords();

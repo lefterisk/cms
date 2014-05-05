@@ -9,9 +9,9 @@ class UserGroup  extends TableHandler
 {
 	public $manager;
 
-    public function __construct($controlPanel, $followRelations = true)
+    public function __construct($followRelations = true, $controlPanel)
     {
-        parent::__construct('UserGroup', $controlPanel);
+        parent::__construct('UserGroup');
 
         $this->setListingFields(array("name"));
         $this->setPrefix("user_group_");
@@ -34,13 +34,15 @@ class UserGroup  extends TableHandler
 //		$this->setMultilingualRequiredFields(array());
 
         $optionsArray = array();
-        foreach ($this->controlPanel->getExistingModelsArray() as $modelName) {
-            $optionsArray[$modelName] = $modelName;
+        if ($controlPanel) {
+            foreach ($controlPanel->getExistingModelsArray() as $modelName) {
+                $optionsArray[$modelName] = $modelName;
+            }
         }
 
         $this->setCustomSelections(array($customSelect = new CustomSelectionHandler('group_view_permission', $optionsArray, true, 'UserGroupsPermission') ));
 		$this->setRelations(array($user = new RelationsHandler('User','oneToMany','email')));
-        $this->finaliseTable();
+       //$this->finaliseTable();
 //		$this->setMetaTitle();
 //		$this->setMetaDescription();
 //		$this->setMetaKeywords();

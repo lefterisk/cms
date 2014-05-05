@@ -3,15 +3,15 @@ namespace Administration\Helper\Model;
 
 use Zend\Db\TableGateway\Exception;
 use Zend\Form\Element;
-use Zend\Form\Form;
 use Zend\InputFilter\InputFilter;
 use Zend\InputFilter\InputFilterAwareInterface;
 use Zend\InputFilter\InputFilterInterface;
 
-class TableHandler extends GenericModelTableGateway implements InputFilterAwareInterface
+class TableHandler implements InputFilterAwareInterface
 {
 	//Table properties
-	private $tableName;
+    private $modelPath = 'Administration\\Model\\';
+    private $tableName;
 	private $tableDescriptionName;
     private $languageID = 'languageId';
     private $followRelations = true;
@@ -70,23 +70,11 @@ class TableHandler extends GenericModelTableGateway implements InputFilterAwareI
     //Contains all related to the add-edit form (zend form, tab-manager)
     public  $tableFormManager;
 
-    //Db adapter
-    public  $adapter;
-
-    //Sql interface
-    public  $sql;
-
-    //Control object contains languages admin-rights etc
-    public  $controlPanel;
-
 	/**
 	 * Instantiates a new TableHandler object
 	 */
-	public function __construct($tableName, $controlPanel)
+	public function __construct($tableName)
 	{
-        $this->controlPanel = $controlPanel;
-        $this->adapter      = $this->controlPanel->getDbAdapter();
-        $this->sql          = $this->controlPanel->getSQL();
         $this->setTableName($tableName);
         $this->setTableDescriptionName($tableName.'Description');
 	}
@@ -386,20 +374,6 @@ class TableHandler extends GenericModelTableGateway implements InputFilterAwareI
 	{
 		return array_merge($this->MultilingualVarchars, $this->MultilingualTexts, $this->MultilingualLongTexts, $this->MultilingualFiles, $this->getImageCaptions(), $this->getFileCaptions(), $this->getMultilingualFilesCaptions());
 	}
-
-    /**
-     * Returns all Multilingual field names (language-specific).
-     */
-    public function getAllMultilingualFieldNames()
-    {
-        $fieldsArray = array();
-        foreach ($this->getAllMultilingualFields() as $field) {
-            foreach ($this->controlPanel->getSiteLanguages() as $languageId => $language) {
-                $fieldsArray[] = $field . '[' . $languageId . ']';
-            }
-        }
-        return $fieldsArray;
-    }
 	
 	/**
 	 * Returns all simple fields.
@@ -548,197 +522,28 @@ class TableHandler extends GenericModelTableGateway implements InputFilterAwareI
     }
 
     /**
-     * Instantiates the default formmanager.
+     * Instantiates the default form structure.
+     * Tab name => array of fields (names) under that tab
      */
     public function getDefaultForm()
     {
-        $this->tableFormManager = new FormManager($this->getFormObject());
-        if (count($this->getSimpleFields()) > 0 ) {
-            $this->tableFormManager->addTab('Tab1', array_merge($this->getSimpleFields(), $this->getRelationsFields(), $this->getCustomSelectionFields(), $this->getDefaultFieldNames()));
+        $formStructure = array();
+        $generalTabFields = array_merge(
+            $this->getSimpleFields(),
+            $this->getRelationsFields(),
+            $this->getCustomSelectionFields(),
+            $this->getDefaultFieldNames()
+        );
+        if (count($generalTabFields) > 0) {
+            $formStructure['Tab1'] = $generalTabFields;
         }
-        if (count($this->getAdvancedFields()) > 0 ) {
-            $this->tableFormManager->addTab('Tab2', $this->getAdvancedFields());
+        if (count($this->getAdvancedFields()) > 0) {
+            $formStructure['Tab2'] = $this->getAdvancedFields();
         }
-        if (count($this->getAllFileFields()) > 0 ) {
-            $this->tableFormManager->addTab('Tab3', $this->getAllFileFields());
+        if (count($this->getAllFileFields()) > 0) {
+            $formStructure['Tab3'] = $this->getAllFileFields();
         }
-        return $this->tableFormManager;
-    }
-
-    /**
-     * Instantiates the Zend Form Object.
-     */
-    public function getFormObject()
-    {
-        $form = new Form($this->getTableName());
-        $form->add(array(
-            'type' => 'hidden',
-            'name' => 'id',
-        ));
-
-        if ($this->getMaximumTreeDepth() > 0) {
-            $value_options = array();
-            $value_options[0] = '---Root Item---';
-
-            foreach ($this->getListingForSelect() as $listingItem) {
-                $optionString = '';
-                foreach ($this->getListingFields() as $listingField) {
-                    $optionString .= $listingItem->{$listingField} . ' ';
-                }
-                $value_options[$listingItem->id] = $optionString;
-            }
-
-            $form->add(array(
-                'type' => 'Zend\Form\Element\Select',
-                'name' => 'parent_' . $this->getPrefix() . 'id',
-                'options' => array(
-                    'label' => 'parent_' . $this->getPrefix() . 'id',
-                    'value_options' => $value_options,
-                ),
-                'attributes' => array('class' => 'form-control', 'multiple' => 'multiple'),
-            ));
-        }
-
-        foreach ($this->getAllFields() as $field) {
-
-            $type          = 'Zend\Form\Element\Text';
-            $attributes    = array();
-            $value_options = array();
-            $name          = '';
-            $label         = '';
-
-            if (in_array($field, array_merge($this->getIntegers(), $this->getVarchars(), $this->getMultilingualVarchars(), $this->getImageCaptions(), $this->getFileCaptions(), $this->getMultilingualFilesCaptions())) ) {
-
-                $type       = 'Zend\Form\Element\Text';
-                $attributes = array('class' => 'form-control');
-                $name       = $field;
-                $label      = $this->getPrefix() . $field;
-
-            } elseif (in_array($field, array_merge($this->getTexts(), $this->getMultilingualTexts()))) {
-
-                $type       = 'Zend\Form\Element\Textarea';
-                $attributes = array('class' => 'form-control');
-                $name       = $field;
-                $label      = $this->getPrefix() . $field;
-
-            } elseif (in_array($field, array_merge($this->getLongTexts(), $this->getMultilingualLongTexts()))) {
-
-                $type       = 'Zend\Form\Element\Textarea';
-                $attributes = array('class' => 'tinyMce');
-                $name       = $field;
-                $label      = $this->getPrefix() . $field;
-
-            } elseif (in_array($field, $this->getEnums())) {
-
-                $type       = 'Zend\Form\Element\Radio';
-                $attributes = array('class' => 'switch','value' => '0');
-                $value_options = array('0' => 'No', '1' => 'Yes');
-                $name       = $field;
-                $label      = $this->getPrefix() . $field;
-
-            } elseif (in_array($field, array_merge($this->getImages(), $this->getFiles(), $this->getMultilingualFiles()))) {
-
-                $type       = 'Zend\Form\Element\Text';
-                $attributes = array('class' => 'form-control', 'id' => $field);
-                if (in_array($field, $this->getImages())) {
-                    $attributes = array_merge($attributes,array('data-type' => 'image'));
-                } else {
-                    $attributes = array_merge($attributes,array('data-type' => 'file'));
-                }
-                $name       = $field;
-                $label      = $this->getPrefix() . $field;
-
-            } elseif (in_array($field , $this->getRelations())) {
-                $type       = 'Zend\Form\Element\Select';
-                $attributes = array('class' => 'form-control');
-
-                $name       = $field->inputFieldName;
-                $label      = $field->inputFieldName;
-
-                if (in_array($field->getRelationType(), array('oneToMany', 'manyToMany'))) {
-                    $attributes['multiple'] = 'multiple';
-                } else {
-                    $value_options[0] = 'Please Choose';
-                }
-
-                foreach ($field->activeModel->getListingForSelect() as $listingItem) {
-                    $value_options[$listingItem->id] = $listingItem->{$field->getRelatedSelectDisplayFields()};
-                }
-            } elseif (in_array($field , $this->getCustomSelections())) {
-                $type       = 'Zend\Form\Element\Select';
-                $attributes = array('class' => 'form-control');
-
-                if ($field->isMultiple()) {
-                    $attributes['multiple'] = 'multiple';
-                    $value_options = $field->getSelectOptions();
-                } else {
-                    $value_options = array_merge(array('0' => 'Please Choose'), $field->getSelectOptions());
-                }
-
-                $name       = $field->getFieldName();
-                $label      = $this->getPrefix() . $field->getFieldName();
-
-            }
-
-            if (in_array($field, $this->getAllMultilingualFields())) {
-                foreach ($this->controlPanel->getSiteLanguages() as $languageId => $language) {
-                    if (array_key_exists('id', $attributes)) {
-                        $attributes['id'] = $attributes['id'] . '-' . $languageId;
-                    }
-                    $form->add(array(
-                        'type' => $type,
-                        'name' => $name . '[' . $languageId . ']',
-                        'options' => array(
-                            'label' => $label,
-                            'value_options' => $value_options,
-                        ),
-                        'attributes' => array_merge($attributes,array('placeholder' => $name)),
-                    ));
-                }
-            } else {
-                $form->add(array(
-                    'type' => $type,
-                    'name' => $name,
-                    'options' => array(
-                        'label' => $label,
-                        'value_options' => $value_options,
-                    ),
-                    'attributes' => array_merge($attributes,array('placeholder' => $name)),
-                ));
-            }
-        }
-        return $form;
-    }
-
-    public function getListingRelationFilters()
-    {
-        $form = new Form('Filters');
-        $form->setAttribute('class', 'form-inline pull-right');
-        if (count($this->getRelations()) > 0) {
-            foreach ($this->getRelations() as $relation) {
-                if (in_array($relation->getRelationType(), array('manyToMany','manyToOne'))) {
-                    $value_options['all'] = '---All---';
-                    foreach ($relation->activeModel->getListingForSelect() as $listingItem) {
-                        $optionString = '';
-                        foreach ($relation->activeModel->getListingFields() as $listingField) {
-                            $optionString .= $listingItem->{$listingField} . ' ';
-                        }
-                        $value_options[$listingItem->id] = $optionString;
-                    }
-
-                    $form->add(array(
-                        'type' => 'Zend\Form\Element\Select',
-                        'name' => 'relationFilters['. $relation->inputFieldName . ']',
-                        'options' => array(
-                            'label'         => $relation->inputFieldName,
-                            'value_options' => $value_options,
-                        ),
-                        'attributes' => array('class' => 'form-control input-sm'),
-                    ));
-                }
-            }
-        }
-        return $form;
+        return $formStructure;
     }
 
     /**
@@ -758,14 +563,6 @@ class TableHandler extends GenericModelTableGateway implements InputFilterAwareI
     public function followRelations()
     {
         return $this->followRelations;
-    }
-
-    /*
-     * Just for checking if this is a generic component
-     */
-    public function genericComponent()
-    {
-        return true;
     }
 
 	////////////////////////////////////////////////////////////////
@@ -988,7 +785,8 @@ class TableHandler extends GenericModelTableGateway implements InputFilterAwareI
 	{
         foreach ($relations as $relation) {
             if ($this->followRelations()) {
-                $relationModel = $this->controlPanel->instantiateModel($relation->getRelatedModel(), false);
+                $modelName     = $this->modelPath . ucfirst($relation->getRelatedModel());
+                $relationModel = new $modelName(false,false);
                 if ($relationModel->getPrefix() == '') {
                     throw new Exception\InvalidArgumentException('Please set the prefix in the ' . $relationModel->getTableName() . ' model!');
                 }
@@ -1079,8 +877,28 @@ class TableHandler extends GenericModelTableGateway implements InputFilterAwareI
      * Manipulate populated form (Should be called
      * after form has been bound to an object)
      */
-    public function populatedFormManipulatorHook ($form)
+    public function populatedFormHook ($form)
     {
         return $form;
+    }
+
+    public function preSaveHook(Array $data)
+    {
+        return $data;
+    }
+
+    public function postSaveHook(Array $data)
+    {
+        return true;
+    }
+
+    public function preDeleteHook($id)
+    {
+        return true;
+    }
+
+    public function postDeleteHook($id)
+    {
+        return true;
     }
 }

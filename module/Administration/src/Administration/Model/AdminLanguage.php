@@ -10,9 +10,9 @@ use Zend\InputFilter\InputFilterInterface;
 class AdminLanguage  extends TableHandler implements InputFilterAwareInterface
 {
 
-    public function __construct($controlPanel, $followRelations = true)
+    public function __construct($followRelations = true, $controlPanel)
     {
-        parent::__construct('AdminLanguage', $controlPanel);
+        parent::__construct('AdminLanguage');
 
         $this->setListingFields(array("name"));
         $this->setListingSwitches(array("status" , "default"));
@@ -23,7 +23,7 @@ class AdminLanguage  extends TableHandler implements InputFilterAwareInterface
 		$this->setEnums(array('status', 'default'));
 		$this->setVarchars(array('name', 'code'));
 		$this->setImages(array('image'));
-        $this->finaliseTable();
+        //$this->finaliseTable();
 
 
     }

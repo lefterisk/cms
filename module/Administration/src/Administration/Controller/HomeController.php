@@ -23,7 +23,6 @@ class HomeController extends AbstractActionController
     protected function initializeComponent()
     {
         $this->controlPanel = $this->getServiceLocator()->get('ControlPanel');
-        $this->component    = $this->controlPanel->instantiateModelForUser($this->params()->fromRoute('model'));
         $escaper            = new Escaper('utf-8');
 
         $this->layout()->setVariable('controlPanel' , $this->controlPanel);
