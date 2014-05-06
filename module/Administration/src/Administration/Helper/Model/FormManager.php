@@ -3,6 +3,7 @@ namespace Administration\Helper\Model;
 
 use Zend\Db\TableGateway\Exception;
 use Zend\Form\Form;
+use Administration\Helper\General\ControlPanel;
 
 class FormManager
 {
@@ -11,12 +12,15 @@ class FormManager
     private   $controlPanel;
     protected $form;
 
-    public function __construct(GenericModelTableGateway $entity, $controlPanel)
+    public function __construct(GenericModelTableGateway $entity, ControlPanel $controlPanel)
     {
         $this->entity       = $entity;
         $this->controlPanel = $controlPanel;
         foreach ($this->entity->getModel()->getForm() as $tabName => $fields) {
             $this->addTab($tabName, $fields);
+        }
+        if ($this->entity->getModel()->isStandAlonePage()) {
+            $this->addTab('TabMeta', $this->entity->getModel()->getMetaFields());
         }
     }
 
@@ -131,7 +135,7 @@ class FormManager
                         $value_options[0] = 'Please Choose';
                     }
 
-                    $activeModel = $this->controlPanel->instantiateModelForUser($field->getRelatedModel());
+                    $activeModel = $this->controlPanel->instantiateModel($field->getRelatedModel());
                     foreach ($activeModel->getListingForSelect() as $listingItem) {
                         $value_options[$listingItem->id] = $listingItem->{$field->getRelatedSelectDisplayFields()};
                     }

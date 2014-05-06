@@ -14,8 +14,8 @@ class Article  extends TableHandler
         $this->setListingFields(array("title"));
         $this->setListingSwitches(array("status"));
         $this->setPrefix("article_");
+        $this->setIsStandAlonePage(true);
         $this->setFollowRelations($followRelations);
-        echo '111<br/><br/>';   
         //Fields
 		$this->setDates(array());
 		$this->setEnums(array('status'));

@@ -15,6 +15,7 @@ class TableHandler implements InputFilterAwareInterface
 	private $tableDescriptionName;
     private $languageID = 'languageId';
     private $followRelations = true;
+    private $isStandAlonePage = false;
     private $maximumTreeDepth = 0;
     private $listingFields = array();
     private $listingSwitches = array();
@@ -37,11 +38,6 @@ class TableHandler implements InputFilterAwareInterface
 	private $MultilingualTexts = array();
 	private $MultilingualLongTexts = array();
 	private $MultilingualFiles = array();
-
-	//Fields which support custom meta tags.
-	private $metaTitle;
-	private $metaDescription;
-	private $metaKeywords;
 	
 	//Captions
 	private $useImagesCaptions = false;
@@ -240,7 +236,15 @@ class TableHandler implements InputFilterAwareInterface
 	 */
 	public function getMultilingualVarchars()
 	{
-		return $this->MultilingualVarchars;
+        if ($this->isStandAlonePage && !in_array($this->getPrefix() . 'meta_title', $this->MultilingualVarchars))
+        {
+            array_push($this->MultilingualVarchars, $this->getPrefix() . 'meta_title');
+        }
+        if ($this->isStandAlonePage && !in_array($this->getPrefix() . 'meta_slug', $this->MultilingualVarchars))
+        {
+            array_push($this->MultilingualVarchars, $this->getPrefix() . 'meta_slug');
+        }
+        return $this->MultilingualVarchars;
 	}
 
 	/**
@@ -248,7 +252,11 @@ class TableHandler implements InputFilterAwareInterface
 	 */
 	public function getMultilingualTexts()
 	{
-		return $this->MultilingualTexts;
+        if ($this->isStandAlonePage && !in_array($this->getPrefix() . 'meta_description', $this->MultilingualTexts))
+        {
+            array_push($this->MultilingualTexts, $this->getPrefix() . 'meta_description');
+        }
+        return $this->MultilingualTexts;
 	}
 
 	/**
@@ -257,30 +265,6 @@ class TableHandler implements InputFilterAwareInterface
 	public function getMultilingualLongTexts()
 	{
 		return $this->MultilingualLongTexts;
-	}
-	
-	/**
-	 * Returns the meta title.
-	 */
-	public function getMetaTitle()
-	{
-		return $this->metaTitle;
-	}
-	
-	/**
-	 * Returns the meta keywords.
-	 */
-	public function getMetaKeywords()
-	{
-		return $this->metaKeywords;
-	}
-	
-	/**
-	 * Returns the meta description.
-	 */
-	public function getMetaDescription()
-	{
-		return $this->metaDescription;
 	}
 
 	/**
@@ -364,7 +348,17 @@ class TableHandler implements InputFilterAwareInterface
 	 */
 	public function getAllNonMultilingualFields()
 	{
-		return array_merge($this->enums, $this->dates, $this->varchars, $this->texts, $this->longTexts, $this->integers, $this->customSelections, $this->images, $this->files);
+		return array_merge(
+            $this->enums,
+            $this->dates,
+            $this->varchars,
+            $this->texts,
+            $this->longTexts,
+            $this->integers,
+            $this->customSelections,
+            $this->images,
+            $this->files
+        );
 	}
 	
 	/**
@@ -372,7 +366,15 @@ class TableHandler implements InputFilterAwareInterface
 	 */
 	public function getAllMultilingualFields()
 	{
-		return array_merge($this->MultilingualVarchars, $this->MultilingualTexts, $this->MultilingualLongTexts, $this->MultilingualFiles, $this->getImageCaptions(), $this->getFileCaptions(), $this->getMultilingualFilesCaptions());
+		return array_merge(
+            $this->MultilingualVarchars,
+            $this->MultilingualTexts,
+            $this->MultilingualLongTexts,
+            $this->MultilingualFiles,
+            $this->getImageCaptions(),
+            $this->getFileCaptions(),
+            $this->getMultilingualFilesCaptions()
+        );
 	}
 	
 	/**
@@ -380,16 +382,17 @@ class TableHandler implements InputFilterAwareInterface
 	 */
 	public function getSimpleFields()
 	{
-		$simpleFields = array_merge($this->dates, $this->varchars, $this->enums, $this->customFields, $this->integers, $this->texts, $this->MultilingualVarchars, $this->MultilingualTexts);
-		// Treat Meta Fields seperately
-		for ($i=0; $i<count($simpleFields); $i++)
-		{
-			if (in_array($simpleFields[$i], $this->getMetaFields()))
-			{
-				unset($simpleFields[$i]);
-			}
-		}
-		return $simpleFields; 
+		$simpleFields = array_merge(
+            $this->dates,
+            $this->varchars,
+            $this->enums,
+            $this->customFields,
+            $this->integers,
+            $this->texts,
+            $this->MultilingualVarchars,
+            $this->MultilingualTexts
+        );
+		return $simpleFields;
 	}
 
     /**
@@ -425,29 +428,6 @@ class TableHandler implements InputFilterAwareInterface
 	}
 	
 	/**
-	 * Returns all meta fields.
-	 */
-	public function getMetaFields()
-	{
-		$metaFields = array();
-		
-		if (isset($this->metaTitle)) 
-		{
-			array_push($metaFields, $this->metaTitle);
-		}
-		if (isset($this->metaDescription)) 
-		{
-			array_push($metaFields, $this->metaDescription);
-		}
-		if (isset($this->metaKeywords)) 
-		{
-			array_push($metaFields, $this->metaKeywords);
-		}
-
-		return $metaFields;
-	}
-	
-	/**
 	 * Returns all different types of files.
 	 */ 
 	public function getAllFileFields()
@@ -460,7 +440,13 @@ class TableHandler implements InputFilterAwareInterface
      */
     public function getAllFields()
     {
-        return array_merge($this->getSimpleFields(), $this->getAdvancedFields(), $this->getAllFileFields(), $this->getRelations(), $this->getCustomSelections());
+        return array_merge(
+            $this->getSimpleFields(),
+            $this->getAdvancedFields(),
+            $this->getAllFileFields(),
+            $this->getRelations(),
+            $this->getCustomSelections()
+        );
     }
 
     public function getMaximumTreeDepth()
@@ -528,11 +514,14 @@ class TableHandler implements InputFilterAwareInterface
     public function getDefaultForm()
     {
         $formStructure = array();
-        $generalTabFields = array_merge(
-            $this->getSimpleFields(),
-            $this->getRelationsFields(),
-            $this->getCustomSelectionFields(),
-            $this->getDefaultFieldNames()
+        $generalTabFields = array_diff(
+            array_merge(
+                $this->getSimpleFields(),
+                $this->getRelationsFields(),
+                $this->getCustomSelectionFields(),
+                $this->getDefaultFieldNames()
+            ),
+            $this->getMetaFields()
         );
         if (count($generalTabFields) > 0) {
             $formStructure['Tab1'] = $generalTabFields;
@@ -547,6 +536,19 @@ class TableHandler implements InputFilterAwareInterface
     }
 
     /**
+     * Returns the auto-generated meta related fields
+     * returns array;
+     */
+    public function getMetaFields()
+    {
+        return array(
+            $this->getPrefix() . 'meta_title',
+            $this->getPrefix() . 'meta_slug',
+            $this->getPrefix() . 'meta_description'
+        );
+    }
+
+    /**
      * Returns whether the model is multilingual (has Description table).
      */
     public function isMultiLingual()
@@ -555,6 +557,15 @@ class TableHandler implements InputFilterAwareInterface
             return true;
         }
         return false;
+    }
+
+    /**
+     * Returns if model instance is stand alone Page
+     * Returns Bool
+     */
+    public function isStandAlonePage()
+    {
+        return $this->isStandAlonePage;
     }
 
     /**
@@ -681,10 +692,6 @@ class TableHandler implements InputFilterAwareInterface
 	public function setMultilingualVarchars($MultilingualVarchars)
 	{
         $this->MultilingualVarchars = $MultilingualVarchars;
-		if (isset($this->metaTitle) && !in_array($this->metaTitle, $MultilingualVarchars))
-		{
-			array_push($this->MultilingualVarchars, $this->metaTitle);	
-		}
 	}
 
 	/**
@@ -693,14 +700,6 @@ class TableHandler implements InputFilterAwareInterface
 	public function setMultilingualTexts($MultilingualTexts)
 	{
         $this->MultilingualTexts = $MultilingualTexts;
-		if (isset($this->metaDescription) && !in_array($this->metaDescription, $MultilingualTexts))
-		{
-			array_push($this->MultilingualTexts, $this->metaDescription);	
-		}
-		if (isset($this->metaKeywords) && !in_array($this->metaKeywords, $MultilingualTexts))
-		{
-			array_push($this->MultilingualTexts, $this->metaKeywords);	
-		}
 	}
 
 	/**
@@ -709,48 +708,6 @@ class TableHandler implements InputFilterAwareInterface
 	public function setMultilingualLongTexts($MultilingualLongTexts)
 	{
         $this->MultilingualLongTexts = $MultilingualLongTexts;
-	}
-	
-	/**
-	 * Sets the meta title, which is treated as an immutable field, i.e., 
-	 * once initialized it cannot be altered.
-	 */
-	public function setMetaTitle($metaTitle)
-	{
-		if (isset($this->metaTitle))
-		{
-			return;
-		}
-		$this->metaTitle = $metaTitle;
-		array_push($this->MultilingualVarchars, $metaTitle);
-	}
-	
-	/**
-	 * Sets the meta keywords, which is treated as an immutable field, i.e., 
-	 * once initialized it cannot be altered.
-	 */
-	public function setMetaKeywords($metaKeywords)
-	{
-		if (isset($this->metaKeywords))
-		{
-			return;
-		}
-		$this->metaKeywords = $metaKeywords;
-		array_push($this->MultilingualTexts, $metaKeywords);
-	}
-	
-	/**
-	 * Sets the meta description, which is treated as an immutable field, i.e., 
-	 * once initialized it cannot be altered.
-	 */
-	public function setMetaDescription($metaDescription)
-	{
-		if (isset($this->metaDescription))
-		{
-			return;
-		}
-		$this->metaDescription = $metaDescription;
-		array_push($this->MultilingualTexts, $metaDescription);
 	}
 
 	/**
@@ -787,6 +744,7 @@ class TableHandler implements InputFilterAwareInterface
             if ($this->followRelations()) {
                 $modelName     = $this->modelPath . ucfirst($relation->getRelatedModel());
                 $relationModel = new $modelName(false,false);
+
                 if ($relationModel->getPrefix() == '') {
                     throw new Exception\InvalidArgumentException('Please set the prefix in the ' . $relationModel->getTableName() . ' model!');
                 }
@@ -830,6 +788,14 @@ class TableHandler implements InputFilterAwareInterface
 	{
 		$this->prefix = $prefix;
 	}
+
+    /**
+     * Sets if the model instance is a standalone page (has Metadata)
+     */
+    public function setIsStandAlonePage($isStandAlonePage)
+    {
+        $this->isStandAlonePage = $isStandAlonePage;
+    }
 
     /**
      * Sets listing switches.

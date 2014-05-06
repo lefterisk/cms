@@ -22,6 +22,7 @@ class ControlPanel
     protected $devToolsModels      = array('AdminLanguage','SiteLanguage','User', 'UserGroup');
     //Support ToolBox Models
     protected $supportToolsModels  = array();
+    protected $instantiatedModels  = array();
 
     public function __construct($adapter, $authentication)
     {
@@ -322,10 +323,16 @@ class ControlPanel
      */
     public function instantiateModel($model, $followRelations = true)
     {
-        if (in_array(ucfirst($model), $this->getExistingModelsArray())) {
-            $modelName    = $this->modelPath . ucfirst($model);
-            $entityModel  = new $modelName($followRelations, $this);
-            $tableGateway = new GenericModelTableGateway($entityModel, $this);
+        $ucName = ucfirst($model);
+        if (in_array($ucName, $this->getExistingModelsArray())) {
+            if (!array_key_exists($ucName, $this->instantiatedModels)) {
+                $modelName    = $this->modelPath . $ucName;
+                $entityModel  = new $modelName($followRelations, $this);
+                $tableGateway = new GenericModelTableGateway($entityModel, $this);
+                $this->instantiatedModels[$ucName] = $tableGateway;
+            } else {
+                $tableGateway = $this->instantiatedModels[$ucName];
+            }
             return $tableGateway;
         } else {
             return false;
@@ -338,10 +345,16 @@ class ControlPanel
      */
     public function instantiateModelForUser($model, $followRelations = true)
     {
-        if (in_array(ucfirst($model), $this->getPermittedModelsForUser())) {
-            $modelName    = $this->modelPath . ucfirst($model);
-            $entityModel  = new $modelName($followRelations, $this);
-            $tableGateway = new GenericModelTableGateway($entityModel, $this);
+        $ucName = ucfirst($model);
+        if (in_array($ucName, $this->getPermittedModelsForUser())) {
+            if (!array_key_exists($ucName, $this->instantiatedModels)) {
+                $modelName    = $this->modelPath . $ucName;
+                $entityModel  = new $modelName($followRelations, $this);
+                $tableGateway = new GenericModelTableGateway($entityModel, $this);
+                $this->instantiatedModels[$ucName] = $tableGateway;
+            } else {
+                $tableGateway = $this->instantiatedModels[$ucName];
+            }
             return $tableGateway;
         } else {
             return false;

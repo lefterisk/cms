@@ -27,6 +27,9 @@ class GenericModelController extends AbstractActionController
     {
         $this->controlPanel = $this->getServiceLocator()->get('ControlPanel');
         $this->component    = $this->controlPanel->instantiateModelForUser($this->params()->fromRoute('model'));
+        if ($this->component) {
+            $this->component->finaliseTable();
+        }
         $escaper            = new Escaper('utf-8');
 
         $this->layout()->setVariable('controlPanel' , $this->controlPanel);
@@ -55,11 +58,10 @@ class GenericModelController extends AbstractActionController
             return;
         }
 
-        if ($this->isGenericComponent()) {
-            $relationFilters = new GenericRelationFilter($this->component->getModel(), $this->controlPanel);
-            $viewModel       = new ViewModel(
-                array(
-                    'listing' => $this->component->getListing(
+        $relationFilters = new GenericRelationFilter($this->component->getModel(), $this->controlPanel);
+        $viewModel       = new ViewModel(
+            array(
+                'listing' => $this->component->getListing(
                         ($this->params()->fromRoute('parent'))         ? $this->params()->fromRoute('parent'): 0,
                         ($this->params()->fromRoute('itemsperpage'))   ? $this->params()->fromRoute('itemsperpage'): 20,
                         ($this->params()->fromRoute('page'))           ? $this->params()->fromRoute('page'): 1,
@@ -67,22 +69,14 @@ class GenericModelController extends AbstractActionController
                         ($this->params()->fromRoute('direction'))      ? $this->params()->fromRoute('direction'): null,
                         ($this->params()->fromPost('relationFilters')) ? $this->params()->fromPost('relationFilters'): array()
                     ),
-                    'visibleListingFields' => $this->component->getModel()->getListingFields(),
-                    'listingSwitches'      => $this->component->getModel()->getListingSwitches(),
-                    'relationFilters'      => $relationFilters->getForm(),
-                    'modelPrefix'          => $this->component->getModel()->getPrefix(),
-                    'model'                => $this->params()->fromRoute('model'),
-                    'controlPanel'         => $this->controlPanel,
-                )
-            );
-        } else {
-            if (method_exists($this->component ,'getViewVariablesArray')) {
-                $viewModel = new ViewModel(array_merge($this->component->getViewVariablesArray(),array()));
-            } else {
-                throw new Exception\InvalidArgumentException('All non generic components must extend the CustomComponent Interface (you are missing the ViewVariablesArray method)');
-            }
-            $viewModel->setTemplate('administration/index/'.$this->params()->fromRoute('model').'.phtml');
-        }
+                'visibleListingFields' => $this->component->getModel()->getListingFields(),
+                'listingSwitches'      => $this->component->getModel()->getListingSwitches(),
+                'relationFilters'      => $relationFilters->getForm(),
+                'modelPrefix'          => $this->component->getModel()->getPrefix(),
+                'model'                => $this->params()->fromRoute('model'),
+                'controlPanel'         => $this->controlPanel,
+            )
+        );
         return $viewModel;
     }
 
@@ -283,11 +277,6 @@ class GenericModelController extends AbstractActionController
                 'model'  => $this->params()->fromRoute('model')
             )
         ));
-    }
-
-    protected function isGenericComponent()
-    {
-        return true;
     }
 
     private function cleanUrlFromLanguage()
