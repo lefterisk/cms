@@ -17,7 +17,7 @@ class Article  extends TableHandler
         $this->setIsStandAlonePage(true);
         $this->setFollowRelations($followRelations);
         //Fields
-		$this->setDates(array());
+		$this->setDates(array('published_date'));
 		$this->setEnums(array('status'));
 		$this->setVarchars(array());
 		$this->setTexts(array());

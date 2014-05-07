@@ -27,7 +27,7 @@ var AppView = Backbone.View.extend({
             'height'    : 600,
             'type'      : 'iframe',
             'autoSize'  : false,
-            'fitToView' : true,
+            'fitToView' : true
         });
         imageFancyPreview.fancybox({
 
@@ -52,6 +52,16 @@ var AppView = Backbone.View.extend({
             external_filemanager_path : "/filemanager/",
             filemanager_title         : "File manager" ,
             external_plugins          : { "filemanager" : "/filemanager/plugin.min.js" }
+        });
+
+        $('.datePicker').datetimepicker({
+            format: "yyyy-mm-dd hh:ii:ss",
+            autoclose: true,
+            todayBtn: true
+        });
+        $('.datetimePickerClear').click(function(){
+            $(this).closest('.input-group').find('input').val('');
+            return false;
         });
     }
 });

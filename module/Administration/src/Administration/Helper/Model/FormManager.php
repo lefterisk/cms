@@ -110,6 +110,17 @@ class FormManager
                     $name       = $field;
                     $label      = $this->entity->getModel()->getPrefix() . $field;
 
+                } elseif (in_array($field,$this->entity->getModel()->getDates())) {
+
+                    $type       = 'Zend\Form\Element\DateTime';
+                    $attributes = array(
+                        'class'     => 'datePicker form-control',
+                        'readonly'  => 'readonly',
+                        'data-type' => 'date',
+                    );
+                    $name       = $field;
+                    $label      = $this->entity->getModel()->getPrefix() . $field;
+
                 } elseif (in_array($field, array_merge($this->entity->getModel()->getImages(), $this->entity->getModel()->getFiles(), $this->entity->getModel()->getMultilingualFiles()))) {
 
                     $type       = 'Zend\Form\Element\Text';
@@ -160,10 +171,10 @@ class FormManager
                             $attributes['id'] = $attributes['id'] . '-' . $languageId;
                         }
                         $this->form->add(array(
-                            'type' => $type,
-                            'name' => $name . '[' . $languageId . ']',
-                            'options' => array(
-                                'label' => $label,
+                            'type'       => $type,
+                            'name'       => $name . '[' . $languageId . ']',
+                            'options'    => array(
+                                'label'         => $label,
                                 'value_options' => $value_options,
                             ),
                             'attributes' => array_merge($attributes,array('placeholder' => $name)),
@@ -171,11 +182,12 @@ class FormManager
                     }
                 } else {
                     $this->form->add(array(
-                        'type' => $type,
-                        'name' => $name,
-                        'options' => array(
-                            'label' => $label,
+                        'type'       => $type,
+                        'name'       => $name,
+                        'options'    => array(
+                            'label'         => $label,
                             'value_options' => $value_options,
+                            'format' => 'Y-m-d H:i:s'
                         ),
                         'attributes' => array_merge($attributes,array('placeholder' => $name)),
                     ));
