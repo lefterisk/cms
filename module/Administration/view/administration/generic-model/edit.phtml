@@ -42,7 +42,7 @@
                             <?php if (array_key_exists('data-type', $form->getFormObject()->get($field)->getAttributes())) : ?>
                                 <?php $attributesArray = $form->getFormObject()->get($field)->getAttributes(); ?>
                                 <div class="input-group">
-                                <?php echo $this->formElement($form->getFormObject()->get($field)); ?>
+                                    <?php echo $this->formElement($form->getFormObject()->get($field)); ?>
                                     <span class="input-group-btn">
                                         <?php if ($attributesArray['data-type'] == 'image' ) : ?>
                                             <?php if( $form->getFormObject()->get($field)->getValue() != ''): ?>

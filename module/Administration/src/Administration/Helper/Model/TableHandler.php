@@ -481,6 +481,20 @@ class TableHandler implements InputFilterAwareInterface
                     'required' => false,
                 ));
             }
+            foreach ($this->getDates() as $date) {
+                $inputFilter->add(array(
+                    'name' => $date,
+                    'required' => true,
+                    'validators' => array(
+                        array(
+                            'name'  => 'Zend\Validator\Date',
+                            'options'  => array(
+                                'format' => 'Y-m-d H:i:s'
+                            )
+                        ),
+                    )
+                ));
+            }
 
             $this->inputFilter = $inputFilter;
         }

@@ -112,7 +112,7 @@ class FormManager
 
                 } elseif (in_array($field,$this->entity->getModel()->getDates())) {
 
-                    $type       = 'Zend\Form\Element\DateTime';
+                    $type       = 'Zend\Form\Element\Text';
                     $attributes = array(
                         'class'     => 'datePicker form-control',
                         'readonly'  => 'readonly',
@@ -187,7 +187,6 @@ class FormManager
                         'options'    => array(
                             'label'         => $label,
                             'value_options' => $value_options,
-                            'format' => 'Y-m-d H:i:s'
                         ),
                         'attributes' => array_merge($attributes,array('placeholder' => $name)),
                     ));
