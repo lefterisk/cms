@@ -11,6 +11,7 @@ namespace Administration\Controller;
 
 use Zend\Mvc\Controller\AbstractActionController;
 use Zend\View\Model\ViewModel;
+use Zend\View\Model\JsonModel;
 use Administration\Model;
 use Zend\Db\TableGateway\Exception;
 use Zend\Escaper\Escaper;
@@ -252,6 +253,81 @@ class GenericModelController extends AbstractActionController
             }
         }
         $this->redirectToComponentListing();
+    }
+
+    public function editSingleBooleanFieldAction()
+    {
+        $this->initializeComponent();
+
+        //If user not logged in redirect to Login Page
+        if (!$this->controlPanel->getAuthService()->hasIdentity()) {
+            return new JsonModel(
+                array(
+                    'success'  => false,
+                    'messages' => array(
+                        'You ve been logged out!'
+                    ),
+                )
+            );
+        }
+
+        //If Model does not exist or is not available to userGroup throw 404
+        if (!$this->component) {
+            return new JsonModel(
+                array(
+                    'success'  => false,
+                    'messages' => array(
+                        'You are not authorized to edit this!'
+                    ),
+                )
+            );
+        }
+        $field = $this->params()->fromPost('field');
+        $value = $this->params()->fromPost('value');
+
+        if (!empty($field) && !empty($value)) {
+            try{
+                $this->component->editSingleBooleanField($field, $value);
+            } catch (\Exception $ex) {
+                return new JsonModel(
+                    array(
+                        'success'  => false,
+                        'messages' => array(
+                            $ex->getMessage()
+                        ),
+                    )
+                );
+            }
+        } else {
+            return new JsonModel(
+                array(
+                    'success'  => false,
+                    'messages' => array(
+                        'You must supply both field name and value!'
+                    ),
+                )
+            );
+        }
+
+        return new JsonModel(
+            array(
+                'success'  => true,
+                'messages' => array(
+                    'field' => $this->params()->fromPost('field'),
+                    'value' => $this->params()->fromPost('value')
+                )
+            )
+        );
+    }
+
+    protected function jsonResponse($success, $messages)
+    {
+        return new JsonModel(
+            array(
+                'success'  => $success,
+                'messages' => $messages,
+            )
+        );
     }
 
     protected function redirectToComponentListing()

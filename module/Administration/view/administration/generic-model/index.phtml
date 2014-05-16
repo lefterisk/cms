@@ -56,7 +56,7 @@ $form->setAttribute('method', 'post');
                             <?php endif; ?>
                         <?php endforeach; ?>
                         <?php foreach ($listingSwitches as $switch) : ?>
-                            <td><input type="checkbox" class="bootstrapSwitchIndex" name="status[<?php echo $item->id ?>]" <?php echo ($item->$switch) ? 'checked' : ''; ?>></td>
+                            <td><input type="checkbox" class="bootstrapSwitchIndex" data-model="<?php echo $model ?>" data-field="<?php echo $switch ?>" data-id="<?php echo $item->id ?>" name="<?php echo $switch ?>[<?php echo $item->id ?>]" <?php echo ($item->$switch) ? 'checked' : ''; ?>></td>
                         <?php endforeach; ?>
                         <td class="text-center" width="70">
                             <div class="btn-group">

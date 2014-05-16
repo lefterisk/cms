@@ -751,4 +751,18 @@ class GenericModelTableGateway
         }
         return $fieldsArray;
     }
+
+    public function editSingleBooleanField($id, $field, $value)
+    {
+
+
+        $statement = $this->adapter->createStatement("SHOW COLUMNS FROM " . $this->model->getTableName() . " LIKE '" . $field . "'" );
+        $result    = $statement->execute();
+        if ($result->count()==0)
+        {
+            throw new Exception\InvalidArgumentException('This model does not contain a property '.$field );
+        } elseif (is_bool($value)) {
+
+        }
+    }
 }
