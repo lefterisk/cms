@@ -36,10 +36,10 @@ $form->setAttribute('method', 'post');
                     <tr>
                         <td class="text-center" width="2%">#</td>
                         <?php foreach ($visibleListingFields as $field) : ?>
-                            <td><?php echo $this->translate($modelPrefix . $field) ?></td>
+                            <td><?php echo $this->translate($field) ?></td>
                         <?php endforeach; ?>
                         <?php foreach ($listingSwitches as $switch) : ?>
-                            <td><?php echo $this->translate($modelPrefix . $switch) ?></td>
+                            <td><?php echo $this->translate($switch) ?></td>
                         <?php endforeach; ?>
                         <td class="text-center">&nbsp;</td>
                     </tr>
@@ -56,7 +56,7 @@ $form->setAttribute('method', 'post');
                             <?php endif; ?>
                         <?php endforeach; ?>
                         <?php foreach ($listingSwitches as $switch) : ?>
-                            <td><?php echo $this->escapeHtml($item->$switch); ?></td>
+                            <td><input type="checkbox" class="bootstrapSwitchIndex" name="status[<?php echo $item->id ?>]" <?php echo ($item->$switch) ? 'checked' : ''; ?>></td>
                         <?php endforeach; ?>
                         <td class="text-center" width="70">
                             <div class="btn-group">

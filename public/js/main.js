@@ -63,6 +63,23 @@ var AppView = Backbone.View.extend({
             $(this).closest('.input-group').find('input').val('');
             return false;
         });
+        $('.bootstrapSwitchIndex').bootstrapSwitch({
+            size: 'mini',
+            onColor: 'success',
+            offColor: 'danger',
+            onText: '<span class="glyphicon glyphicon-ok"></span>',
+            offText: '<span class="glyphicon glyphicon-remove"></span>',
+            onSwitchChange: function(event, state) {
+
+            }
+        });
+        $('.bootstrapSwitchEdit').bootstrapSwitch({
+            size: 'small',
+            onColor: 'success',
+            offColor: 'danger',
+            onText: '<span class="glyphicon glyphicon-ok"></span>',
+            offText: '<span class="glyphicon glyphicon-remove"></span>'
+        });
     }
 });
 

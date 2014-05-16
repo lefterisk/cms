@@ -78,6 +78,7 @@ class FormManager
                 $type          = 'Zend\Form\Element\Text';
                 $attributes    = array();
                 $value_options = array();
+                $moreOptions   = array();
                 $name          = '';
                 $label         = '';
 
@@ -104,9 +105,8 @@ class FormManager
 
                 } elseif (in_array($field, $this->entity->getModel()->getEnums())) {
 
-                    $type       = 'Zend\Form\Element\Radio';
-                    $attributes = array('class' => 'switch','value' => '0');
-                    $value_options = array('0' => 'No', '1' => 'Yes');
+                    $type        = 'Zend\Form\Element\Checkbox';
+                    $attributes  = array('class' => 'bootstrapSwitchEdit');
                     $name       = $field;
                     $label      = $this->entity->getModel()->getPrefix() . $field;
 
@@ -187,6 +187,9 @@ class FormManager
                         'options'    => array(
                             'label'         => $label,
                             'value_options' => $value_options,
+                            'use_hidden_element' => true,
+                            'checked_value'      => '1',
+                            'unchecked_value'    => '0'
                         ),
                         'attributes' => array_merge($attributes,array('placeholder' => $name)),
                     ));

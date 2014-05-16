@@ -13,13 +13,13 @@ class User  extends TableHandler
         parent::__construct('User');//<--Table name
 
         $this->setListingFields(array("email"));
-        $this->setListingSwitches(array("status"));
+        $this->setListingSwitches(array());
         $this->setPrefix("user_");
         $this->setFollowRelations($followRelations);
 
         //Fields
 		$this->setDates(array());
-		$this->setEnums(array('status'));
+		$this->setEnums(array());
 		$this->setVarchars(array('email', 'first_name', 'last_name', 'password'));
 		$this->setTexts(array());
 		$this->setLongTexts(array());

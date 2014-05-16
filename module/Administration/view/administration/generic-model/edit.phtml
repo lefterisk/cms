@@ -18,53 +18,57 @@
                     <?php foreach ($tab['fields'] as $field) : ?>
                         <?php if (is_array($multilingualFields) && in_array($field , $multilingualFields)) : ?>
                             <?php foreach ($this->controlPanel->getSiteLanguages() as $languageId => $language): ?>
-                                <?php echo $this->translate($form->getFormObject()->get($field . '[' . $languageId . ']')->getLabel()) . '( ' . $language['name'] . ' )' ?>
-                                <?php if (array_key_exists('data-type', $form->getFormObject()->get($field . '[' . $languageId . ']')->getAttributes())) : ?>
-                                    <?php $attributesArray = $form->getFormObject()->get($field . '[' . $languageId . ']')->getAttributes(); ?>
-                                    <div class="input-group">
-                                        <?php echo $this->formElement($form->getFormObject()->get($field . '[' . $languageId . ']')); ?>
-                                        <span class="input-group-btn">
-                                        <?php if( $form->getFormObject()->get($field . '[' . $languageId . ']')->getValue() != '' && $attributesArray['data-type'] == 'image' ): ?>
-                                            <a href="<?php echo $form->getFormObject()->get($field . '[' . $languageId . ']')->getValue() ?>" class="btn btn-default image-preview" type="button">
-                                                <span class="glyphicon glyphicon-picture"></span>
-                                            </a>
-                                        <?php endif;?>
-                                            <a href="/filemanager/dialog.php?field_id=<?php echo $attributesArray['id'] ?>&type=<?php echo ($attributesArray['data-type'] == 'image')? '1':'2' ; ?>" class="btn btn-default iframe-btn " type="button"><?php echo $this->translate('Select'); ?></a>
-                                        </span>
-                                    </div>
-                                <?php else: ?>
-                                    <?php echo $this->formElement($form->getFormObject()->get($field . '[' . $languageId . ']')); ?>
-                                <?php endif; ?>
-                                <?php echo $this->formElementErrors($form->getFormObject()->get($field . '[' . $languageId . ']')); ?>
-                            <?php endforeach; ?>
-                        <?php else: ?>
-                            <?php echo ($form->getFormObject()->get($field)->getLabel() != '') ? $this->translate($form->getFormObject()->get($field)->getLabel()) : ''; ?>
-                            <?php if (array_key_exists('data-type', $form->getFormObject()->get($field)->getAttributes())) : ?>
-                                <?php $attributesArray = $form->getFormObject()->get($field)->getAttributes(); ?>
-                                <div class="input-group">
-                                    <?php echo $this->formElement($form->getFormObject()->get($field)); ?>
-                                    <span class="input-group-btn">
-                                        <?php if ($attributesArray['data-type'] == 'image' ) : ?>
-                                            <?php if( $form->getFormObject()->get($field)->getValue() != ''): ?>
-                                                <a href="<?php echo $form->getFormObject()->get($field)->getValue() ?>" class="btn btn-default image-preview" type="button">
+                                <div class="form-group">
+                                    <label><?php echo $this->translate($form->getFormObject()->get($field . '[' . $languageId . ']')->getLabel()) . '( ' . $language['name'] . ' )' ?></label>
+                                    <?php if (array_key_exists('data-type', $form->getFormObject()->get($field . '[' . $languageId . ']')->getAttributes())) : ?>
+                                        <?php $attributesArray = $form->getFormObject()->get($field . '[' . $languageId . ']')->getAttributes(); ?>
+                                        <div class="input-group">
+                                            <?php echo $this->formElement($form->getFormObject()->get($field . '[' . $languageId . ']')); ?>
+                                            <span class="input-group-btn">
+                                            <?php if( $form->getFormObject()->get($field . '[' . $languageId . ']')->getValue() != '' && $attributesArray['data-type'] == 'image' ): ?>
+                                                <a href="<?php echo $form->getFormObject()->get($field . '[' . $languageId . ']')->getValue() ?>" class="btn btn-default image-preview" type="button">
                                                     <span class="glyphicon glyphicon-picture"></span>
                                                 </a>
                                             <?php endif;?>
-                                            <a href="/filemanager/dialog.php?field_id=<?php echo $attributesArray['id'] ?>&type=<?php echo ($attributesArray['data-type'] == 'image')? '1':'2' ; ?>" class="btn btn-default iframe-btn " type="button"><?php echo $this->translate('Select'); ?></a>
-                                        <?php elseif ($attributesArray['data-type'] == 'date' ) : ?>
-                                            <a href="" class="btn btn-default datetimePickerClear" type="button">
-                                                <span class="glyphicon glyphicon-remove"></span>
-                                            </a>
-                                            <a href="" class="btn btn-default datetimePickerTrigger" type="button">
-                                                <span class="glyphicon glyphicon-calendar"></span>
-                                            </a>
-                                        <?php endif;?>
-                                    </span>
+                                                <a href="/filemanager/dialog.php?field_id=<?php echo $attributesArray['id'] ?>&type=<?php echo ($attributesArray['data-type'] == 'image')? '1':'2' ; ?>" class="btn btn-default iframe-btn " type="button"><?php echo $this->translate('Select'); ?></a>
+                                            </span>
+                                        </div>
+                                    <?php else: ?>
+                                        <?php echo $this->formElement($form->getFormObject()->get($field . '[' . $languageId . ']')); ?>
+                                    <?php endif; ?>
+                                    <?php echo $this->formElementErrors($form->getFormObject()->get($field . '[' . $languageId . ']')); ?>
                                 </div>
-                            <?php else: ?>
-                                <?php echo $this->formElement($form->getFormObject()->get($field)); ?>
-                            <?php endif; ?>
-                            <?php echo $this->formElementErrors($form->getFormObject()->get($field)); ?>
+                            <?php endforeach; ?>
+                        <?php else: ?>
+                            <div class="form-group">
+                                <label><?php echo ($form->getFormObject()->get($field)->getLabel() != '') ? $this->translate($form->getFormObject()->get($field)->getLabel()) : ''; ?></label>
+                                <?php if (array_key_exists('data-type', $form->getFormObject()->get($field)->getAttributes())) : ?>
+                                    <?php $attributesArray = $form->getFormObject()->get($field)->getAttributes(); ?>
+                                    <div class="input-group">
+                                        <?php echo $this->formElement($form->getFormObject()->get($field)); ?>
+                                        <span class="input-group-btn">
+                                            <?php if ($attributesArray['data-type'] == 'image' ) : ?>
+                                                <?php if( $form->getFormObject()->get($field)->getValue() != ''): ?>
+                                                    <a href="<?php echo $form->getFormObject()->get($field)->getValue() ?>" class="btn btn-default image-preview" type="button">
+                                                        <span class="glyphicon glyphicon-picture"></span>
+                                                    </a>
+                                                <?php endif;?>
+                                                <a href="/filemanager/dialog.php?field_id=<?php echo $attributesArray['id'] ?>&type=<?php echo ($attributesArray['data-type'] == 'image')? '1':'2' ; ?>" class="btn btn-default iframe-btn " type="button"><?php echo $this->translate('Select'); ?></a>
+                                            <?php elseif ($attributesArray['data-type'] == 'date' ) : ?>
+                                                <a href="" class="btn btn-default datetimePickerClear" type="button">
+                                                    <span class="glyphicon glyphicon-remove"></span>
+                                                </a>
+                                                <a href="" class="btn btn-default datetimePickerTrigger" type="button">
+                                                    <span class="glyphicon glyphicon-calendar"></span>
+                                                </a>
+                                            <?php endif;?>
+                                        </span>
+                                    </div>
+                                <?php else: ?>
+                                    <?php echo $this->formElement($form->getFormObject()->get($field)); ?>
+                                <?php endif; ?>
+                                <?php echo $this->formElementErrors($form->getFormObject()->get($field)); ?>
+                            </div>
                         <?php endif; ?>
                     <?php endforeach; ?>
                 </div>

@@ -59,7 +59,7 @@ class GenericModelTableGateway
 
     private function createTablesIfNotExist()
     {
-        $this->adapter->query('CREATE TABLE IF NOT EXISTS `' . $this->model->getTableName() . '` (`id` int(11) unsigned NOT NULL AUTO_INCREMENT, PRIMARY KEY (`id`))', Adapter::QUERY_MODE_EXECUTE);
+        $this->adapter->query('CREATE TABLE IF NOT EXISTS `' . $this->model->getTableName() . '` (`id` int(11) unsigned NOT NULL AUTO_INCREMENT, `' . $this->model->getPublishedField() . '`  ENUM( "0", "1" ) NOT NULL DEFAULT "0", PRIMARY KEY (`id`))', Adapter::QUERY_MODE_EXECUTE);
         if ($this->model->isMultiLingual()) {
             $results = $this->adapter->query("SHOW TABLES LIKE '" . $this->model->getTableDescriptionName() . "'" , Adapter::QUERY_MODE_EXECUTE);
             if ($results->count() <= 0) {
@@ -100,7 +100,7 @@ class GenericModelTableGateway
                 break;
             case 'enums':
                 $tableToAddTheColumn = $this->model->getTableName();
-                $fieldType = " ENUM( '0', '1' ) NOT NULL ";
+                $fieldType = " ENUM( '0', '1' ) NOT NULL DEFAULT '0' ";
                 break;
             case 'dates':
                 $tableToAddTheColumn = $this->model->getTableName();
