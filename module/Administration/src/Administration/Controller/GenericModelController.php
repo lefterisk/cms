@@ -282,42 +282,70 @@ class GenericModelController extends AbstractActionController
                 )
             );
         }
-        $field = $this->params()->fromPost('field');
-        $value = $this->params()->fromPost('value');
 
-        if (!empty($field) && !empty($value)) {
-            try{
-                $this->component->editSingleBooleanField($field, $value);
-            } catch (\Exception $ex) {
-                return new JsonModel(
-                    array(
-                        'success'  => false,
-                        'messages' => array(
-                            $ex->getMessage()
-                        ),
-                    )
-                );
-            }
-        } else {
+        //See if item to be edited exists
+        echo $this->params()->fromRoute('id');
+        try {
+            $item = $this->component->getItemById($this->params()->fromRoute('item'));
+        }
+        catch (\Exception $ex) {
             return new JsonModel(
                 array(
                     'success'  => false,
                     'messages' => array(
-                        'You must supply both field name and value!'
+                        'Something went wrong with retrieving the Item you wish to edit!'
                     ),
                 )
             );
         }
-
-        return new JsonModel(
-            array(
-                'success'  => true,
-                'messages' => array(
-                    'field' => $this->params()->fromPost('field'),
-                    'value' => $this->params()->fromPost('value')
+        if (!$item) {
+            return new JsonModel(
+                array(
+                    'success'  => false,
+                    'messages' => array(
+                        'The Item you are trying to edit does not exist!'
+                    ),
                 )
-            )
-        );
+            );
+        } else {
+            $id    = $this->params()->fromRoute('item');
+            $field = $this->params()->fromPost('field');
+            $value = $this->params()->fromPost('value');
+
+            if (!empty($field) && !empty($value)) {
+                try{
+                    $this->component->editSingleBooleanField($id, $field, $value);
+                } catch (\Exception $ex) {
+                    return new JsonModel(
+                        array(
+                            'success'  => false,
+                            'messages' => array(
+                                $ex->getMessage()
+                            ),
+                        )
+                    );
+                }
+            } else {
+                return new JsonModel(
+                    array(
+                        'success'  => false,
+                        'messages' => array(
+                            'You must supply both field name and value!'
+                        ),
+                    )
+                );
+            }
+
+            return new JsonModel(
+                array(
+                    'success'  => true,
+                    'messages' => array(
+                        'field' => $this->params()->fromPost('field'),
+                        'value' => $this->params()->fromPost('value')
+                    )
+                )
+            );
+        }
     }
 
     protected function jsonResponse($success, $messages)
