@@ -59,7 +59,7 @@ class GenericModelTableGateway
 
     private function createTablesIfNotExist()
     {
-        $this->adapter->query('CREATE TABLE IF NOT EXISTS `' . $this->model->getTableName() . '` (`id` int(11) unsigned NOT NULL AUTO_INCREMENT, PRIMARY KEY (`id`))', Adapter::QUERY_MODE_EXECUTE);
+        $this->adapter->query('CREATE TABLE IF NOT EXISTS `' . $this->model->getTableName() . '` (`id` int(11) unsigned NOT NULL AUTO_INCREMENT, `' . $this->model->getPublishedField() . '`  ENUM( "0", "1" ) NOT NULL DEFAULT "0", PRIMARY KEY (`id`))', Adapter::QUERY_MODE_EXECUTE);
         if ($this->model->isMultiLingual()) {
             $results = $this->adapter->query("SHOW TABLES LIKE '" . $this->model->getTableDescriptionName() . "'" , Adapter::QUERY_MODE_EXECUTE);
             if ($results->count() <= 0) {
@@ -100,7 +100,7 @@ class GenericModelTableGateway
                 break;
             case 'enums':
                 $tableToAddTheColumn = $this->model->getTableName();
-                $fieldType = " ENUM( '0', '1' ) NOT NULL ";
+                $fieldType = " ENUM( '0', '1' ) NOT NULL DEFAULT '0' ";
                 break;
             case 'dates':
                 $tableToAddTheColumn = $this->model->getTableName();
@@ -750,5 +750,19 @@ class GenericModelTableGateway
             }
         }
         return $fieldsArray;
+    }
+
+    public function editSingleBooleanField($id, $field, $value)
+    {
+
+
+        $statement = $this->adapter->createStatement("SHOW COLUMNS FROM " . $this->model->getTableName() . " LIKE '" . $field . "'" );
+        $result    = $statement->execute();
+        if ($result->count()==0)
+        {
+            throw new Exception\InvalidArgumentException('This model does not contain a property '.$field );
+        } elseif (is_bool($value)) {
+
+        }
     }
 }

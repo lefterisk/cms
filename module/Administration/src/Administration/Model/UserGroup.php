@@ -19,7 +19,7 @@ class UserGroup  extends TableHandler
 
         //Fields
         $this->setDates(array());
-        $this->setEnums(array('status'));
+        $this->setEnums(array());
         $this->setVarchars(array('name'));
         $this->setTexts(array());
         $this->setLongTexts(array());

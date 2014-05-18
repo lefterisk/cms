@@ -12,13 +12,13 @@ class Article  extends TableHandler
         parent::__construct('Article');//<--Table name
 
         $this->setListingFields(array("title"));
-        $this->setListingSwitches(array("status"));
+        $this->setListingSwitches(array());
         $this->setPrefix("article_");
         $this->setIsStandAlonePage(true);
         $this->setFollowRelations($followRelations);
         //Fields
 		$this->setDates(array('published_date'));
-		$this->setEnums(array('status'));
+		$this->setEnums(array());
 		$this->setVarchars(array());
 		$this->setTexts(array());
 		$this->setLongTexts(array());

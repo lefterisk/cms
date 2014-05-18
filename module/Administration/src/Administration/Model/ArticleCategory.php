@@ -13,13 +13,13 @@ class ArticleCategory  extends TableHandler
 
         $this->setListingFields(array("title"));
         $this->setMaximumTreeDepth(4);
-        $this->setListingSwitches(array("status"));
+        $this->setListingSwitches(array());
         $this->setPrefix("article_category_");
         $this->setFollowRelations($followRelations);
 
         //Fields
 		$this->setDates(array());
-		$this->setEnums(array('status'));
+		$this->setEnums(array());
 		$this->setVarchars(array());
 		$this->setTexts(array());
 		$this->setLongTexts(array());

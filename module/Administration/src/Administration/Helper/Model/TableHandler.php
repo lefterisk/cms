@@ -109,7 +109,15 @@ class TableHandler implements InputFilterAwareInterface
 	public function getLanguageID()
 	{
 		return $this->languageID;
-	}	
+	}
+
+    /**
+     * Returns published state field name.
+     */
+    public function getPublishedField()
+    {
+        return $this->getPrefix() . 'status';
+    }
 	
 	/**
 	 * Returns name field.
@@ -124,6 +132,9 @@ class TableHandler implements InputFilterAwareInterface
      */
     public function getListingSwitches()
     {
+        if (!in_array($this->getPublishedField(), $this->listingSwitches)) {
+            $this->listingSwitches[] = $this->getPublishedField();
+        }
         return $this->listingSwitches;
     }
 
@@ -132,7 +143,10 @@ class TableHandler implements InputFilterAwareInterface
 	 */
 	public function getEnums()
 	{
-		return $this->enums;
+        if (!in_array($this->getPublishedField(), $this->enums)) {
+            $this->enums[] = $this->getPublishedField();
+        }
+        return $this->enums;
 	}
 
 	/**

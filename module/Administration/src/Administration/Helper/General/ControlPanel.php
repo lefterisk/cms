@@ -38,7 +38,7 @@ class ControlPanel
     public function getSiteLanguages()
     {
         if (count($this->siteLanguagesArray) <= 0 ) {
-            $statement    = $this->sql->select('SiteLanguage')->where(array('status' => '1'));
+            $statement    = $this->sql->select('SiteLanguage')->where(array('language_status' => '1'));
             $selectString = $this->sql->getSqlStringForSqlObject($statement);
             $results      = $this->adapter->query($selectString, Adapter::QUERY_MODE_EXECUTE);
             if (count($results) > 0) {
@@ -95,7 +95,7 @@ class ControlPanel
     public function getAdminLanguages()
     {
         if (count($this->adminLanguagesArray) <= 0 ) {
-            $statement    = $this->sql->select('AdminLanguage')->where(array('status' => '1'));
+            $statement    = $this->sql->select('AdminLanguage')->where(array('admin_language_status' => '1'));
             $selectString = $this->sql->getSqlStringForSqlObject($statement);
             $results      = $this->adapter->query($selectString, Adapter::QUERY_MODE_EXECUTE);
             if (count($results) > 0) {
