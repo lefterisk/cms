@@ -752,17 +752,30 @@ class GenericModelTableGateway
         return $fieldsArray;
     }
 
+    /**
+     * Edits single boolean field in main table
+     * @param $id int
+     * @param $field string
+     * @param $value boolean
+     * @throws \Zend\Db\TableGateway\Exception\InvalidArgumentException
+     */
     public function editSingleBooleanField($id, $field, $value)
     {
-
-
         $statement = $this->adapter->createStatement("SHOW COLUMNS FROM " . $this->model->getTableName() . " LIKE '" . $field . "'" );
         $result    = $statement->execute();
         if ($result->count()==0)
         {
             throw new Exception\InvalidArgumentException('This model does not contain a property '.$field );
-        } elseif (is_bool($value)) {
-
+        } else {
+            $statement = $this->sql->update($this->model->getTableName());
+            $statement->set(array($field => $value));
+            $statement->where(
+                array(
+                    'id' => $id,
+                )
+            );
+            $sqlString = $this->sql->getSqlStringForSqlObject($statement);
+            $this->adapter->query($sqlString, Adapter::QUERY_MODE_EXECUTE);
         }
     }
 }

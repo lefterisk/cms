@@ -86,9 +86,15 @@ var AppView = Backbone.View.extend({
         });
     },
     ajaxSwitchCall: function (model, field, id, value) {
+        var fieldValue;
+        if (value) {
+           fieldValue = '1';
+        } else {
+           fieldValue = '0';
+        }
         var data = {
             'field' : field,
-            'value' : value
+            'value' : fieldValue
         };
         //console.log('/administration/model/' + model + '/' + id + '/editSingleField');
 
@@ -96,6 +102,7 @@ var AppView = Backbone.View.extend({
             url      : '/administration/model/' + model + '/' + id + '/editSingleBooleanField',
             type     : 'POST',
             data     : data,
+            dataType :'json',
             success  : function(response) {
                 if (response.success) {
                     console.log('success');

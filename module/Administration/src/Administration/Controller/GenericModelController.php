@@ -312,7 +312,7 @@ class GenericModelController extends AbstractActionController
             $field = $this->params()->fromPost('field');
             $value = $this->params()->fromPost('value');
 
-            if (!empty($field) && !empty($value)) {
+            if (!empty($field) && isset($value)) {
                 try{
                     $this->component->editSingleBooleanField($id, $field, $value);
                 } catch (\Exception $ex) {
