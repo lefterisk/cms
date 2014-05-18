@@ -37,7 +37,7 @@ $form->setAttribute('method', 'post');
                     <span class="sr-only">Toggle Dropdown</span>
                 </span>
                 <ul class="dropdown-menu" role="menu">
-                    <?php foreach ($controlPanel->getContentBoxModels() as $model) : ?>
+                    <?php foreach ($controlPanel->getStandAlonePageModels() as $model) : ?>
                     <li><a href="#">Type <?php echo $model ?></a></li>
                     <?php endforeach; ?>
                 </ul>

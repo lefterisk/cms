@@ -319,6 +319,25 @@ class ControlPanel
     }
 
     /*
+     * Returns Array with Models that can be Standalone Pages
+     * (have metadata tags and slug field)
+     */
+    public function getStandAlonePageModels()
+    {
+        if (!isset($this->standAloneModels)) {
+            foreach ($this->getContentBoxModels() as $model) {
+                $modelName    = $this->modelPath . $model;
+                $entityModel  = new $modelName(false, false);
+                if ($entityModel->isStandAlonePage()) {
+                    $this->standAloneModels[] = $model;
+                }
+            }
+        }
+
+        return $this->standAloneModels;
+    }
+
+    /*
      * Instantiate an existing model
      */
     public function instantiateModel($model, $followRelations = true)
