@@ -70,11 +70,44 @@ var AppView = Backbone.View.extend({
             onText: '<span class="glyphicon glyphicon-ok"></span>',
             offText: '<span class="glyphicon glyphicon-remove"></span>',
             onSwitchChange: function(event, state) {
+                var currentSwitch = $(this);
                 var model = $(this).data('model'),
                     field = $(this).data('field'),
-                    id    = $(this).data('id'),
-                    value = state;
-                App.ajaxSwitchCall(model, field, id, value);
+                    id    = $(this).data('id');
+
+                var fieldValue;
+                if (state) {
+                    fieldValue = '1';
+                } else {
+                    fieldValue = '0';
+                }
+                var data = {
+                    'field' : field,
+                    'value' : fieldValue
+                };
+                //disable the switch while there is interaction with server
+                currentSwitch.bootstrapSwitch('disabled',true);
+                $.ajax({
+                    url      : '/administration/model/' + model + '/' + id + '/editSingleBooleanField',
+                    type     : 'POST',
+                    data     : data,
+                    dataType :'json',
+                    success  : function(response) {
+                        if (response.success) {
+                            currentSwitch.bootstrapSwitch('disabled',false);
+//                            console.log('success');
+//                            console.log(response.messages);
+                        } else {
+                            currentSwitch.bootstrapSwitch('disabled',false);
+                            currentSwitch.bootstrapSwitch('toggleState','skip');
+//                            console.log('failure');
+//                            console.log(response.messages);
+                        }
+                    },
+                    error: function (xhr, ajaxOptions, thrownError) {
+                        console.log(thrownError);
+                    }
+                });
             }
         });
         $('.bootstrapSwitchEdit').bootstrapSwitch({
@@ -83,38 +116,6 @@ var AppView = Backbone.View.extend({
             offColor: 'danger',
             onText: '<span class="glyphicon glyphicon-ok"></span>',
             offText: '<span class="glyphicon glyphicon-remove"></span>'
-        });
-    },
-    ajaxSwitchCall: function (model, field, id, value) {
-        var fieldValue;
-        if (value) {
-           fieldValue = '1';
-        } else {
-           fieldValue = '0';
-        }
-        var data = {
-            'field' : field,
-            'value' : fieldValue
-        };
-        //console.log('/administration/model/' + model + '/' + id + '/editSingleField');
-
-        $.ajax({
-            url      : '/administration/model/' + model + '/' + id + '/editSingleBooleanField',
-            type     : 'POST',
-            data     : data,
-            dataType :'json',
-            success  : function(response) {
-                if (response.success) {
-                    console.log('success');
-                    console.log(response.messages);
-                } else {
-                    console.log('failure');
-                    console.log(response.messages);
-                }
-            },
-            error: function (xhr, ajaxOptions, thrownError) {
-                console.log(thrownError);
-            }
         });
     }
 });

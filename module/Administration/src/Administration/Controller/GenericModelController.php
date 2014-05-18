@@ -261,26 +261,12 @@ class GenericModelController extends AbstractActionController
 
         //If user not logged in redirect to Login Page
         if (!$this->controlPanel->getAuthService()->hasIdentity()) {
-            return new JsonModel(
-                array(
-                    'success'  => false,
-                    'messages' => array(
-                        'You ve been logged out!'
-                    ),
-                )
-            );
+            return $this->jsonResponse(false,array('You ve been logged out!'));
         }
 
         //If Model does not exist or is not available to userGroup throw 404
         if (!$this->component) {
-            return new JsonModel(
-                array(
-                    'success'  => false,
-                    'messages' => array(
-                        'You are not authorized to edit this!'
-                    ),
-                )
-            );
+            return $this->jsonResponse(false,array('You are not authorized to edit this!'));
         }
 
         //See if item to be edited exists
@@ -289,24 +275,10 @@ class GenericModelController extends AbstractActionController
             $item = $this->component->getItemById($this->params()->fromRoute('item'));
         }
         catch (\Exception $ex) {
-            return new JsonModel(
-                array(
-                    'success'  => false,
-                    'messages' => array(
-                        'Something went wrong with retrieving the Item you wish to edit!'
-                    ),
-                )
-            );
+            return $this->jsonResponse(false,array('Something went wrong with retrieving the Item you wish to edit!'));
         }
         if (!$item) {
-            return new JsonModel(
-                array(
-                    'success'  => false,
-                    'messages' => array(
-                        'The Item you are trying to edit does not exist!'
-                    ),
-                )
-            );
+            return $this->jsonResponse(false,array('The Item you are trying to edit does not exist!'));
         } else {
             $id    = $this->params()->fromRoute('item');
             $field = $this->params()->fromPost('field');
@@ -316,35 +288,16 @@ class GenericModelController extends AbstractActionController
                 try{
                     $this->component->editSingleBooleanField($id, $field, $value);
                 } catch (\Exception $ex) {
-                    return new JsonModel(
-                        array(
-                            'success'  => false,
-                            'messages' => array(
-                                $ex->getMessage()
-                            ),
-                        )
-                    );
+                    return $this->jsonResponse(false,array($ex->getMessage()));
                 }
             } else {
-                return new JsonModel(
-                    array(
-                        'success'  => false,
-                        'messages' => array(
-                            'You must supply both field name and value!'
-                        ),
-                    )
-                );
+                return $this->jsonResponse(false,array('You must supply both field name and value!'));
             }
 
-            return new JsonModel(
-                array(
-                    'success'  => true,
-                    'messages' => array(
-                        'field' => $this->params()->fromPost('field'),
-                        'value' => $this->params()->fromPost('value')
-                    )
-                )
-            );
+            return $this->jsonResponse(true,array(
+                'field' => $this->params()->fromPost('field'),
+                'value' => $this->params()->fromPost('value')
+            ));
         }
     }
 

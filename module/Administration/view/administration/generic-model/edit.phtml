@@ -41,7 +41,9 @@
                             <?php endforeach; ?>
                         <?php else: ?>
                             <div class="form-group">
-                                <label><?php echo ($form->getFormObject()->get($field)->getLabel() != '') ? $this->translate($form->getFormObject()->get($field)->getLabel()) : ''; ?></label>
+                                <?php if ($form->getFormObject()->get($field)->getLabel() != ''): ?>
+                                <label><?php echo  $this->translate($form->getFormObject()->get($field)->getLabel()); ?></label>
+                                <?php endif; ?>
                                 <?php if (array_key_exists('data-type', $form->getFormObject()->get($field)->getAttributes())) : ?>
                                     <?php $attributesArray = $form->getFormObject()->get($field)->getAttributes(); ?>
                                     <div class="input-group">
