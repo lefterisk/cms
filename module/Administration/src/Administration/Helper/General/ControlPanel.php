@@ -16,6 +16,7 @@ class ControlPanel
     protected $siteLanguagesArray  = array();
     protected $adminLanguagesArray = array();
     protected $modelPath           = 'Administration\\Model\\';
+
     //Models that should not appear in any list
     protected $hiddenModels        = array();
     //Developer ToolBox Models
@@ -337,8 +338,11 @@ class ControlPanel
         return $this->standAloneModels;
     }
 
-    /*
+    /**
      * Instantiate an existing model
+     * @param $model
+     * @param bool $followRelations
+     * @return GenericModelTableGateway|bool
      */
     public function instantiateModel($model, $followRelations = true)
     {
@@ -358,9 +362,12 @@ class ControlPanel
         }
     }
 
-    /*
+    /**
      * Instantiate an existing model only
      * if the user is permitted to access it
+     * @param $model
+     * @param bool $followRelations
+     * @return GenericModelTableGateway|bool
      */
     public function instantiateModelForUser($model, $followRelations = true)
     {

@@ -20,12 +20,14 @@ $form->setAttribute('method', 'post');
                 </tr>
             </thead>
             <tbody>
+            <?php foreach ($siteMap as $sitemapEntry) : ?>
                 <tr>
                     <td>&nbsp;</td>
-                    <td>&nbsp;</td>
+                    <td><?php echo $sitemapEntry['model'] ?></td>
                     <td>&nbsp;</td>
                     <td>&nbsp;</td>
                 </tr>
+            <?php endforeach; ?>
             </tbody>
         </table>
         <div class="btn-group">
@@ -38,7 +40,7 @@ $form->setAttribute('method', 'post');
                 </span>
                 <ul class="dropdown-menu" role="menu">
                     <?php foreach ($controlPanel->getStandAlonePageModels() as $model) : ?>
-                    <li><a href="#">Type <?php echo $model ?></a></li>
+                    <li><a href="<?php echo $this->url('sitemanager', array('action' => 'add', 'model' => $model)); ?>">Type <?php echo $model ?></a></li>
                     <?php endforeach; ?>
                 </ul>
             </div>

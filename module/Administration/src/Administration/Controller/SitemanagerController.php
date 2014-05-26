@@ -9,6 +9,7 @@
 
 namespace Administration\Controller;
 
+use Administration\Helper\Model\SiteManagerTableGateway;
 use Zend\Mvc\Controller\AbstractActionController;
 use Zend\View\Model\ViewModel;
 use Administration\Model;
@@ -24,7 +25,6 @@ class SiteManagerController extends AbstractActionController
     protected function initializeComponent()
     {
         $this->controlPanel = $this->getServiceLocator()->get('ControlPanel');
-        //$this->component    = $this->controlPanel->instantiateModelForUser($this->params()->fromRoute('model'));
         $escaper            = new Escaper('utf-8');
 
         $this->layout()->setVariable('controlPanel' , $this->controlPanel);
@@ -41,9 +41,12 @@ class SiteManagerController extends AbstractActionController
             return $this->redirect()->toRoute('adminLogin');
         }
 
+        $siteManagerGateway = new SiteManagerTableGateway($this->controlPanel);
+
         $viewModel = new ViewModel(
             array(
-                'controlPanel' => $this->controlPanel
+                'controlPanel' => $this->controlPanel,
+                'siteMap'      => $siteManagerGateway->getSiteMap()
             )
         );
 
@@ -59,9 +62,20 @@ class SiteManagerController extends AbstractActionController
             return $this->redirect()->toRoute('adminLogin');
         }
 
-        $viewModel = new ViewModel();
+        $this->component    = $this->controlPanel->instantiateModelForUser($this->params()->fromRoute('model'));
+        //if component doesnt exist or is not standalone component
+        if (!$this->component || !$this->component->getModel()->isStandAlonePage()) {
+            $this->getResponse()->setStatusCode(404);
+            return;
+        }
 
-        return $viewModel;
+        try {
+            $this->component->addToSiteMap();
+        }
+        catch (\Exception $ex) {
+            $this->redirectToSiteManagerListing();
+        }
+        $this->redirectToSiteManagerListing();
     }
 
     public function editAction()

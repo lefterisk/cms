@@ -18,6 +18,9 @@ class GenericModelTableGateway
     //Control object contains languages admin-rights etc
     public  $controlPanel;
 
+    public $sitemapTable = 'Sitemap';
+    public $routesTable  = 'Routes';
+
     public function __construct($model, $controlPanel)
     {
         $this->controlPanel = $controlPanel;
@@ -763,8 +766,7 @@ class GenericModelTableGateway
     {
         $statement = $this->adapter->createStatement("SHOW COLUMNS FROM " . $this->model->getTableName() . " LIKE '" . $field . "'" );
         $result    = $statement->execute();
-        if ($result->count()==0)
-        {
+        if ($result->count() == 0){
             throw new Exception\InvalidArgumentException('This model does not contain a property '.$field );
         } else {
             $statement = $this->sql->update($this->model->getTableName());
@@ -777,5 +779,25 @@ class GenericModelTableGateway
             $sqlString = $this->sql->getSqlStringForSqlObject($statement);
             $this->adapter->query($sqlString, Adapter::QUERY_MODE_EXECUTE);
         }
+    }
+
+    public function addToSiteMap($parent = 0)
+    {
+        if (!$this->model->isStandAlonePage()) {
+            throw new Exception\InvalidArgumentException('This model can not be added to the sitemap');
+        }
+        $this->adapter->query('CREATE TABLE IF NOT EXISTS `' . $this->sitemapTable . '` (`id` int(11) unsigned NOT NULL AUTO_INCREMENT, `model`  VARCHAR( 255 ) NOT NULL, `parent` int(11) NOT NULL DEFAULT "0", PRIMARY KEY (`id`))', Adapter::QUERY_MODE_EXECUTE);
+        $this->adapter->query('CREATE TABLE IF NOT EXISTS `' . $this->routesTable . '` (`route` varchar(255) NOT NULL, `sitemap_id` int(11) NOT NULL, `item_id` int(11) NOT NULL, PRIMARY KEY (`route`))', Adapter::QUERY_MODE_EXECUTE);
+
+        $dataArray = array(
+            'model'  => $this->model->getTableName(),
+            'parent' => $parent
+        );
+
+        $statement = $this->sql->insert($this->sitemapTable);
+        $statement->values($dataArray);
+        $sqlString = $this->sql->getSqlStringForSqlObject($statement);
+        $this->adapter->query($sqlString, Adapter::QUERY_MODE_EXECUTE);
+        $this->lastInsertValue = $this->adapter->getDriver()->getConnection()->getLastGeneratedValue();
     }
 }
