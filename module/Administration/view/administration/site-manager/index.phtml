@@ -23,9 +23,26 @@ $form->setAttribute('method', 'post');
             <?php foreach ($siteMap as $sitemapEntry) : ?>
                 <tr>
                     <td>&nbsp;</td>
-                    <td><?php echo $sitemapEntry['model'] ?></td>
+                    <td>/:<?php echo $sitemapEntry['model'] ?></td>
                     <td>&nbsp;</td>
-                    <td>&nbsp;</td>
+                    <td>
+                        <div class="btn-group btn-group-xs">
+                            <div class="btn-group btn-group-xs">
+                                <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown">
+                                    Add
+                                    <span class="caret"></span>
+                                </button>
+                                <ul class="dropdown-menu">
+                                    <?php foreach ($sitemapEntry['related'] as $relatedModel) : ?>
+                                        <li><a href="#"><?php echo $relatedModel ?></a></li>
+                                    <?php endforeach; ?>
+                                </ul>
+                            </div>
+                            <a href="" class="btn btn-danger">
+                                <span class="glyphicon glyphicon-trash"></span>
+                            </a>
+                        </div>
+                    </td>
                 </tr>
             <?php endforeach; ?>
             </tbody>

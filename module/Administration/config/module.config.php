@@ -49,12 +49,13 @@ return array(
             'sitemanager' => array(
                 'type' => 'segment',
                 'options' => array(
-                    'route'    => '/administration/sitemanager[/page/:page][/:action][/model/:model][/item/:item][/language/:language]',
+                    'route'    => '/administration/sitemanager[/page/:page][/:action][/model/:model][/item/:item][/parent/:parent][/language/:language]',
                     'constraints' => array(
                         'page'          => '[0-9]*',
                         'model'         => '[a-zA-Z][a-zA-Z0-9_-]*',
                         'action'        => '[a-zA-Z][a-zA-Z0-9_-]*',
                         'item'          => '[0-9]*',
+                        'parent'        => '[0-9]*',
                         'language'      => '[a-z]{2}'
                     ),
                     'defaults' => array(

@@ -41,6 +41,15 @@ class SiteManagerTableGateway
         $siteMapArray = array();
         foreach ($results as $result) {
             $result['depth'] = $depth;
+            $result['related'] = array();
+            $entity = $this->controlPanel->instantiateModel($result['model'],true);
+            if ($entity) {
+                foreach ($entity->getModel()->getRelations() as $relation) {
+                    if ($relation->activeModel->isStandAlonePage()) {
+                        $result['related'][] = $relation->getRelatedModel();
+                    }
+                }
+            }
             $siteMapArray[]  = $result;
             $siteMapArray    = array_merge($siteMapArray, $this->getSiteMap($result['id'], $depth+1));
         }

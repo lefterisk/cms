@@ -16,6 +16,7 @@ class ArticleCategory  extends TableHandler
         $this->setListingSwitches(array());
         $this->setPrefix("article_category_");
         $this->setFollowRelations($followRelations);
+        $this->setIsStandAlonePage(true);
 
         //Fields
 		$this->setDates(array());
