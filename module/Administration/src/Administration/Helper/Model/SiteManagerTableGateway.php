@@ -29,7 +29,7 @@ class SiteManagerTableGateway
     private function buildTablesIfNotExist()
     {
         $this->adapter->query('CREATE TABLE IF NOT EXISTS `' . $this->sitemapTable . '` (`id` int(11) unsigned NOT NULL AUTO_INCREMENT, `model`  VARCHAR( 255 ) NOT NULL, `parent` int(11) NOT NULL DEFAULT "0", PRIMARY KEY (`id`))', Adapter::QUERY_MODE_EXECUTE);
-        $this->adapter->query('CREATE TABLE IF NOT EXISTS `' . $this->routesTable . '` (`route` varchar(255) NOT NULL, `sitemap_id` int(11) NOT NULL, `item_id` int(11) NOT NULL, PRIMARY KEY (`route`))', Adapter::QUERY_MODE_EXECUTE);
+        $this->adapter->query('CREATE TABLE IF NOT EXISTS `' . $this->routesTable . '` (`id` int(11) unsigned NOT NULL AUTO_INCREMENT, `route` varchar(255) NOT NULL, `sitemap_id` int(11) NOT NULL, `item_id` int(11) NOT NULL, `parent_id` int(11) NOT NULL, PRIMARY KEY (`id`,`route`))', Adapter::QUERY_MODE_EXECUTE);
     }
 
     public function getSiteMap($parent = 0, $depth = 0)

@@ -787,7 +787,7 @@ class GenericModelTableGateway
             throw new Exception\InvalidArgumentException('This model can not be added to the sitemap');
         }
         $this->adapter->query('CREATE TABLE IF NOT EXISTS `' . $this->sitemapTable . '` (`id` int(11) unsigned NOT NULL AUTO_INCREMENT, `model`  VARCHAR( 255 ) NOT NULL, `parent` int(11) NOT NULL DEFAULT "0", PRIMARY KEY (`id`))', Adapter::QUERY_MODE_EXECUTE);
-        $this->adapter->query('CREATE TABLE IF NOT EXISTS `' . $this->routesTable . '` (`route` varchar(255) NOT NULL, `sitemap_id` int(11) NOT NULL, `item_id` int(11) NOT NULL, PRIMARY KEY (`route`))', Adapter::QUERY_MODE_EXECUTE);
+        $this->adapter->query('CREATE TABLE IF NOT EXISTS `' . $this->routesTable . '` (`id` int(11) unsigned NOT NULL AUTO_INCREMENT, `route` varchar(255) NOT NULL, `sitemap_id` int(11) NOT NULL, `item_id` int(11) NOT NULL, `parent_id` int(11) NOT NULL, PRIMARY KEY (`id`, `route`))', Adapter::QUERY_MODE_EXECUTE);
 
         $dataArray = array(
             'model'  => $this->model->getTableName(),
@@ -798,6 +798,34 @@ class GenericModelTableGateway
         $statement->values($dataArray);
         $sqlString = $this->sql->getSqlStringForSqlObject($statement);
         $this->adapter->query($sqlString, Adapter::QUERY_MODE_EXECUTE);
-        $this->lastInsertValue = $this->adapter->getDriver()->getConnection()->getLastGeneratedValue();
+        $siteMapId = $this->adapter->getDriver()->getConnection()->getLastGeneratedValue();
+
+        $this->addToRoute(0, $siteMapId, '', 0);
+
+    }
+
+    private function addToRoute($parent, $siteMapId, $parentRoute = '', $parentRouteId = 0)
+    {
+        if ($this->model->getMaximumTreeDepth() > 0) {
+            foreach ($this->getListing($parent) as $entry) {
+                if ($entry->{$this->model->getPublishedField()}) {
+                    $dataArray = array(
+                        'route'  => $parentRoute . '/' . $entry->{$this->model->getPrefix() . 'meta_slug'},
+                        'sitemap_id' => $siteMapId,
+                        'item_id' => $entry->id,
+                        'parent_id' => $parentRouteId
+                    );
+                    $statement = $this->sql->insert($this->routesTable);
+                    $statement->values($dataArray);
+                    $sqlString = $this->sql->getSqlStringForSqlObject($statement);
+                    $this->adapter->query($sqlString, Adapter::QUERY_MODE_EXECUTE);
+                    $routeId = $this->adapter->getDriver()->getConnection()->getLastGeneratedValue();
+
+                    if ($entry->childCount > 0) {
+                        $this->addToRoute($entry->id, $siteMapId, $dataArray['route'], $routeId);
+                    }
+                }
+            }
+        }
     }
 }
