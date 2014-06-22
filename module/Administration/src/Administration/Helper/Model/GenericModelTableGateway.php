@@ -4,6 +4,7 @@ namespace Administration\Helper\Model;
 use Zend\Db\Adapter\Adapter;
 use Zend\Db\TableGateway\Exception;
 use Zend\Db\Sql\Select;
+use Zend\Debug\Debug;
 
 
 class GenericModelTableGateway
@@ -198,12 +199,15 @@ class GenericModelTableGateway
         }
     }
 
-    public function getListing( $parent = 0, $itemsPerPage = 'all', $page = null, $order = null, $orderDirection = null, Array $filters = array(), Array $notInArray = array())
+    public function getListing( $parent = 0, $itemsPerPage = 'all', $page = null, $order = null, $orderDirection = null, Array $filters = array(), Array $notInArray = array(), $languageId = null)
     {
         if (is_array($this->model->getListingFields()) && count($this->model->getListingFields()) > 0) {
 
             if ($this->model->isMultiLingual()) {
-                $statement = $this->sql->select($this->model->getTableName())->join(array( 'dc' => $this->model->getTableDescriptionName()),'dc.' . $this->model->getPrefix() . 'id = ' . $this->model->getTableName() . '.id' , Select::SQL_STAR , Select::JOIN_LEFT)->where(array($this->model->getLanguageID() => $this->controlPanel->getDefaultSiteLanguageId()));
+                if (empty($languageId)) {
+                    $languageId = $this->controlPanel->getDefaultSiteLanguageId();
+                }
+                $statement = $this->sql->select($this->model->getTableName())->join(array( 'dc' => $this->model->getTableDescriptionName()),'dc.' . $this->model->getPrefix() . 'id = ' . $this->model->getTableName() . '.id' , Select::SQL_STAR , Select::JOIN_LEFT)->where(array($this->model->getLanguageID() => $languageId));
             } else {
                 $statement = $this->sql->select($this->model->getTableName());
             }
@@ -787,7 +791,7 @@ class GenericModelTableGateway
             throw new Exception\InvalidArgumentException('This model can not be added to the sitemap');
         }
         $this->adapter->query('CREATE TABLE IF NOT EXISTS `' . $this->sitemapTable . '` (`id` int(11) unsigned NOT NULL AUTO_INCREMENT, `model`  VARCHAR( 255 ) NOT NULL, `parent` int(11) NOT NULL DEFAULT "0", PRIMARY KEY (`id`))', Adapter::QUERY_MODE_EXECUTE);
-        $this->adapter->query('CREATE TABLE IF NOT EXISTS `' . $this->routesTable . '` (`id` int(11) unsigned NOT NULL AUTO_INCREMENT, `route` varchar(255) NOT NULL, `sitemap_id` int(11) NOT NULL, `item_id` int(11) NOT NULL, `parent_id` int(11) NOT NULL, PRIMARY KEY (`id`, `route`))', Adapter::QUERY_MODE_EXECUTE);
+        $this->adapter->query('CREATE TABLE IF NOT EXISTS `' . $this->routesTable . '` (`id` int(11) unsigned NOT NULL AUTO_INCREMENT, `route` VARCHAR(255) NOT NULL, `sitemap_id` int(11) NOT NULL, `item_id` int(11) NOT NULL, `parent_id` int(11) NOT NULL, PRIMARY KEY (`id`, `route`))', Adapter::QUERY_MODE_EXECUTE);
 
         $dataArray = array(
             'model'  => $this->model->getTableName(),
@@ -800,32 +804,109 @@ class GenericModelTableGateway
         $this->adapter->query($sqlString, Adapter::QUERY_MODE_EXECUTE);
         $siteMapId = $this->adapter->getDriver()->getConnection()->getLastGeneratedValue();
 
-        $this->addToRoute(0, $siteMapId, '', 0);
+        $siteMapParent = false;
+        if ($parent != 0 ) {
+            $statement = $this->sql->select($this->sitemapTable);
+            $statement->where(array('id' => $parent));
+            $sqlString = $this->sql->getSqlStringForSqlObject($statement);
+            $results = $this->adapter->query($sqlString, Adapter::QUERY_MODE_EXECUTE);
+            $siteMapParent = $results->current();
+        }
+
+        $this->addToRoute(0,$siteMapParent, $siteMapId, '', 0);
 
     }
 
-    private function addToRoute($parent, $siteMapId, $parentRoute = '', $parentRouteId = 0)
+    private function addToRoute($sameModelParent,$siteMapParent = false, $siteMapId, $parentRoute = '', $parentRouteId = 0)
     {
-        if ($this->model->getMaximumTreeDepth() > 0) {
-            foreach ($this->getListing($parent) as $entry) {
-                if ($entry->{$this->model->getPublishedField()}) {
-                    $dataArray = array(
-                        'route'  => $parentRoute . '/' . $entry->{$this->model->getPrefix() . 'meta_slug'},
-                        'sitemap_id' => $siteMapId,
-                        'item_id' => $entry->id,
-                        'parent_id' => $parentRouteId
-                    );
-                    $statement = $this->sql->insert($this->routesTable);
-                    $statement->values($dataArray);
-                    $sqlString = $this->sql->getSqlStringForSqlObject($statement);
-                    $this->adapter->query($sqlString, Adapter::QUERY_MODE_EXECUTE);
-                    $routeId = $this->adapter->getDriver()->getConnection()->getLastGeneratedValue();
+        foreach ($this->getListing($sameModelParent) as $entry) {
+            if ($entry->{$this->model->getPublishedField()}) {
+                $parentRoutes = $this->getParentRelationRoute($siteMapParent, $entry);
 
-                    if ($entry->childCount > 0) {
-                        $this->addToRoute($entry->id, $siteMapId, $dataArray['route'], $routeId);
+                if ($siteMapParent) {
+                    // have to be separate statements for the continue, if no parent relation found
+                    if (count($parentRoutes)) {
+                        foreach ($parentRoutes as $parentRouteObj) {
+                            $this->addToRouteTable($parentRouteObj->route, $parentRouteObj->id, $entry, $siteMapId);
+                        }
+                    }
+                    continue;
+                }
+                // do if it is root route(no parent)
+                $this->addToRouteTable($parentRoute, $parentRouteId, $entry, $siteMapId);
+            }
+        }
+    }
+
+    private function addToRouteTable($parentRoute, $parentRouteId, $entry, $siteMapId )
+    {
+        $dataArray = array(
+            'route'  => $parentRoute . '/' . $entry->{$this->model->getPrefix() . 'meta_slug'},
+            'sitemap_id' => $siteMapId,
+            'item_id' => $entry->id,
+            'parent_id' => $parentRouteId
+        );
+        $statement = $this->sql->insert($this->routesTable);
+        $statement->values($dataArray);
+        $sqlString = $this->sql->getSqlStringForSqlObject($statement);
+        $this->adapter->query($sqlString, Adapter::QUERY_MODE_EXECUTE);
+        $routeId = $this->adapter->getDriver()->getConnection()->getLastGeneratedValue();
+
+        if ($entry->childCount > 0) {
+            $this->addToRoute($entry->id, false, $siteMapId, $dataArray['route'], $routeId);
+        }
+    }
+
+    private function getParentRelationRoute($siteMapParent = false, $entry)
+    {
+        $parentRoutes = array();
+        if ($siteMapParent) {
+            foreach ($this->model->getRelations() as $relation) {
+                if ($relation->getRelatedModel() == $siteMapParent->model) {
+                    if ($relation->hasLookUpTable()) {
+                        //If relation is manyToMany
+                        $lookUpTableStatement    = $this->sql->select($relation->getLookUpTableName())->where(array($this->model->getPrefix().'id' => $entry->id));
+                        $lookUpTableSelectString = $this->sql->getSqlStringForSqlObject($lookUpTableStatement);
+                        $lookUpTableResults      = $this->adapter->query($lookUpTableSelectString, Adapter::QUERY_MODE_EXECUTE);
+
+                        if ($lookUpTableResults->count() > 0) {
+                            foreach ($lookUpTableResults as $lookupTableResult) {
+                                $routesStatement = $this->sql->select($this->routesTable)
+                                    ->where(
+                                        array(
+                                            'sitemap_id' => $siteMapParent->id,
+                                            'item_id' => $lookupTableResult[$relation->activeModel->getPrefix() . 'id']
+                                        )
+                                    );
+                                $routesSelectString = $this->sql->getSqlStringForSqlObject($routesStatement);
+                                $routesResults      = $this->adapter->query($routesSelectString, Adapter::QUERY_MODE_EXECUTE);
+                                $parentRoutes[]     = $routesResults->current();
+                            }
+                        }
+                    } elseif ($relation->getRelationType() == 'oneToMany') {
+                        //If relation is oneToMany
+                        $relationStatement    = $this->sql->select($relation->activeModel->getTableName())->where(array($this->model->getPrefix().'id' => $entry->id));
+                        $relationSelectString = $this->sql->getSqlStringForSqlObject($relationStatement);
+                        $relationResults      = $this->adapter->query($relationSelectString, Adapter::QUERY_MODE_EXECUTE);
+
+                        if ($relationResults->count() > 0) {
+                            foreach ($relationResults as $relationResult) {
+                                $routesStatement = $this->sql->select($this->routesTable)
+                                    ->where(
+                                        array(
+                                            'sitemap_id' => $siteMapParent->id,
+                                            'item_id' => $relationResult['id']
+                                        )
+                                    );
+                                $routesSelectString = $this->sql->getSqlStringForSqlObject($routesStatement);
+                                $routesResults      = $this->adapter->query($routesSelectString, Adapter::QUERY_MODE_EXECUTE);
+                                $parentRoutes[]     = $routesResults->current();
+                            }
+                        }
                     }
                 }
             }
+            return $parentRoutes;
         }
     }
 }

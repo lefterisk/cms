@@ -10,6 +10,7 @@
 namespace Administration\Controller;
 
 use Administration\Helper\Model\SiteManagerTableGateway;
+use Zend\Debug\Debug;
 use Zend\Mvc\Controller\AbstractActionController;
 use Zend\View\Model\ViewModel;
 use Administration\Model;
@@ -68,12 +69,14 @@ class SiteManagerController extends AbstractActionController
             $this->getResponse()->setStatusCode(404);
             return;
         }
-
+        $parent = ($this->params()->fromRoute('parent') != null) ? $this->params()->fromRoute('parent') : '0';
         try {
-            $this->component->addToSiteMap();
+            $this->component->addToSiteMap($parent);
         }
         catch (\Exception $ex) {
-            $this->redirectToSiteManagerListing();
+            Debug::dump($ex->getMessage());
+            die();
+            //$this->redirectToSiteManagerListing();
         }
         $this->redirectToSiteManagerListing();
     }

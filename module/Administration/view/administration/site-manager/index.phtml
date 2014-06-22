@@ -34,7 +34,7 @@ $form->setAttribute('method', 'post');
                                 </button>
                                 <ul class="dropdown-menu">
                                     <?php foreach ($sitemapEntry['related'] as $relatedModel) : ?>
-                                        <li><a href="#"><?php echo $relatedModel ?></a></li>
+                                        <li><a href="<?php echo $this->url('sitemanager', array('action' => 'add', 'model' => $relatedModel, 'parent' => $sitemapEntry['id'])); ?>"><?php echo $relatedModel ?></a></li>
                                     <?php endforeach; ?>
                                 </ul>
                             </div>
